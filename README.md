@@ -14,7 +14,8 @@ WIP (Likely Arduino)
 
 ## Front End
 WIP (Preferably raw html/javascript)
-[Demo](https://html-preview.github.io/?url=https://github.com/cheltenhamhackspace/enviro_map/blob/main/frontend/wip-demo.html)
+
+[Demo](https://rawcdn.githack.com/cheltenhamhackspace/enviro_map/adfc7acc3d47bd99ebaca75dd163c78b1ab452f4/frontend/wip-demo.html)
 
 ## Back End
 WIP (AWS Lambda & DynamoDB?)
