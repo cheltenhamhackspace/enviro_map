@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Quick Start - Leaflet</title>
+
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+	<style>
+		html,
+		body {
+			height: 100%;
+			margin: 0;
+		}
+
+		.leaflet-container {
+			height: 400px;
+			width: 600px;
+			max-width: 100%;
+			max-height: 100%;
+		}
+
+		table,
+		th,
+		td {
+			border: 1px solid black;
+			border-collapse: collapse;
+		}
+
+		tr:nth-child(even) {
+			background-color: #D6EEEE;
+		}
+
+		.leaflet-tooltip-pane .text {
+			color: rgb(0, 0, 0);
+			font-weight: bold;
+			background: transparent;
+			border: 0;
+			box-shadow: none;
+			font-size: 1em;
+		}
+	</style>
+
+
+</head>
+
+<body>
+
+
+
+	<div id="map" style="width: 80%; height: 80%;"></div>
+	<script>
+
+		const testData = {
+			"sensors": [
+				{
+					"name": "test node 1",
+					"location": [
+						"51.8800",
+						"-2.0700"
+					],
+					"pm1": "1",
+					"pm2_5": "1",
+					"pm10": "1",
+					"temp": "1",
+					"humid": "1"
+				},
+				{
+					"name": "test node 2",
+					"location": [
+						"51.9100",
+						"-2.0450"
+					],
+					"pm1": "2",
+					"pm2_5": "2",
+					"pm10": "2",
+					"temp": "2",
+					"humid": "2"
+				},
+				{
+					"name": "test node 3",
+					"location": [
+						"51.9200",
+						"-2.1150"
+					],
+					"pm1": "3",
+					"pm2_5": "3",
+					"pm10": "3",
+					"temp": "3",
+					"humid": "3"
+				},
+				{
+					"name": "test node 4",
+					"location": [
+						"51.8850",
+						"-2.1100"
+					],
+					"pm1": "4",
+					"pm2_5": "400",
+					"pm10": "4",
+					"temp": "4",
+					"humid": "4"
+				},
+				{
+					"name": "test node 5",
+					"location": [
+						"51.8994",
+						"-2.0783"
+					],
+					"pm1": "5",
+					"pm2_5": "50",
+					"pm10": "5",
+					"temp": "5",
+					"humid": "5"
+				}
+			]
+		};
+
+		var sensorData = testData.sensors
+
+		function getPMColour(sensor) {
+			var greenLimit = 20,
+				amberLimit = 100,
+				redLimit = 200
+
+			if (sensor.pm2_5 <= greenLimit) {
+				return '#0f0'
+			}
+			else if (sensor.pm2_5 > greenLimit && sensor.pm2_5 <= amberLimit) {
+				return '#f70'
+			}
+			else {
+				return '#f00'
+			}
+		}
+
+		const map = L.map('map').setView([51.8994, -2.0783], 13);
+
+		const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 19,
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+		}).addTo(map);
+
+		// BEGIN HANDLE_TEST_DATA
+		markers = []
+		for (sensorId in sensorData) {
+			// draw a circle for each item
+			var circle = L.circle(sensorData[sensorId].location, {
+				color: getPMColour(sensorData[sensorId]),
+				fillColor: getPMColour(sensorData[sensorId]),
+				fillOpacity: 0.6,
+				opacity: 1,
+				radius: 100
+			}).bindPopup(`<table>
+							<tr>
+								<td>Name</td>
+								<td>${sensorData[sensorId].name}</td>
+							</tr>
+							<tr>
+								<td>Temperature</td>
+								<td>${sensorData[sensorId].temp}</td >
+							</tr >
+							<tr>
+								<td>Humidity</td>
+								<td>${sensorData[sensorId].humid}</td >
+							</tr >
+							<tr>
+								<td>PM1</td>
+								<td>${sensorData[sensorId].pm1}</td>
+							</tr>
+							<tr>
+								<td>PM2.5</td>
+								<td>${sensorData[sensorId].pm2_5}</td >
+							</tr >
+							<tr>
+								<td>PM10</td>
+								<td>${sensorData[sensorId].pm10}</td >
+							</tr >
+						</table >`).bindTooltip(sensorData[sensorId].pm2_5, { direction: 'center', className: 'text', permanent: true }).addTo(map)
+		};
+		// END HANDLE_TEST_DATA
+
+		function testFunc(e) {
+			console.log(map.getBounds());
+		}
+		map.on('moveend', testFunc);
+
+	</script>
+
+
+
+</body>
+
+</html>
