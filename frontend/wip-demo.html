@@ -14,6 +14,9 @@
 		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
 		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"
+		integrity="sha512-ZwR1/gSZM3ai6vCdI+LVF1zSq/5HznD3ZSTk7kajkaj4D292NLuduDCO1c/NT8Id+jE58KYLKT7hXnbtryGmMg=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 	<style>
 		html,
@@ -46,7 +49,7 @@
 			background: transparent;
 			border: 0;
 			box-shadow: none;
-			font-size: 1em;
+			font-size: 1.5em;
 		}
 	</style>
 
@@ -54,14 +57,59 @@
 </head>
 
 <body>
-	<h1> Using placeholder data right now </h1>
-	<div id="map" style="width: 100%; height: 80%;"></div>
-	<script>
+	<h1> Using placeholder and randomly generated data right now </h1>
+	<div id="map" style="width: 100%; height: 70%;"></div>
+	<canvas id="pmChart" style="width: 100%; height: 20%;"></canvas>
 
+	<script>
+		var pmChart = new Chart("pmChart", {
+			type: "line",
+			data: {
+				labels: ["Jan", "", "", "", "Feb", "", "", "", "Mar", "", "", "", "Apr", "", "", "", "May", "", "", "", "Jun", "", "", "", "Jul", "", "", "", "Aug", "", "", "", "Sep", "", "", "", "Oct", "", "", "", "Nov", "", "", "", "Dec", "", "", ""],
+				datasets: [
+					{
+						label: "PM1",
+						data: Array.from({ length: 48 }, () => Math.floor(Math.random() * 500))
+					},
+					{
+						label: "PM2.5",
+						data: Array.from({ length: 48 }, () => Math.floor(Math.random() * 250))
+					},
+					{
+						label: "PM10",
+						data: Array.from({ length: 48 }, () => Math.floor(Math.random() * 50))
+					}
+				]
+			},
+			options: {
+				plugins: {
+					title: {
+						display: true,
+						text: 'Country Wide Average',
+					}
+				}
+			}
+		});
+
+		function updateGraph(e) {
+			console.log(e.sourceTarget.options.uuid)
+			if (pmChart) {
+				for (datasetId in pmChart.data.datasets) {
+					pmChart.data.datasets[datasetId].data = Array.from({ length: 48 }, () => Math.floor(Math.random() * 500 / (datasetId + 1)))
+				}
+				pmChart.options.plugins.title.text = e.sourceTarget.options.name
+				pmChart.update()
+			}
+		}
+
+	</script>
+
+	<script>
 		const testData = {
 			"sensors": [
 				{
 					"name": "test node 1",
+					"uuid": "test-node-1-uuid",
 					"location": [
 						"51.8800",
 						"-2.0700"
@@ -74,6 +122,7 @@
 				},
 				{
 					"name": "test node 2",
+					"uuid": "test-node-2-uuid",
 					"location": [
 						"51.9100",
 						"-2.0450"
@@ -86,6 +135,7 @@
 				},
 				{
 					"name": "test node 3",
+					"uuid": "test-node-3-uuid",
 					"location": [
 						"51.9200",
 						"-2.1150"
@@ -98,6 +148,7 @@
 				},
 				{
 					"name": "test node 4",
+					"uuid": "test-node-4-uuid",
 					"location": [
 						"51.8850",
 						"-2.1100"
@@ -110,6 +161,7 @@
 				},
 				{
 					"name": "test node 5",
+					"uuid": "test-node-5-uuid",
 					"location": [
 						"51.8994",
 						"-2.0783"
@@ -123,12 +175,13 @@
 			]
 		};
 
+		// USE TEST DATA
 		var sensorData = testData.sensors
 
 		function getPMColour(sensor) {
-			var greenLimit = 20,
+			var greenLimit = 50,
 				amberLimit = 100,
-				redLimit = 200
+				redLimit = 150
 
 			if (sensor.pm2_5 <= greenLimit) {
 				return '#0f0'
@@ -148,16 +201,23 @@
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 		}).addTo(map);
 
+
+		function printDebug(e) {
+			console.log(e.sourceTarget.options.uuid);
+		}
+
 		// BEGIN HANDLE_TEST_DATA
 		markers = []
 		for (sensorId in sensorData) {
 			// draw a circle for each item
-			var circle = L.circle(sensorData[sensorId].location, {
+			var circle = L.circleMarker(sensorData[sensorId].location, {
 				color: getPMColour(sensorData[sensorId]),
 				fillColor: getPMColour(sensorData[sensorId]),
 				fillOpacity: 0.6,
 				opacity: 1,
-				radius: 100
+				radius: 20,
+				uuid: sensorData[sensorId].uuid,
+				name: sensorData[sensorId].name
 			}).bindPopup(`<table>
 							<tr>
 								<td>Name</td>
@@ -183,7 +243,7 @@
 								<td>PM10</td>
 								<td>${sensorData[sensorId].pm10}</td >
 							</tr >
-						</table >`).bindTooltip(sensorData[sensorId].pm2_5, { direction: 'center', className: 'text', permanent: true }).addTo(map)
+						</table >`).bindTooltip(sensorData[sensorId].pm2_5, { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', updateGraph)
 		};
 		// END HANDLE_TEST_DATA
 
