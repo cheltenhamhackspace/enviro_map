@@ -91,13 +91,25 @@
 			}
 		});
 
-		function updateGraph(e) {
-			console.log(e.sourceTarget.options.uuid)
+		async function getTimeSeriesNode(e) {
+			var uuid = e.sourceTarget.options.uuid
+			console.log(uuid)
+			apiUrl = `https://ostbn1wyte.execute-api.eu-west-1.amazonaws.com/v1/sensor/${uuid}/PM2_5`
+			const request = await fetch(apiUrl, { method: "GET" });
+			const response = await request.json();
+			console.log(response)
+			updateGraph(e.sourceTarget.options.name, response)
+		}
+
+		function updateGraph(title, data) {
 			if (pmChart) {
-				for (datasetId in pmChart.data.datasets) {
-					pmChart.data.datasets[datasetId].data = Array.from({ length: 48 }, () => Math.floor(Math.random() * 500 / (datasetId + 1)))
-				}
-				pmChart.options.plugins.title.text = e.sourceTarget.options.name
+				console.log(data.readings)
+				pmChart.data.datasets = [{ backgroundColor: "rgba(54, 162, 235, 0.5)", borderColor: "rgb(54, 162, 235)", label: "PM2.5", data: data.readings }]
+				pmChart.data.labels = data.times
+				// for (datasetId in pmChart.data.datasets) {
+				// 	pmChart.data.datasets[datasetId].data = Array.from({ length: 48 }, () => Math.floor(Math.random() * 500 / (datasetId + 1)))
+				// }
+				pmChart.options.plugins.title.text = title
 				pmChart.update()
 			}
 		}
@@ -243,7 +255,7 @@
 								<td>PM10</td>
 								<td>${sensorData[sensorId].pm10}</td >
 							</tr >
-						</table >`).bindTooltip(sensorData[sensorId].pm2_5, { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', updateGraph)
+						</table >`).bindTooltip(sensorData[sensorId].pm2_5, { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', getTimeSeriesNode)
 		};
 		// END HANDLE_TEST_DATA
 
