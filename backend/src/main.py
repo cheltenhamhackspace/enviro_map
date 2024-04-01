@@ -20,7 +20,7 @@ def lambda_handler(event, context):
                 TableName=os.environ["READINGS_TABLE"],
                 Item={
                     "DeviceId": {"S": str(payload["DeviceId"])},
-                    "EventTime": {"N": str(time.time())},
+                    "EventTime": {"N": str(int(time.time()))},
                     "RelativeHumidity": {"N": str(payload["RelativeHumidity"])},
                     "Temperature": {"N": str(payload["Temperature"])},
                     "PM1": {"N": str(payload["PM1"])},
@@ -51,11 +51,20 @@ def lambda_handler(event, context):
                 ProjectionExpression="EventTime, %s" % (reading_type),
             )
             print(dynamodb_response)
-            times = [i["EventTime"]["N"] for i in dynamodb_response["Items"]]
-            readings = [i[reading_type]["N"] for i in dynamodb_response["Items"]]
-            response = {"times": times, "readings": readings}
+            # times = [i["EventTime"]["N"] for i in dynamodb_response["Items"]]
+            # readings = [i[reading_type]["N"] for i in dynamodb_response["Items"]]
+            # response = {"times": times, "readings": readings}
 
-            if len(times) > 0 and len(readings) > 0:
+            response = []
+            for item in dynamodb_response["Items"]:
+                response.append(
+                    {
+                        "x": float(item["EventTime"]["N"]) * 1000,
+                        "y": item[reading_type]["N"],
+                    }
+                )
+
+            if len(response) > 0:
                 return {
                     "statusCode": 200,
                     "headers": {"Access-Control-Allow-Origin": "*"},
