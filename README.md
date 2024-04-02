@@ -26,7 +26,7 @@ WIP (AWS Lambda & DynamoDB?)
 - Frontend
     - Get actual latest readings for nodes
     - Get nodes within bounding box
-    - Make graphed dataset selectable
+    - Make graphed dataset selectable (including averages)
     - Snazzy top banner
     - Heatmap view
     - S3 hosting
