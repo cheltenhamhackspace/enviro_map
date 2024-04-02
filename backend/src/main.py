@@ -35,6 +35,7 @@ def lambda_handler(event, context):
             return {"statusCode": 201, "headers": {"Access-Control-Allow-Origin": "*"}}
         elif (
             event["httpMethod"] == "GET"
+            and event["resource"] == "/sensor/{sensorid}/{reading_type}"
             and event["pathParameters"]["sensorid"] != None
             and event["pathParameters"]["reading_type"] != None
         ):
@@ -64,6 +65,31 @@ def lambda_handler(event, context):
                     }
                 )
 
+            if len(response) > 0:
+                return {
+                    "statusCode": 200,
+                    "headers": {"Access-Control-Allow-Origin": "*"},
+                    "body": str(json.dumps(response)),
+                }
+            else:
+                return {
+                    "statusCode": 404,
+                    "headers": {"Access-Control-Allow-Origin": "*"},
+                }
+        elif event["httpMethod"] == "GET" and event["resource"] == "/sensors":
+            dynamodb_response = dynamodb_client.scan(
+                TableName=os.environ["SENSORS_TABLE"],
+            )
+            print("RESPONSE -> " + str(dynamodb_response))
+            response = []
+            for item in dynamodb_response["Items"]:
+                response.append(
+                    {
+                        "name": item["DeviceName"]["S"],
+                        "uuid": item["DeviceId"]["S"],
+                        "location": [item["Lat"]["N"], item["Lon"]["N"]],
+                    }
+                )
             if len(response) > 0:
                 return {
                     "statusCode": 200,
