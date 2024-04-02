@@ -23,6 +23,7 @@ WIP (AWS Lambda & DynamoDB?)
 ## TODO
 - Everything
     - Security
+    - CI?
 - Frontend
     - Get actual latest readings for nodes
     - Get nodes within bounding box
@@ -33,6 +34,8 @@ WIP (AWS Lambda & DynamoDB?)
     - Full refactor
 - Backend
     - Stable and sensible API structure
+        - Device Registration
+        - Sensor Data
     - Full terraform refactor
 - Sensor
     - Full refactor
