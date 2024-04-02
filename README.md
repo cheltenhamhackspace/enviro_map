@@ -28,6 +28,7 @@ WIP (AWS Lambda & DynamoDB?)
     - Get nodes within bounding box
     - Make graphed dataset selectable
     - Snazzy top banner
+    - Heatmap view
     - S3 hosting
     - Full refactor
 - Backend
