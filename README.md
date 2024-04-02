@@ -19,3 +19,19 @@ WIP (Preferably raw html/javascript)
 
 ## Back End
 WIP (AWS Lambda & DynamoDB?)
+
+## TODO
+- Everything
+    - Security
+- Frontend
+    - Get actual latest readings for nodes
+    - Get nodes within bounding box
+    - Make graphed dataset selectable
+    - Snazzy top banner
+    - S3 hosting
+    - Full refactor
+- Backend
+    - Stable and sensible API structure
+    - Full terraform refactor
+- Sensor
+    - Full refactor
