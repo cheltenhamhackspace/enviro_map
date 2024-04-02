@@ -179,7 +179,7 @@ void loop() {
   Serial.println("[HTTPS] begin...");
   Serial.println("[HTTPS] using insecure SSL, not validating certificate");
   https.setInsecure(); 
-  if (https.begin("https://ostbn1wyte.execute-api.eu-west-1.amazonaws.com/v1/sensor")) {  // HTTPS
+  if (https.begin("https://api.ntf.systems/v1/sensor")) {  // HTTPS
 
     Serial.println("[HTTPS] POST...");
     // start connection and send HTTP header
