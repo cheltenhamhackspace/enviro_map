@@ -20,7 +20,10 @@ provider "aws" {
   region = "eu-west-1"
 }
 
-
+provider "aws" {
+  region = "us-east-1"
+  alias  = "us-east-1"
+}
 
 resource "aws_dynamodb_table" "sensor_readings" {
   name         = "SensorReadings"
@@ -40,6 +43,45 @@ resource "aws_dynamodb_table" "sensor_readings" {
 
   tags = {
     Name        = "dynamodb-table-1"
+    Environment = "production"
+  }
+}
+
+resource "aws_dynamodb_table" "sensors" {
+  name         = "Sensors"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "DeviceId"
+  range_key    = "DeviceName"
+
+  attribute {
+    name = "DeviceId"
+    type = "S"
+  }
+
+  attribute {
+    name = "DeviceName"
+    type = "S"
+  }
+
+  attribute {
+    name = "Lat"
+    type = "N"
+  }
+
+  attribute {
+    name = "Lon"
+    type = "N"
+  }
+
+  global_secondary_index {
+    name            = "SensorLocationIndex"
+    hash_key        = "Lat"
+    range_key       = "Lon"
+    projection_type = "ALL"
+  }
+
+  tags = {
+    Name        = "dynamodb-table-2"
     Environment = "production"
   }
 }
@@ -124,6 +166,7 @@ resource "aws_lambda_function" "lambda" {
     variables = {
       REGION         = "eu-west-1"
       READINGS_TABLE = aws_dynamodb_table.sensor_readings.name
+      SENSORS_TABLE  = aws_dynamodb_table.sensors.name
     }
   }
 }
@@ -133,15 +176,21 @@ resource "aws_api_gateway_rest_api" "web_api" {
   description = "Environment Map API"
 }
 
-resource "aws_api_gateway_resource" "root" {
+resource "aws_api_gateway_resource" "sensor" {
   rest_api_id = aws_api_gateway_rest_api.web_api.id
   parent_id   = aws_api_gateway_rest_api.web_api.root_resource_id
   path_part   = "sensor"
 }
 
+resource "aws_api_gateway_resource" "sensors" {
+  rest_api_id = aws_api_gateway_rest_api.web_api.id
+  parent_id   = aws_api_gateway_rest_api.web_api.root_resource_id
+  path_part   = "sensors"
+}
+
 resource "aws_api_gateway_resource" "sensorid" {
   rest_api_id = aws_api_gateway_rest_api.web_api.id
-  parent_id   = aws_api_gateway_resource.root.id
+  parent_id   = aws_api_gateway_resource.sensor.id
   path_part   = "{sensorid}"
 }
 
@@ -154,8 +203,15 @@ resource "aws_api_gateway_resource" "reading_type" {
 # Define a GET method on the above resource.
 resource "aws_api_gateway_method" "sensor_post" {
   rest_api_id   = aws_api_gateway_rest_api.web_api.id
-  resource_id   = aws_api_gateway_resource.root.id
+  resource_id   = aws_api_gateway_resource.sensor.id
   http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "sensors_get" {
+  rest_api_id   = aws_api_gateway_rest_api.web_api.id
+  resource_id   = aws_api_gateway_resource.sensors.id
+  http_method   = "GET"
   authorization = "NONE"
 }
 
@@ -169,8 +225,18 @@ resource "aws_api_gateway_method" "sensor_get" {
 # Connect the Lambda function to the GET method via an integration.
 resource "aws_api_gateway_integration" "sensor_post" {
   rest_api_id = aws_api_gateway_rest_api.web_api.id
-  resource_id = aws_api_gateway_resource.root.id
+  resource_id = aws_api_gateway_resource.sensor.id
   http_method = aws_api_gateway_method.sensor_post.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.lambda.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "sensors_get" {
+  rest_api_id = aws_api_gateway_rest_api.web_api.id
+  resource_id = aws_api_gateway_resource.sensors.id
+  http_method = aws_api_gateway_method.sensors_get.http_method
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
@@ -194,7 +260,16 @@ resource "aws_lambda_permission" "sensor_post" {
   function_name = aws_lambda_function.lambda.function_name
   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "${aws_api_gateway_rest_api.web_api.execution_arn}/*/${aws_api_gateway_method.sensor_post.http_method}${aws_api_gateway_resource.root.path}"
+  source_arn = "${aws_api_gateway_rest_api.web_api.execution_arn}/*/${aws_api_gateway_method.sensor_post.http_method}${aws_api_gateway_resource.sensor.path}"
+}
+
+resource "aws_lambda_permission" "sensors_get" {
+  statement_id  = "AllowAPIGatewayInvoke_sensors_get"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_api_gateway_rest_api.web_api.execution_arn}/*/${aws_api_gateway_method.sensors_get.http_method}${aws_api_gateway_resource.sensors.path}"
 }
 
 resource "aws_lambda_permission" "sensor_get" {
@@ -207,8 +282,8 @@ resource "aws_lambda_permission" "sensor_get" {
 }
 
 # The Deploy stage of the API.
-resource "aws_api_gateway_deployment" "example" {
-  depends_on = [aws_api_gateway_integration.sensor_get, aws_api_gateway_integration.sensor_post]
+resource "aws_api_gateway_deployment" "sensor_api" {
+  depends_on = [aws_api_gateway_integration.sensor_get, aws_api_gateway_integration.sensors_get, aws_api_gateway_integration.sensor_post]
 
   rest_api_id = aws_api_gateway_rest_api.web_api.id
   stage_name  = "v1"
@@ -217,4 +292,61 @@ resource "aws_api_gateway_deployment" "example" {
   variables = {
     "lambdaFunctionName" = "${aws_lambda_function.lambda.function_name}"
   }
+}
+
+data "aws_route53_zone" "api_base_domain" {
+  name         = "ntf.systems"
+  private_zone = false
+}
+
+resource "aws_acm_certificate" "api_base_domain_certificate" {
+  provider          = aws.us-east-1
+  domain_name       = "api.ntf.systems"
+  validation_method = "DNS"
+}
+
+resource "aws_route53_record" "api_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.api_base_domain_certificate.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.api_base_domain.zone_id
+}
+
+resource "aws_acm_certificate_validation" "sensor_api" {
+  provider                = aws.us-east-1
+  depends_on              = [aws_route53_record.api_validation]
+  certificate_arn         = aws_acm_certificate.api_base_domain_certificate.arn
+  validation_record_fqdns = [for record in aws_route53_record.api_validation : record.fqdn]
+}
+
+resource "aws_api_gateway_domain_name" "sensor_api_domain" {
+  certificate_arn = aws_acm_certificate_validation.sensor_api.certificate_arn
+  domain_name     = aws_acm_certificate.api_base_domain_certificate.domain_name
+}
+
+resource "aws_route53_record" "api" {
+  name    = aws_api_gateway_domain_name.sensor_api_domain.domain_name
+  type    = "A"
+  zone_id = data.aws_route53_zone.api_base_domain.zone_id
+
+  alias {
+    name                   = aws_api_gateway_domain_name.sensor_api_domain.cloudfront_domain_name
+    zone_id                = aws_api_gateway_domain_name.sensor_api_domain.cloudfront_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_api_gateway_base_path_mapping" "mapping" {
+  api_id      = aws_api_gateway_rest_api.web_api.id
+  domain_name = aws_api_gateway_domain_name.sensor_api_domain.domain_name
 }
