@@ -224,7 +224,7 @@
 			markers = []
 			for (sensorId in sensorData) {
 				// bodge the value of pm2_5 to show values inside the circles
-				sensorData[sensorId].pm2_5 = String(Math.floor(Math.random() * 100) + 1);
+				sensorData[sensorId].pm2_5 = String(Math.floor(Math.random() * 150) + 1);
 				// draw a circle for each item
 				var circle = L.circleMarker(sensorData[sensorId].location, {
 					color: getPMColour(sensorData[sensorId]),
