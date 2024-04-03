@@ -26,12 +26,14 @@ WIP (AWS Lambda & DynamoDB?)
     - CI?
 - Frontend
     - Get actual latest readings for nodes
-    - Get nodes within bounding box
-    - Make graphed dataset selectable (including averages)
-    - Snazzy top banner
+    - Get nodes within bounding box after settle time
+    - ~~Make graphed dataset selectable~~
+    - Make averages visible
+    - Snazzy top banner (partially done)
     - Heatmap view
     - S3 hosting
     - Full refactor
+        - Optimise number of API calls needed
 - Backend
     - Stable and sensible API structure
         - Device Registration
@@ -39,3 +41,6 @@ WIP (AWS Lambda & DynamoDB?)
     - Full terraform refactor
 - Sensor
     - Full refactor
+    - Send averaged readings, not instantaneous
+    - Prevent bad readings from being sent
+        - Uninitialised sensor etc
