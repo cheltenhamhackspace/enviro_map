@@ -95,6 +95,16 @@
 	</nav>
 
 	<div id="map" style="width: 100%; height: 70%;"></div>
+
+	<div id="datasetToggle">
+		<button onClick="setGraphDatasets('PM1')">PM 1</button>
+		<button onClick="setGraphDatasets('PM2_5')">PM 2.5</button>
+		<button onClick="setGraphDatasets('PM4')">PM 4</button>
+		<button onClick="setGraphDatasets('PM10')">PM 10</button>
+		<button onClick="setGraphDatasets('VOC')">VOC</button>
+		<button onClick="setGraphDatasets('NOx')">NOx</button>
+	</div>
+
 	<canvas id="pmChart" style="width: 100%; height: 20%;"></canvas>
 
 	<script>
@@ -124,25 +134,61 @@
 			}
 		});
 
-		async function getTimeSeriesNode(e) {
-			var uuid = e.sourceTarget.options.uuid
-			console.log(uuid)
-			apiUrl = `https://api.ntf.systems/v1/sensor/${uuid}/PM2_5`
-			const request = await fetch(apiUrl, { method: "GET" });
-			const response = await request.json();
-			updateGraph(e.sourceTarget.options.name, response)
+
+		var graph_uuid = ""
+		var graph_name = ""
+		var graph_datasets = ["PM2_5"]
+		var graph_data = []
+
+		function setGraphDatasets(dataset) {
+			var index = graph_datasets.indexOf(dataset)
+			if (index == -1) {
+				graph_datasets.push(dataset)
+			}
+			else {
+				graph_datasets.splice(index, 1)
+			}
+			graph_datasets.sort()
+			console.log(graph_datasets)
+			getTimeSeriesData()
+		}
+
+		function setGraphNodeMapEvent(e) {
+			graph_uuid = e.sourceTarget.options.uuid
+			graph_name = e.sourceTarget.options.name
+			getTimeSeriesData()
+		}
+
+		async function getTimeSeriesData() {
+			console.log(graph_uuid)
+			graph_data = []
+			for (dataset in graph_datasets) {
+				try {
+					apiUrl = `https://api.ntf.systems/v1/sensor/${graph_uuid}/${graph_datasets[dataset]}`
+					const request = await fetch(apiUrl, { method: "GET" });
+					const response = await request.json();
+					console.log("API Response for node graph dataset: " + graph_datasets[dataset])
+					console.log(response)
+					graph_data.push(response)
+					console.log(graph_data)
+				}
+				catch (error) {
+					console.error("ERROR: ", error)
+					graph_data.push([])
+				}
+			}
+			updateGraph(graph_name, graph_data)
 		}
 
 		function updateGraph(title, data) {
 			if (pmChart) {
 				console.log(data)
-				pmChart.data.datasets = [{ backgroundColor: "rgba(54, 162, 235, 0.5)", borderColor: "rgb(54, 162, 235)", label: "PM2.5", data: data }]
+				pmChart.data.datasets = []
+				for (index in graph_datasets) {
+					pmChart.data.datasets.push({ label: graph_datasets[index], data: data[index] })
+				}
 				pmChart.options.scales.x.min = data[0].x
 				pmChart.options.scales.x.max = Date.now()
-				//pmChart.data.labels = data.times
-				// for (datasetId in pmChart.data.datasets) {
-				// 	pmChart.data.datasets[datasetId].data = Array.from({ length: 48 }, () => Math.floor(Math.random() * 500 / (datasetId + 1)))
-				// }
 				pmChart.options.plugins.title.text = title
 				pmChart.update()
 			}
@@ -292,7 +338,7 @@
 									<td>PM10</td>
 									<td>${sensorData[sensorId].pm10}</td >
 								</tr >
-							</table >`).bindTooltip(sensorData[sensorId].pm2_5, { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', getTimeSeriesNode)
+							</table >`).bindTooltip(sensorData[sensorId].pm2_5, { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 			};
 			// END HANDLE_TEST_DATA
 		}
