@@ -13,7 +13,7 @@ A hackspace project to map the quality of our air
 [Likely this one for small and low cost](https://www.screwfix.com/p/british-general-ip55-weatherproof-outdoor-enclosure-75mm-x-53mm-x-85mm/33991)
 
 ### Software
-WIP (Likely Arduino)
+WIP (Currently Arduino)
 
 ## Front End
 WIP (Preferably raw html/javascript)
@@ -21,7 +21,7 @@ WIP (Preferably raw html/javascript)
 [Demo](https://raw.githack.com/cheltenhamhackspace/enviro_map/main/frontend/wip-demo.html)
 
 ## Back End
-WIP (AWS Lambda & DynamoDB?)
+WIP (Currently AWS Lambda & DynamoDB)
 
 ## TODO
 - Everything

@@ -35,12 +35,10 @@ def lambda_handler(event, context):
             return {"statusCode": 201, "headers": {"Access-Control-Allow-Origin": "*"}}
         elif (
             event["httpMethod"] == "GET"
-            and event["resource"] == "/sensor/{sensorid}/{reading_type}"
+            and event["resource"] == "/sensor/{sensorid}"
             and event["pathParameters"]["sensorid"] != None
-            and event["pathParameters"]["reading_type"] != None
         ):
             sensorid = event["pathParameters"]["sensorid"]
-            reading_type = event["pathParameters"]["reading_type"]
             print("sensorid: " + str(sensorid))
             dynamodb_response = dynamodb_client.query(
                 TableName=os.environ["READINGS_TABLE"],
@@ -49,23 +47,30 @@ def lambda_handler(event, context):
                     ":deviceid": {"S": str(sensorid)},
                     ":event_time": {"N": "1711938696.9761453"},
                 },
-                ProjectionExpression="EventTime, %s" % (reading_type),
             )
-            print(dynamodb_response)
             # times = [i["EventTime"]["N"] for i in dynamodb_response["Items"]]
             # readings = [i[reading_type]["N"] for i in dynamodb_response["Items"]]
             # response = {"times": times, "readings": readings}
 
-            response = []
+            response = {
+                "time": [],
+                "PM1": [],
+                "PM2_5": [],
+                "PM4": [],
+                "PM10": [],
+                "VOC": [],
+                "NOx": [],
+            }
             for item in dynamodb_response["Items"]:
-                response.append(
-                    {
-                        "x": float(item["EventTime"]["N"]) * 1000,
-                        "y": item[reading_type]["N"],
-                    }
-                )
+                response["time"].append(float(item["EventTime"]["N"]) * 1000)
+                response["PM1"].append(item["PM1"]["N"])
+                response["PM2_5"].append(item["PM2_5"]["N"])
+                response["PM4"].append(item["PM4"]["N"])
+                response["PM10"].append(item["PM10"]["N"])
+                response["VOC"].append(item["VOC"]["N"])
+                response["NOx"].append(item["NOx"]["N"])
 
-            if len(response) > 0:
+            if len(response["time"]) > 0:
                 return {
                     "statusCode": 200,
                     "headers": {"Access-Control-Allow-Origin": "*"},

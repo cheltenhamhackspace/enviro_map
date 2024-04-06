@@ -194,12 +194,6 @@ resource "aws_api_gateway_resource" "sensorid" {
   path_part   = "{sensorid}"
 }
 
-resource "aws_api_gateway_resource" "reading_type" {
-  rest_api_id = aws_api_gateway_rest_api.web_api.id
-  parent_id   = aws_api_gateway_resource.sensorid.id
-  path_part   = "{reading_type}"
-}
-
 # Define a GET method on the above resource.
 resource "aws_api_gateway_method" "sensor_post" {
   rest_api_id   = aws_api_gateway_rest_api.web_api.id
@@ -215,9 +209,9 @@ resource "aws_api_gateway_method" "sensors_get" {
   authorization = "NONE"
 }
 
-resource "aws_api_gateway_method" "sensor_get" {
+resource "aws_api_gateway_method" "sensorid_get" {
   rest_api_id   = aws_api_gateway_rest_api.web_api.id
-  resource_id   = aws_api_gateway_resource.reading_type.id
+  resource_id   = aws_api_gateway_resource.sensorid.id
   http_method   = "GET"
   authorization = "NONE"
 }
@@ -243,10 +237,10 @@ resource "aws_api_gateway_integration" "sensors_get" {
   uri                     = aws_lambda_function.lambda.invoke_arn
 }
 
-resource "aws_api_gateway_integration" "sensor_get" {
+resource "aws_api_gateway_integration" "sensorid_get" {
   rest_api_id = aws_api_gateway_rest_api.web_api.id
-  resource_id = aws_api_gateway_resource.reading_type.id
-  http_method = aws_api_gateway_method.sensor_get.http_method
+  resource_id = aws_api_gateway_resource.sensorid.id
+  http_method = aws_api_gateway_method.sensorid_get.http_method
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
@@ -272,18 +266,18 @@ resource "aws_lambda_permission" "sensors_get" {
   source_arn = "${aws_api_gateway_rest_api.web_api.execution_arn}/*/${aws_api_gateway_method.sensors_get.http_method}${aws_api_gateway_resource.sensors.path}"
 }
 
-resource "aws_lambda_permission" "sensor_get" {
-  statement_id  = "AllowAPIGatewayInvoke_sensor_get"
+resource "aws_lambda_permission" "sensorid_get" {
+  statement_id  = "AllowAPIGatewayInvoke_sensorid_get"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda.function_name
   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "${aws_api_gateway_rest_api.web_api.execution_arn}/*/${aws_api_gateway_method.sensor_get.http_method}${aws_api_gateway_resource.reading_type.path}"
+  source_arn = "${aws_api_gateway_rest_api.web_api.execution_arn}/*/${aws_api_gateway_method.sensorid_get.http_method}${aws_api_gateway_resource.sensorid.path}"
 }
 
 # The Deploy stage of the API.
 resource "aws_api_gateway_deployment" "sensor_api" {
-  depends_on = [aws_api_gateway_integration.sensor_get, aws_api_gateway_integration.sensors_get, aws_api_gateway_integration.sensor_post]
+  depends_on = [aws_api_gateway_integration.sensorid_get, aws_api_gateway_integration.sensors_get, aws_api_gateway_integration.sensor_post]
 
   rest_api_id = aws_api_gateway_rest_api.web_api.id
   stage_name  = "v1"
@@ -349,4 +343,62 @@ resource "aws_route53_record" "api" {
 resource "aws_api_gateway_base_path_mapping" "mapping" {
   api_id      = aws_api_gateway_rest_api.web_api.id
   domain_name = aws_api_gateway_domain_name.sensor_api_domain.domain_name
+}
+
+resource "aws_cognito_user_pool" "sensor_user_pool" {
+  name = "sensorUserPool"
+
+  email_verification_subject = "Your Verification Code"
+  email_verification_message = "Please use the following code: {####}"
+  alias_attributes           = ["email"]
+  auto_verified_attributes   = ["email"]
+
+  password_policy {
+    minimum_length                   = 8
+    require_lowercase                = true
+    require_numbers                  = true
+    require_symbols                  = true
+    require_uppercase                = true
+    temporary_password_validity_days = 7
+  }
+
+  username_configuration {
+    case_sensitive = false
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "email"
+    required                 = true
+
+    string_attribute_constraints {
+      min_length = 7
+      max_length = 256
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "name"
+    required                 = true
+
+    string_attribute_constraints {
+      min_length = 3
+      max_length = 256
+    }
+  }
+}
+
+resource "aws_cognito_user_pool_client" "sensor_user_pool_client" {
+  name         = "enviro_map_client"
+  user_pool_id = aws_cognito_user_pool.sensor_user_pool.id
+  explicit_auth_flows = [
+    "ALLOW_USER_PASSWORD_AUTH",
+    "ALLOW_USER_SRP_AUTH",
+    "ALLOW_REFRESH_TOKEN_AUTH"
+  ]
 }

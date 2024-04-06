@@ -138,7 +138,7 @@
 		var graph_uuid = ""
 		var graph_name = ""
 		var graph_datasets = ["PM2_5"]
-		var graph_data = []
+		var graph_data = {}
 
 		function setGraphDatasets(dataset) {
 			var index = graph_datasets.indexOf(dataset)
@@ -150,7 +150,7 @@
 			}
 			graph_datasets.sort()
 			console.log(graph_datasets)
-			getTimeSeriesData()
+			updateGraph()
 		}
 
 		function setGraphNodeMapEvent(e) {
@@ -161,36 +161,58 @@
 
 		async function getTimeSeriesData() {
 			console.log(graph_uuid)
-			graph_data = []
-			for (dataset in graph_datasets) {
-				try {
-					apiUrl = `https://api.ntf.systems/v1/sensor/${graph_uuid}/${graph_datasets[dataset]}`
-					const request = await fetch(apiUrl, { method: "GET" });
-					const response = await request.json();
-					console.log("API Response for node graph dataset: " + graph_datasets[dataset])
-					console.log(response)
-					graph_data.push(response)
-					console.log(graph_data)
+			graph_data = {}
+			try {
+				apiUrl = `https://api.ntf.systems/v1/sensor/${graph_uuid}`
+				const request = await fetch(apiUrl, { method: "GET" });
+				const response = await request.json();
+				//console.log("API Response for node graph dataset: " + graph_datasets[dataset])
+				console.log(response)
+				for (dataset in response) {
+					if (dataset == "time") {
+						console.log("Skipping time dataset")
+						continue
+					}
+					console.log("Processing dataset: " + dataset)
+					graph_data[dataset] = []
+					for (item in response[dataset])
+						//console.log(item)
+						graph_data[dataset].push({
+							"x": response["time"][item],
+							"y": response[dataset][item],
+						})
 				}
-				catch (error) {
-					console.error("ERROR: ", error)
-					graph_data.push([])
-				}
+				console.log("Graph data finished processing")
+				console.log(graph_data)
 			}
-			updateGraph(graph_name, graph_data)
+			catch (error) {
+				console.error("ERROR: ", error)
+				graph_data = {}
+			}
+			updateGraph()
 		}
 
-		function updateGraph(title, data) {
+		function updateGraph() {
 			if (pmChart) {
-				console.log(data)
+				//console.log(graph_data)
 				pmChart.data.datasets = []
-				for (index in graph_datasets) {
-					pmChart.data.datasets.push({ label: graph_datasets[index], data: data[index] })
+				if (Object.keys(graph_data).length === 0) {
+					console.log("No graphable data found")
+					pmChart.options.plugins.title.text = "NO DATA"
+					pmChart.options.scales.x.min = Date.now()
+					pmChart.options.scales.x.max = Date.now()
 				}
-				pmChart.options.scales.x.min = data[0].x
-				pmChart.options.scales.x.max = Date.now()
-				pmChart.options.plugins.title.text = title
+				else {
+					for (index in graph_datasets) {
+						pmChart.data.datasets.push({ label: graph_datasets[index], data: graph_data[graph_datasets[index]] })
+					}
+					pmChart.options.scales.x.min = graph_data["PM2_5"][0].x
+					pmChart.options.scales.x.max = Date.now()
+					pmChart.options.plugins.title.text = graph_name
+
+				}
 				pmChart.update()
+
 			}
 		}
 
