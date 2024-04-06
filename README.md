@@ -41,6 +41,7 @@ WIP (Currently AWS Lambda & DynamoDB)
     - Stable and sensible API structure
         - Device Registration
         - Sensor Data
+        - Make graph timescales selectable
     - Full terraform refactor
 - Sensor
     - Full refactor

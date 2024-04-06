@@ -45,7 +45,7 @@ def lambda_handler(event, context):
                 KeyConditionExpression="DeviceId = :deviceid AND EventTime >= :event_time",
                 ExpressionAttributeValues={
                     ":deviceid": {"S": str(sensorid)},
-                    ":event_time": {"N": "1711938696.9761453"},
+                    ":event_time": {"N": str(int(time.time() - 86400))},
                 },
             )
             # times = [i["EventTime"]["N"] for i in dynamodb_response["Items"]]
