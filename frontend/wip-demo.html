@@ -23,6 +23,12 @@
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1"></script>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
 		integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"
+		integrity="sha512-KhIBJeCI4oTEeqOmRi2gDJ7m+JARImhUYgXWiOTIp9qqySpFUAJs09erGKem4E5IPuxxSTjavuurvBitBmwE0w=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+		integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
 	<style>
 		html,
 		body {
@@ -94,7 +100,7 @@
 		</div>
 	</nav>
 
-	<div id="map" style="width: 100%; height: 70%;"></div>
+	<div id="map" style="width: 100%; height: 65%;"></div>
 
 	<div id="datasetToggle">
 		<button onClick="setGraphDatasets('PM1')">PM 1</button>
@@ -105,7 +111,7 @@
 		<button onClick="setGraphDatasets('NOx')">NOx</button>
 	</div>
 
-	<canvas id="pmChart" style="width: 100%; height: 20%;"></canvas>
+	<canvas id="pmChart" style="width: 100%; height: 25%;"></canvas>
 
 	<script>
 		var pmChart = new Chart("pmChart", {
@@ -119,8 +125,11 @@
 						display: true,
 						text: 'Country Wide Average',
 					},
-					"legend": {
-						"position": "right"
+					legend: {
+						position: "right"
+					},
+					tooltip: {
+						mode: "index"
 					}
 				},
 				scales: {
@@ -140,7 +149,7 @@
 
 		var graph_uuid = ""
 		var graph_name = ""
-		var graph_datasets = ["PM2_5"]
+		var graph_datasets = ["PM1", "PM2_5", "PM4", "PM10"]
 		var graph_data = {}
 
 		function setGraphDatasets(dataset) {
@@ -222,79 +231,6 @@
 	</script>
 
 	<script>
-		const testData = {
-			"sensors": [
-				{
-					"name": "test node 1",
-					"uuid": "test-node-1-uuid",
-					"location": [
-						"51.8800",
-						"-2.0700"
-					],
-					"pm1": "1",
-					"pm2_5": "1",
-					"pm10": "1",
-					"temp": "1",
-					"humid": "1"
-				},
-				{
-					"name": "test node 2",
-					"uuid": "test-node-2-uuid",
-					"location": [
-						"51.9100",
-						"-2.0450"
-					],
-					"pm1": "2",
-					"pm2_5": "2",
-					"pm10": "2",
-					"temp": "2",
-					"humid": "2"
-				},
-				{
-					"name": "test node 3",
-					"uuid": "test-node-3-uuid",
-					"location": [
-						"51.9200",
-						"-2.1150"
-					],
-					"pm1": "3",
-					"pm2_5": "3",
-					"pm10": "3",
-					"temp": "3",
-					"humid": "3"
-				},
-				{
-					"name": "test node 4",
-					"uuid": "test-node-4-uuid",
-					"location": [
-						"51.8850",
-						"-2.1100"
-					],
-					"pm1": "4",
-					"pm2_5": "400",
-					"pm10": "4",
-					"temp": "4",
-					"humid": "4"
-				},
-				{
-					"name": "test node 5",
-					"uuid": "test-node-5-uuid",
-					"location": [
-						"51.8994",
-						"-2.0783"
-					],
-					"pm1": "5",
-					"pm2_5": "100",
-					"pm10": "5",
-					"temp": "5",
-					"humid": "5"
-				}
-			]
-		};
-
-		// USE TEST DATA
-		var sensorData = testData.sensors
-
 		function getPMColour(sensor) {
 			var greenLimit = 50,
 				amberLimit = 100,
@@ -318,6 +254,7 @@
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 		}).addTo(map);
 
+		markers = []
 		async function drawNodeMarkers(map) {
 			apiUrl = `https://api.ntf.systems/v1/sensors`
 			const nodes_request = await fetch(apiUrl, { method: "GET" });
@@ -325,7 +262,6 @@
 
 
 			// BEGIN HANDLE_TEST_DATA
-			markers = []
 			for (sensorId in sensorData) {
 				// bodge the value of pm2_5 to show values inside the circles
 				sensorData[sensorId].pm2_5 = String(Math.floor(Math.random() * 150) + 1);
@@ -364,7 +300,9 @@
 									<td>${sensorData[sensorId].pm10}</td >
 								</tr >
 							</table >`).bindTooltip(sensorData[sensorId].pm2_5, { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
+				markers.push(circle)
 			};
+
 			// END HANDLE_TEST_DATA
 		}
 
