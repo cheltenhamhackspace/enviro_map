@@ -35,6 +35,9 @@ WiFiMulti multi;
 unsigned char serialNumber[32];
 uint8_t serialNumberSize = 32;
 
+unsigned long previousMillis = 0;
+unsigned long interval = 300000;
+
 void setup() {
   Serial.begin(115200);
 
@@ -108,7 +111,12 @@ void setup() {
 }
 
 void loop() {
-  delay(300000);  // execute once every 5 minutes, don't flood remote service
+  unsigned long currentMillis = millis();
+  if (multi.run() != WL_CONNECTED) {
+    Serial.println("Unable to connect to network, rebooting...");
+    delay(10000);
+    rp2040.reboot();
+  }
   uint16_t error;
   char errorMessage[256];
 
@@ -121,86 +129,88 @@ void loop() {
   float ambientTemperature;
   float vocIndex;
   float noxIndex;
+  if (currentMillis - previousMillis >= interval) {
+    error = sen5x.readMeasuredValues(
+      massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0,
+      massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex,
+      noxIndex);
 
-  error = sen5x.readMeasuredValues(
-    massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0,
-    massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex,
-    noxIndex);
-
-  if (error) {
-    Serial.print("Error trying to execute readMeasuredValues(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
-  } else {
-    Serial.print("MassConcentrationPm1p0:");
-    Serial.print(massConcentrationPm1p0);
-    Serial.print("\t");
-    Serial.print("MassConcentrationPm2p5:");
-    Serial.print(massConcentrationPm2p5);
-    Serial.print("\t");
-    Serial.print("MassConcentrationPm4p0:");
-    Serial.print(massConcentrationPm4p0);
-    Serial.print("\t");
-    Serial.print("MassConcentrationPm10p0:");
-    Serial.print(massConcentrationPm10p0);
-    Serial.print("\t");
-    Serial.print("AmbientHumidity:");
-    if (isnan(ambientHumidity)) {
-        Serial.print("n/a");
+    if (error) {
+      Serial.print("Error trying to execute readMeasuredValues(): ");
+      errorToString(error, errorMessage, 256);
+      Serial.println(errorMessage);
     } else {
-        Serial.print(ambientHumidity);
-    }
-    Serial.print("\t");
-    Serial.print("AmbientTemperature:");
-    if (isnan(ambientTemperature)) {
-        Serial.print("n/a");
-    } else {
-        Serial.print(ambientTemperature);
-    }
-    Serial.print("\t");
-    Serial.print("VocIndex:");
-    if (isnan(vocIndex)) {
-        Serial.print("n/a");
-    } else {
-        Serial.print(vocIndex);
-    }
-    Serial.print("\t");
-    Serial.print("NoxIndex:");
-    if (isnan(noxIndex)) {
-        Serial.println("n/a");
-    } else {
-        Serial.println(noxIndex);
-    }
-  }
-
-  // Use WiFiClient class to create TCP connections
-  WiFiClient client;
-  HTTPClient https;
-  Serial.println("[HTTPS] begin...");
-  Serial.println("[HTTPS] using insecure SSL, not validating certificate");
-  https.setInsecure(); 
-  if (https.begin("https://api.ntf.systems/v1/sensor")) {  // HTTPS
-
-    Serial.println("[HTTPS] POST...");
-    // start connection and send HTTP header
-    int httpCode = https.POST("{\"DeviceId\":\"test-node-2-uuid\", \"RelativeHumidity\":\"" + String(ambientHumidity) + "\", \"Temperature\":\"" + String(ambientTemperature) + "\", \"PM1\":\"" + String(massConcentrationPm1p0) + "\", \"PM2_5\":\"" + String(massConcentrationPm2p5) + "\", \"PM4\":\"" + String(massConcentrationPm4p0) + "\", \"PM10\":\"" + String(massConcentrationPm10p0) + "\", \"VOC\":\"" + String(vocIndex) + "\", \"NOx\":\"" + String(noxIndex) + "\"}");
-
-    // httpCode will be negative on error
-    if (httpCode > 0) {
-      // HTTP header has been send and Server response header has been handled
-      Serial.printf("[HTTPS] POST... code: %d\n\r", httpCode);
-
-      // file found at server
-      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-        String payload = https.getString();
-        Serial.println(payload);
+      Serial.print("MassConcentrationPm1p0:");
+      Serial.print(massConcentrationPm1p0);
+      Serial.print("\t");
+      Serial.print("MassConcentrationPm2p5:");
+      Serial.print(massConcentrationPm2p5);
+      Serial.print("\t");
+      Serial.print("MassConcentrationPm4p0:");
+      Serial.print(massConcentrationPm4p0);
+      Serial.print("\t");
+      Serial.print("MassConcentrationPm10p0:");
+      Serial.print(massConcentrationPm10p0);
+      Serial.print("\t");
+      Serial.print("AmbientHumidity:");
+      if (isnan(ambientHumidity)) {
+          Serial.print("n/a");
+      } else {
+          Serial.print(ambientHumidity);
       }
-    } else {
-      Serial.printf("[HTTPS] GET... failed, error: %s\n\r", https.errorToString(httpCode).c_str());
+      Serial.print("\t");
+      Serial.print("AmbientTemperature:");
+      if (isnan(ambientTemperature)) {
+          Serial.print("n/a");
+      } else {
+          Serial.print(ambientTemperature);
+      }
+      Serial.print("\t");
+      Serial.print("VocIndex:");
+      if (isnan(vocIndex)) {
+          Serial.print("n/a");
+      } else {
+          Serial.print(vocIndex);
+      }
+      Serial.print("\t");
+      Serial.print("NoxIndex:");
+      if (isnan(noxIndex)) {
+          Serial.println("n/a");
+      } else {
+          Serial.println(noxIndex);
+      }
     }
 
-    https.end();
-  } else {
-    Serial.printf("[HTTPS] Unable to connect\n\r");
+    // Use WiFiClient class to create TCP connections
+    WiFiClient client;
+    HTTPClient https;
+    Serial.println("[HTTPS] begin...");
+    Serial.println("[HTTPS] using insecure SSL, not validating certificate");
+    https.setInsecure(); 
+    if (https.begin("https://api.ntf.systems/v1/sensor")) {  // HTTPS
+
+      Serial.println("[HTTPS] POST...");
+      // start connection and send HTTP header
+      int httpCode = https.POST("{\"DeviceId\":\"test-node-3-uuid\", \"RelativeHumidity\":\"" + String(ambientHumidity) + "\", \"Temperature\":\"" + String(ambientTemperature) + "\", \"PM1\":\"" + String(massConcentrationPm1p0) + "\", \"PM2_5\":\"" + String(massConcentrationPm2p5) + "\", \"PM4\":\"" + String(massConcentrationPm4p0) + "\", \"PM10\":\"" + String(massConcentrationPm10p0) + "\", \"VOC\":\"" + String(vocIndex) + "\", \"NOx\":\"" + String(noxIndex) + "\"}");
+
+      // httpCode will be negative on error
+      if (httpCode > 0) {
+        // HTTP header has been send and Server response header has been handled
+        Serial.printf("[HTTPS] POST... code: %d\n\r", httpCode);
+
+        // file found at server
+        if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+          String payload = https.getString();
+          Serial.println(payload);
+        }
+      } else {
+        Serial.printf("[HTTPS] GET... failed, error: %s\n\r", https.errorToString(httpCode).c_str());
+      }
+
+      https.end();
+    } else {
+      Serial.printf("[HTTPS] Unable to connect\n\r");
+    }
+    previousMillis = currentMillis;
   }
 }
