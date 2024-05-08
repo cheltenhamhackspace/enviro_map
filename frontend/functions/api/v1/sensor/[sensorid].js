@@ -1,5 +1,6 @@
 export async function onRequest(context) {
     if (context.request.method === "POST") {
+        console.log(context);
         return new Response(context.params.sensorid);
     }
     else if (context.request.method === "GET") {
