@@ -300,6 +300,14 @@
 									<td>PM10</td>
 									<td>${sensorData[sensorId].pm10}</td >
 								</tr >
+								<tr>
+									<td>NOx</td>
+									<td>${sensorData[sensorId].nox}</td >
+								</tr >
+								<tr>
+									<td>VOC</td>
+									<td>${sensorData[sensorId].voc}</td >
+								</tr >
 							</table >`).bindTooltip(sensorData[sensorId].pm2_5, { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 				markers.push(circle)
 			};

@@ -4,7 +4,7 @@ export async function onRequest(context) {
     ).all();
 
     const latestReadings = await context.env.READINGS_TABLE.prepare(
-        "SELECT device_id, pm2_5, MAX(event_time) FROM sensor_readings GROUP BY device_id"
+        "SELECT device_id, pm2_5, nox, voc MAX(event_time) FROM sensor_readings GROUP BY device_id"
     ).all();
 
     console.log(allSensors);
@@ -18,6 +18,8 @@ export async function onRequest(context) {
         if (index >= 0) {
             console.log(arrayItem);
             allSensors.results[index]["pm2_5"] = arrayItem.pm2_5;
+            allSensors.results[index]["nox"] = arrayItem.nox;
+            allSensors.results[index]["voc"] = arrayItem.voc;
         }
     });
 
