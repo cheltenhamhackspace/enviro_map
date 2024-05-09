@@ -28,7 +28,7 @@ export async function onRequest(context) {
 
     async function standardiseReadingData(readingData) {
         function checkUndefinedSetNull(item) {
-            if (readingData[item] === undefined) {
+            if (readingData[item] === undefined || readingData[item] === "inf") {
                 readingData[item] = null;
             };
         }
