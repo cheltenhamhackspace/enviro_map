@@ -29,7 +29,7 @@ export async function onRequest(context) {
     if (context.request.method === "POST") {
         const reqBody = await readRequestBody(context.request);
         const data = JSON.parse(reqBody);
-        coneole.log(data);
+        console.log(data);
         return new Response(context.params.sensorid);
     }
     else if (context.request.method === "GET") {
