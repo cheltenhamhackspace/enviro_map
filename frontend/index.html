@@ -287,31 +287,35 @@
 								</tr>
 								<tr>
 									<td>Temperature</td>
-									<td>${sensorData[sensorId].temp}</td >
+									<td>${sensorData[sensorId].temperature} °C</td >
 								</tr >
 								<tr>
 									<td>Relative Humidity</td>
-									<td>${sensorData[sensorId].relative_humidity}</td >
+									<td>${sensorData[sensorId].relative_humidity} %</td >
 								</tr >
 								<tr>
-									<td>PM1</td>
-									<td>${sensorData[sensorId].pm1}</td>
+									<td>PM 1</td>
+									<td>${sensorData[sensorId].pm1} μg/m³</td>
 								</tr>
 								<tr>
-									<td>PM2.5</td>
-									<td>${sensorData[sensorId].pm2_5}</td >
+									<td>PM 2.5</td>
+									<td>${sensorData[sensorId].pm2_5} μg/m³</td >
 								</tr >
 								<tr>
-									<td>PM10</td>
-									<td>${sensorData[sensorId].pm10}</td >
+									<td>PM 4</td>
+									<td>${sensorData[sensorId].pm4} μg/m³</td >
+								</tr >
+								<tr>
+									<td>PM 10</td>
+									<td>${sensorData[sensorId].pm10} μg/m³</td >
 								</tr >
 								<tr>
 									<td>NOx</td>
-									<td>${sensorData[sensorId].nox}</td >
+									<td>${sensorData[sensorId].nox} ppm</td >
 								</tr >
 								<tr>
 									<td>VOC</td>
-									<td>${sensorData[sensorId].voc}</td >
+									<td>${sensorData[sensorId].voc} ppm</td >
 								</tr >
 							</table >`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 				markers.push(circle)
