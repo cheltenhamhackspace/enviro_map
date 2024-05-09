@@ -147,7 +147,7 @@
 		});
 
 
-		let graph_uuid = ""
+		let device_id = ""
 		let graph_name = ""
 		let graph_datasets = ["pm1", "pm2_5", "pm4", "pm10"]
 		let graph_data = {}
@@ -166,16 +166,16 @@
 		}
 
 		function setGraphNodeMapEvent(e) {
-			graph_uuid = e.sourceTarget.options.uuid
+			device_id = e.sourceTarget.options.device_id
 			graph_name = e.sourceTarget.options.name
 			getTimeSeriesData()
 		}
 
 		async function getTimeSeriesData() {
-			console.log(graph_uuid)
+			console.log(device_id)
 			graph_data = {}
 			try {
-				apiUrl = `https://map.cheltenham.space/api/v1/sensor/${graph_uuid}`
+				apiUrl = `https://map.cheltenham.space/api/v1/sensor/${device_id}`
 				const request = await fetch(apiUrl, { method: "GET" });
 				graph_data = await request.json();
 				// for (dataset in response[0]) {
@@ -275,7 +275,7 @@
 					fillOpacity: 0.6,
 					opacity: 1,
 					radius: 20,
-					uuid: sensorData[sensorId].device_id,
+					device_id: sensorData[sensorId].device_id,
 					name: sensorData[sensorId].name
 				}).bindPopup(`<table>
 								<tr>
