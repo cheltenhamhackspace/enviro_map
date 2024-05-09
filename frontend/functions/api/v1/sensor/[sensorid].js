@@ -27,7 +27,7 @@ export async function onRequest(context) {
     }
 
     if (context.request.method === "POST") {
-        console.log(await readRequestBody(context));
+        console.log(await readRequestBody(context.request));
         return new Response(context.params.sensorid);
     }
     else if (context.request.method === "GET") {
