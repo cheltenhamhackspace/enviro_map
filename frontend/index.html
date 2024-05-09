@@ -107,8 +107,8 @@
 		<button onClick="setGraphDatasets('pm2_5')">PM 2.5</button>
 		<button onClick="setGraphDatasets('pm4')">PM 4</button>
 		<button onClick="setGraphDatasets('pm10')">PM 10</button>
-		<button onClick="setGraphDatasets('VOC')">VOC</button>
-		<button onClick="setGraphDatasets('NOx')">NOx</button>
+		<button onClick="setGraphDatasets('voc')">VOC</button>
+		<button onClick="setGraphDatasets('nox')">NOx</button>
 	</div>
 
 	<canvas id="pmChart" style="width: 100%; height: 25%;"></canvas>
@@ -216,6 +216,7 @@
 				else {
 					pmChart.data.labels = graph_data.map(a => a["event_time"])
 					for (index in graph_datasets) {
+						console.log(graph_datasets[index]);
 						pmChart.data.datasets.push({ label: graph_datasets[index], data: graph_data.map(a => a[graph_datasets[index]]) })
 					}
 					pmChart.options.scales.x.min = pmChart.data.labels[0]
