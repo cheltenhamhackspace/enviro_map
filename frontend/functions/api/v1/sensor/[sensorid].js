@@ -57,6 +57,8 @@ export async function onRequest(context) {
 
     }
     else if (context.request.method === "GET") {
-        return new Response("The request was a GET");
+        const dbQueryAllData = context.env.READINGS_TABLE.prepare('SELECT event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox FROM sensor_readings WHERE device_id = ?1');
+        const allData = await dbQueryAllData.bind(context.params.sensorid).all();
+        return new Response(allData);
     }
 }
