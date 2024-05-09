@@ -175,10 +175,10 @@
 			console.log(graph_uuid)
 			graph_data = {}
 			try {
-				apiUrl = `https://api.ntf.systems/v1/sensor/${graph_uuid}`
+				apiUrl = `https://map.cheltenham.space/api/v1/sensor/${graph_uuid}`
 				const request = await fetch(apiUrl, { method: "GET" });
 				const response = await request.json();
-				//console.log("API Response for node graph dataset: " + graph_datasets[dataset])
+				console.log("API Response for node graph dataset: " + graph_datasets[dataset])
 				console.log(response)
 				for (dataset in response) {
 					if (dataset == "time") {
