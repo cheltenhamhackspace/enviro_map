@@ -59,6 +59,12 @@ export async function onRequest(context) {
     else if (context.request.method === "GET") {
         const dbQueryAllData = context.env.READINGS_TABLE.prepare('SELECT event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox FROM sensor_readings WHERE device_id = ?1');
         const allData = await dbQueryAllData.bind(context.params.sensorid).all();
-        return new Response(JSON.stringify(allData));
+
+        if (allData.results.length > 0) {
+            return new Response(JSON.stringify(allData.results));
+        }
+        else {
+            return new Response("No data", { status: 404 });
+        }
     }
 }
