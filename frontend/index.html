@@ -179,7 +179,7 @@
 				const request = await fetch(apiUrl, { method: "GET" });
 				const response = await request.json();
 				console.log(response);
-				for (dataset in [0]) {
+				for (dataset in response[0]) {
 					console.log(dataset);
 					if (dataset == "time") {
 						console.log("Skipping time dataset")
