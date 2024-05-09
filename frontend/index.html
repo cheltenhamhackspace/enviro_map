@@ -103,10 +103,10 @@
 	<div id="map" style="width: 100%; height: 65%;"></div>
 
 	<div id="datasetToggle">
-		<button onClick="setGraphDatasets('PM1')">PM 1</button>
-		<button onClick="setGraphDatasets('PM2_5')">PM 2.5</button>
-		<button onClick="setGraphDatasets('PM4')">PM 4</button>
-		<button onClick="setGraphDatasets('PM10')">PM 10</button>
+		<button onClick="setGraphDatasets('pm1')">PM 1</button>
+		<button onClick="setGraphDatasets('pm2_5')">PM 2.5</button>
+		<button onClick="setGraphDatasets('pm4')">PM 4</button>
+		<button onClick="setGraphDatasets('pm10')">PM 10</button>
 		<button onClick="setGraphDatasets('VOC')">VOC</button>
 		<button onClick="setGraphDatasets('NOx')">NOx</button>
 	</div>
@@ -217,7 +217,7 @@
 					for (index in graph_datasets) {
 						pmChart.data.datasets.push({ label: graph_datasets[index], data: graph_data.map(a => graph_datasets[index]) })
 					}
-					pmChart.options.scales.x.min = graph_data["PM2_5"][0].x
+					pmChart.options.scales.x.min = graph_data["pm2_5"][0].x
 					pmChart.options.scales.x.max = Date.now()
 					pmChart.options.plugins.title.text = graph_name
 
