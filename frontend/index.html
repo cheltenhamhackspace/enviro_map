@@ -114,7 +114,7 @@
 	<canvas id="pmChart" style="width: 100%; height: 25%;"></canvas>
 
 	<script>
-		var pmChart = new Chart("pmChart", {
+		let pmChart = new Chart("pmChart", {
 			type: "line",
 			data: {
 
@@ -147,13 +147,13 @@
 		});
 
 
-		var graph_uuid = ""
-		var graph_name = ""
-		var graph_datasets = ["PM1", "PM2_5", "PM4", "PM10"]
-		var graph_data = {}
+		let graph_uuid = ""
+		let graph_name = ""
+		let graph_datasets = ["pm1", "pm2_5", "pm4", "pm10"]
+		let graph_data = {}
 
 		function setGraphDatasets(dataset) {
-			var index = graph_datasets.indexOf(dataset)
+			let index = graph_datasets.indexOf(dataset)
 			if (index == -1) {
 				graph_datasets.push(dataset)
 			}
@@ -231,7 +231,7 @@
 
 	<script>
 		function getPMColour(sensor) {
-			var greenLimit = 50,
+			let greenLimit = 50,
 				amberLimit = 100,
 				redLimit = 150
 
@@ -265,7 +265,7 @@
 				// bodge the value of pm2_5 to show values inside the circles
 				sensorData[sensorId].pm2_5 = String(Math.floor(Math.random() * 150) + 1);
 				// draw a circle for each item
-				var circle = L.circleMarker(sensorData[sensorId].location, {
+				let circle = L.circleMarker(sensorData[sensorId].location, {
 					color: getPMColour(sensorData[sensorId]),
 					fillColor: getPMColour(sensorData[sensorId]),
 					fillOpacity: 0.6,
