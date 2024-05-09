@@ -182,19 +182,17 @@
 				for (dataset in response[0]) {
 					console.log(dataset);
 					if (dataset == "event_time") {
-						console.log("Skipping time dataset")
+						console.log("Processing times");
+						let times = response.map(a => a[dataset]);
 						continue
 					}
 					console.log("Processing dataset: " + dataset)
 					let mapResult = response.map(a => a[dataset]);
 					console.log(mapResult);
-					graph_data[dataset] = []
-					for (item in response[dataset])
-						//console.log(item)
-						graph_data[dataset].push({
-							"x": response["time"][item],
-							"y": response[dataset][item],
-						})
+					graph_data[dataset] = mapResult;
+
+					console.log(graph_data);
+
 				}
 				console.log("Graph data finished processing")
 				console.log(graph_data)
