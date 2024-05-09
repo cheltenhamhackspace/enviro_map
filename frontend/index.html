@@ -310,12 +310,12 @@
 									<td>${sensorData[sensorId].pm10} μg/m³</td >
 								</tr >
 								<tr>
-									<td>NOx</td>
-									<td>${sensorData[sensorId].nox} ppm</td >
+									<td>NOx Index</td>
+									<td>${sensorData[sensorId].nox}</td >
 								</tr >
 								<tr>
-									<td>VOC</td>
-									<td>${sensorData[sensorId].voc} ppm</td >
+									<td>VOC Index</td>
+									<td>${sensorData[sensorId].voc}</td >
 								</tr >
 							</table >`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 				markers.push(circle)
