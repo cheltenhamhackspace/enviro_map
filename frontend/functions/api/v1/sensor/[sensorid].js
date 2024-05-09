@@ -30,6 +30,11 @@ export async function onRequest(context) {
         const reqBody = await readRequestBody(context.request);
         const data = JSON.parse(reqBody);
         console.log(data);
+
+        if (data.device_id && data.event_time) {
+            return new Response("whoop");
+        }
+
         return new Response(context.params.sensorid);
     }
     else if (context.request.method === "GET") {
