@@ -15,7 +15,9 @@ export async function onRequest(context) {
     latestReadings.results.forEach(function (arrayItem) {
         let index = allSensors.results.findIndex(x => x.device_id === arrayItem.device_id);
         console.log(index);
-        allSensors.results[index]["pm2_5"] = arrayItem.pm2_5;
+        if (index >= 0) {
+            allSensors.results[index]["pm2_5"] = arrayItem.pm2_5;
+        }
     });
 
     return Response.json(allSensors.results);
