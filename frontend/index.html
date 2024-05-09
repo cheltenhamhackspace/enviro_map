@@ -311,7 +311,7 @@
 									<td>VOC</td>
 									<td>${sensorData[sensorId].voc}</td >
 								</tr >
-							</table >`).bindTooltip(sensorData[sensorId].pm2_5, { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
+							</table >`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 				markers.push(circle)
 			};
 
