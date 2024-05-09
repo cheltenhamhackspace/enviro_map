@@ -27,10 +27,13 @@ export async function onRequest(context) {
     }
 
     async function standardiseReadingData(readingData) {
+        function checkUndefinedSetNull(item) {
+            if (readingData[item] === undefined) {
+                readingData[item] = null;
+            };
+        }
         const keys = ["device_id", "event_time", "relative_humidity", "temperature", "pm1", "pm2_5", "pm4", "pm10", "voc", "nox"];
-        keys.forEach(key =>
-            console.log(`${key} -> ${readingData[key]}`)
-        );
+        keys.forEach(checkUndefinedSetNull);
     }
 
     if (context.request.method === "POST") {
@@ -40,6 +43,7 @@ export async function onRequest(context) {
 
         if (data.device_id && data.event_time) {
             standardiseReadingData(data);
+            console.log(data);
             const { success } = await context.env.READINGS_TABLE.prepare(`
                 insert into sensor_readings ( device_id, event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(data.device_id, data.event_time, data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox).run()
