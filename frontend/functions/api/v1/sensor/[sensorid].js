@@ -1,7 +1,6 @@
 export async function onRequest(context) {
     if (context.request.method === "POST") {
-        console.log(context);
-        console.log(JSON.stringify(await context.json()));
+        console.log(await context);
         return new Response(context.params.sensorid);
     }
     else if (context.request.method === "GET") {
