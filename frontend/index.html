@@ -261,6 +261,8 @@
 			const nodes_request = await fetch(apiUrl, { method: "GET" });
 			const sensorData = await nodes_request.json();
 
+			console.log(sensorData);
+
 
 			// BEGIN HANDLE_TEST_DATA
 			for (sensorId in sensorData) {
