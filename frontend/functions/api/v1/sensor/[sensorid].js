@@ -47,10 +47,14 @@ export async function onRequest(context) {
             const { success } = await context.env.READINGS_TABLE.prepare(`
                 insert into sensor_readings ( device_id, event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(data.device_id, data.event_time, data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox).run()
-            return new Response("whoop");
+            return new Response("Indexed", { status: 201 });
         }
 
-        return new Response(context.params.sensorid);
+        else {
+            return new Response("Bad data", { status: 500 });
+        }
+
+
     }
     else if (context.request.method === "GET") {
         return new Response("The request was a GET");
