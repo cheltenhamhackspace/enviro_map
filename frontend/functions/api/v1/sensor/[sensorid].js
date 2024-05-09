@@ -32,7 +32,7 @@ export async function onRequest(context) {
                 readingData[item] = null;
             };
         }
-        const keys = ["device_id", "event_time", "relative_humidity", "temperature", "pm1", "pm2_5", "pm4", "pm10", "voc", "nox"];
+        const keys = ["relative_humidity", "temperature", "pm1", "pm2_5", "pm4", "pm10", "voc", "nox"];
         keys.forEach(checkUndefinedSetNull);
     }
 
@@ -46,7 +46,7 @@ export async function onRequest(context) {
             console.log(data);
             const { success } = await context.env.READINGS_TABLE.prepare(`
                 insert into sensor_readings ( device_id, event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).bind(data.device_id, data.event_time, data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox).run()
+            `).bind(context.params.sensorid, Date.now(), data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox).run()
             return new Response("Indexed", { status: 201 });
         }
 
