@@ -7,7 +7,7 @@ export async function onRequest(context) {
         console.log(latestReading);
 
         if (latestReading.results.length == 1) {
-            return Response.json(latestReading.results);
+            return Response.json(latestReading.results[0]);
         }
         else {
             return new Response("404 - No data", { status: 404 });
