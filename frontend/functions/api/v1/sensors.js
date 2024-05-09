@@ -7,6 +7,8 @@ export async function onRequest(context) {
         "SELECT device_id, voc, MAX(event_time) FROM sensor_readings GROUP BY device_id"
     ).all();
 
+    console.log(latestReadings);
+
     latestReadings.forEach(function (arrayItem) {
         let index = allSensors.findIndex(x => x.device_id === arrayItem.device_id);
         console.log(index);
