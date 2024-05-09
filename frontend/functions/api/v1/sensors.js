@@ -4,7 +4,7 @@ export async function onRequest(context) {
     ).all();
 
     const latestReadings = await context.env.READINGS_TABLE.prepare(
-        "SELECT device_id, voc, MAX(event_time) FROM sensor_readings GROUP BY device_id"
+        "SELECT device_id, pm2_5, MAX(event_time) FROM sensor_readings GROUP BY device_id"
     ).all();
 
     console.log(allSensors);
