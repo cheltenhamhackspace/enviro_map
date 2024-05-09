@@ -32,6 +32,9 @@ export async function onRequest(context) {
         console.log(data);
 
         if (data.device_id && data.event_time) {
+            const { success } = await c.env.DB.prepare(`
+                insert into sensor_readings ( device_id, event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(data.device_id, data.event_time, data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox).run()
             return new Response("whoop");
         }
 
