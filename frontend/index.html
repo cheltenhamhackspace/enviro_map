@@ -177,23 +177,22 @@
 			try {
 				apiUrl = `https://map.cheltenham.space/api/v1/sensor/${graph_uuid}`
 				const request = await fetch(apiUrl, { method: "GET" });
-				const response = await request.json();
-				console.log(response);
-				for (dataset in response[0]) {
-					console.log(dataset);
-					if (dataset == "event_time") {
-						console.log("Processing times");
-						let times = response.map(a => a[dataset]);
-						continue
-					}
-					console.log("Processing dataset: " + dataset)
-					let mapResult = response.map(a => a[dataset]);
-					console.log(mapResult);
-					graph_data[dataset] = mapResult;
+				graph_data = await request.json();
+				// for (dataset in response[0]) {
+				// 	console.log(dataset);
+				// 	if (dataset == "event_time") {
+				// 		console.log("Processing times");
+				// 		let times = response.map(a => a[dataset]);
+				// 		continue
+				// 	}
+				// 	console.log("Processing dataset: " + dataset)
+				// 	let mapResult = response.map(a => a[dataset]);
+				// 	console.log(mapResult);
+				// 	graph_data[dataset] = mapResult;
 
-					console.log(graph_data);
+				// 	console.log(graph_data);
 
-				}
+				// }
 				console.log("Graph data finished processing")
 				console.log(graph_data)
 			}
@@ -216,7 +215,7 @@
 				}
 				else {
 					for (index in graph_datasets) {
-						pmChart.data.datasets.push({ label: graph_datasets[index], data: graph_data[graph_datasets[index]] })
+						pmChart.data.datasets.push({ label: graph_datasets[index], data: graph_data.map(a => graph_datasets[index]) })
 					}
 					pmChart.options.scales.x.min = graph_data["PM2_5"][0].x
 					pmChart.options.scales.x.max = Date.now()
