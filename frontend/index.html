@@ -178,21 +178,6 @@
 				apiUrl = `https://map.cheltenham.space/api/v1/sensor/${device_id}`
 				const request = await fetch(apiUrl, { method: "GET" });
 				graph_data = await request.json();
-				// for (dataset in response[0]) {
-				// 	console.log(dataset);
-				// 	if (dataset == "event_time") {
-				// 		console.log("Processing times");
-				// 		let times = response.map(a => a[dataset]);
-				// 		continue
-				// 	}
-				// 	console.log("Processing dataset: " + dataset)
-				// 	let mapResult = response.map(a => a[dataset]);
-				// 	console.log(mapResult);
-				// 	graph_data[dataset] = mapResult;
-
-				// 	console.log(graph_data);
-
-				// }
 				console.log("Graph data finished processing")
 				console.log(graph_data)
 			}
@@ -270,6 +255,23 @@
 				//sensorData[sensorId].pm2_5 = String(Math.floor(Math.random() * 150) + 1);
 				// draw a circle for each item
 				console.log(sensorData[sensorId]);
+				// get latest data for the sensor
+				try {
+					apiUrl = `https://map.cheltenham.space/api/v1/sensor/${sensorData[sensorId].device_id}/latest`
+					const request = await fetch(apiUrl, { method: "GET" });
+					const latest_reading = await request.json();
+					console.log(`Got latest reading for ${sensorData[sensorId].device_id}`);
+					for (let key in latest_reading) {
+						sensorData[sensorId][key] = latest_reading[key];
+					}
+				}
+				catch (error) {
+					console.error("ERROR: ", error)
+					graph_data = {}
+				}
+
+
+
 				let circle = L.circleMarker([sensorData[sensorId].lat, sensorData[sensorId].long], {
 					color: getPMColour(sensorData[sensorId]),
 					fillColor: getPMColour(sensorData[sensorId]),
