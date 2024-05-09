@@ -218,9 +218,8 @@
 
 	<script>
 		function getPMColour(sensor) {
-			let greenLimit = 50,
-				amberLimit = 100,
-				redLimit = 150
+			let greenLimit = 12,
+				amberLimit = 20
 
 			if (sensor.pm2_5 <= greenLimit) {
 				return '#0f0'
