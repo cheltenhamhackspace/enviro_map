@@ -29,7 +29,7 @@ export async function onRequest(context) {
     async function standardiseReadingData(readingData) {
         const keys = ["device_id", "event_time", "relative_humidity", "temperature", "pm1", "pm2_5", "pm4", "pm10", "voc", "nox"];
         keys.forEach(key =>
-            console.log(key)
+            console.log(`${key} -> ${readingData[key]}`)
         );
     }
 
