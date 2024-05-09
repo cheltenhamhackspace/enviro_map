@@ -257,7 +257,7 @@
 
 		markers = []
 		async function drawNodeMarkers(map) {
-			apiUrl = `https://api.ntf.systems/v1/sensors`
+			apiUrl = `https://map.cheltenham.space/api/v1/sensors`
 			const nodes_request = await fetch(apiUrl, { method: "GET" });
 			const sensorData = await nodes_request.json();
 
@@ -267,13 +267,13 @@
 				// bodge the value of pm2_5 to show values inside the circles
 				sensorData[sensorId].pm2_5 = String(Math.floor(Math.random() * 150) + 1);
 				// draw a circle for each item
-				let circle = L.circleMarker(sensorData[sensorId].location, {
+				let circle = L.circleMarker([sensorData[sensorId].lat, sensorData[sensorId].long], {
 					color: getPMColour(sensorData[sensorId]),
 					fillColor: getPMColour(sensorData[sensorId]),
 					fillOpacity: 0.6,
 					opacity: 1,
 					radius: 20,
-					uuid: sensorData[sensorId].uuid,
+					uuid: sensorData[sensorId].device_id,
 					name: sensorData[sensorId].name
 				}).bindPopup(`<table>
 								<tr>
