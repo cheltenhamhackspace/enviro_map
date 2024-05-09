@@ -57,8 +57,8 @@ export async function onRequest(context) {
 
     }
     else if (context.request.method === "GET") {
-        const dbQueryAllData = context.env.READINGS_TABLE.prepare('SELECT event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox FROM sensor_readings WHERE device_id = ?1');
-        const allData = await dbQueryAllData.bind(context.params.sensorid).all();
+        const dbQueryAllData = context.env.READINGS_TABLE.prepare('SELECT event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox FROM sensor_readings WHERE device_id = ?1 AND event_time >= ?2');
+        const allData = await dbQueryAllData.bind(context.params.sensorid, Date.now() - 86400000).all();
 
         console.log(allData.meta);
         if (allData.results.length > 0) {
