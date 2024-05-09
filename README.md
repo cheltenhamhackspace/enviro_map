@@ -18,29 +18,28 @@ WIP (Currently Arduino)
 ## Front End
 WIP (Preferably raw html/javascript)
 
-[Demo](https://raw.githack.com/cheltenhamhackspace/enviro_map/main/frontend/wip-demo.html)
+[Front page](https://map.cheltenham.space/)
 
 ## Back End
-WIP (Currently AWS Lambda & DynamoDB)
+WIP (Currently Cloudflare Pages & D1)
 
 ## TODO
 - Everything
     - Security
     - CI?
 - Frontend
-    - Get actual latest readings for nodes
+    - ~~Get actual latest readings for nodes~~
     - Get nodes within bounding box after settle time
     - ~~Make graphed dataset selectable~~
     - Make averages visible
     - Snazzy top banner (partially done)
     - Heatmap view
-    - S3 hosting
     - Full refactor
         - Optimise number of API calls needed
 - Backend
-    - Stable and sensible API structure
+    - Stable and ~~sensible API structure~~
         - Device Registration
-        - Sensor Data
+        - ~~Sensor Data~~
         - Make graph timescales selectable
     - Full terraform refactor
 - Sensor
