@@ -181,11 +181,13 @@
 				console.log(response);
 				for (dataset in response[0]) {
 					console.log(dataset);
-					if (dataset == "time") {
+					if (dataset == "event_time") {
 						console.log("Skipping time dataset")
 						continue
 					}
 					console.log("Processing dataset: " + dataset)
+					let mapResult = response.map(a => a[dataset]);
+					console.log(mapResult);
 					graph_data[dataset] = []
 					for (item in response[dataset])
 						//console.log(item)
