@@ -14,7 +14,7 @@ export async function onRequest(context) {
 
 
 
-    latestReadings.results.forEach(async function (arrayItem) {
+    allSensors.results.forEach(async function (arrayItem) {
         const latestReading = await dbQueryLatestReadings.bind(arrayItem.device_id).all();
         console.log(latestReading);
         if (latestReading.results.length == 1) {
