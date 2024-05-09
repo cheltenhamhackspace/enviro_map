@@ -9,11 +9,11 @@ export async function onRequest(context) {
 
     console.log(latestReadings);
 
-    latestReadings.forEach(function (arrayItem) {
-        let index = allSensors.findIndex(x => x.device_id === arrayItem.device_id);
+    latestReadings.results.forEach(function (arrayItem) {
+        let index = allSensors.results.findIndex(x => x.device_id === arrayItem.device_id);
         console.log(index);
-        allSensors[index].pm2_5 = arrayItem.pm2_5;
+        allSensors.results[index].pm2_5 = arrayItem.pm2_5;
     });
 
-    return Response.json(results);
+    return Response.json(allSensors.results);
 }
