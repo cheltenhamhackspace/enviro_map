@@ -47,11 +47,11 @@ export async function onRequest(context) {
             const { success } = await context.env.READINGS_TABLE.prepare(`
                 insert into sensor_readings ( device_id, event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(context.params.sensorid, Date.now(), data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox).run()
-            return new Response("Indexed", { status: 201 });
+            return new Response("201 - Indexed", { status: 201 });
         }
 
         else {
-            return new Response("Bad data", { status: 500 });
+            return new Response("500 - Bad data", { status: 500 });
         }
 
 
@@ -65,7 +65,7 @@ export async function onRequest(context) {
             return new Response(JSON.stringify(allData.results));
         }
         else {
-            return new Response("No data", { status: 404 });
+            return new Response("404 - No data", { status: 404 });
         }
     }
 }
