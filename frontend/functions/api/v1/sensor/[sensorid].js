@@ -41,7 +41,7 @@ export async function onRequest(context) {
         const data = JSON.parse(reqBody);
         console.log(data);
 
-        if (data.device_id && data.event_time) {
+        if (data.pm1) {
             standardiseReadingData(data);
             console.log(data);
             const { success } = await context.env.READINGS_TABLE.prepare(`
