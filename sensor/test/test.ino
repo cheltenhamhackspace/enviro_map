@@ -187,11 +187,13 @@ void loop() {
     Serial.println("[HTTPS] begin...");
     Serial.println("[HTTPS] using insecure SSL, not validating certificate");
     https.setInsecure(); 
-    if (https.begin("https://api.ntf.systems/v1/sensor")) {  // HTTPS
+    if (https.begin("https://map.cheltenham.space/api/v1/sensor/test-node-2-uuid")) {  // HTTPS
 
       Serial.println("[HTTPS] POST...");
+      
+      https.addHeader("Content-Type", "application/json");
       // start connection and send HTTP header
-      int httpCode = https.POST("{\"DeviceId\":\"test-node-3-uuid\", \"RelativeHumidity\":\"" + String(ambientHumidity) + "\", \"Temperature\":\"" + String(ambientTemperature) + "\", \"PM1\":\"" + String(massConcentrationPm1p0) + "\", \"PM2_5\":\"" + String(massConcentrationPm2p5) + "\", \"PM4\":\"" + String(massConcentrationPm4p0) + "\", \"PM10\":\"" + String(massConcentrationPm10p0) + "\", \"VOC\":\"" + String(vocIndex) + "\", \"NOx\":\"" + String(noxIndex) + "\"}");
+      int httpCode = https.POST("{\"relative_humidity\":\"" + String(ambientHumidity) + "\", \"temperature\":\"" + String(ambientTemperature) + "\", \"pm1\":\"" + String(massConcentrationPm1p0) + "\", \"pm2_5\":\"" + String(massConcentrationPm2p5) + "\", \"pm4\":\"" + String(massConcentrationPm4p0) + "\", \"pm10\":\"" + String(massConcentrationPm10p0) + "\", \"voc\":\"" + String(vocIndex) + "\", \"nox\":\"" + String(noxIndex) + "\"}");
 
       // httpCode will be negative on error
       if (httpCode > 0) {
