@@ -110,6 +110,12 @@
 		<button onClick="setGraphDatasets('voc')">VOC</button>
 		<button onClick="setGraphDatasets('nox')">NOx</button>
 	</div>
+	<select id="timespanSelect" onchange="setGraphTimespan()">
+		<option value="86400000">24 Hours</option>
+		<option value="172800000">48 Hours</option>
+		<option value="604800000">7 Days</option>
+		<option value="1209600000">14 Days</option>
+	</select>
 
 	<canvas id="pmChart" style="width: 100%; height: 25%;"></canvas>
 
@@ -151,6 +157,7 @@
 		let graph_name = ""
 		let graph_datasets = ["pm1", "pm2_5", "pm4", "pm10"]
 		let graph_data = {}
+		let graph_timespan = 86400000;
 
 		function setGraphDatasets(dataset) {
 			let index = graph_datasets.indexOf(dataset)
@@ -165,6 +172,12 @@
 			updateGraph()
 		}
 
+		function setGraphTimespan() {
+			graph_timespan = document.getElementById("timespanSelect").value;
+			console.log(`Timespan: ${graph_timespan}`);
+			getTimeSeriesData()
+		}
+
 		function setGraphNodeMapEvent(e) {
 			device_id = e.sourceTarget.options.device_id
 			graph_name = e.sourceTarget.options.name
@@ -175,7 +188,7 @@
 			console.log(device_id)
 			graph_data = {}
 			try {
-				apiUrl = `https://map.cheltenham.space/api/v1/sensor/${device_id}`
+				apiUrl = `https://map.cheltenham.space/api/v1/sensor/${device_id}?from=${Date.now() - graph_timespan}`
 				const request = await fetch(apiUrl, { method: "GET" });
 				graph_data = await request.json();
 				console.log("Graph data finished processing")
