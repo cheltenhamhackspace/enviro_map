@@ -217,7 +217,7 @@
 						console.log(graph_datasets[index]);
 						pmChart.data.datasets.push({ label: graph_datasets[index], data: graph_data.map(a => a[graph_datasets[index]]) })
 					}
-					pmChart.options.scales.x.min = pmChart.data.labels[0]
+					pmChart.options.scales.x.min = Date.now() - graph_timespan
 					pmChart.options.scales.x.max = Date.now()
 					pmChart.options.plugins.title.text = graph_name
 
