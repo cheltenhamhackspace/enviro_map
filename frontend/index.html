@@ -253,14 +253,13 @@
 				// bodge the value of pm2_5 to show values inside the circles
 				//sensorData[sensorId].pm2_5 = String(Math.floor(Math.random() * 150) + 1);
 				// draw a circle for each item
-				console.log(sensorData[sensorId]);
+
 				// get latest data for the sensor
 				try {
 					apiUrl = `https://map.cheltenham.space/api/v1/sensor/${sensorData[sensorId].device_id}/latest`
 					const request = await fetch(apiUrl, { method: "GET" });
 					const latest_reading = await request.json();
 					console.log(`Got latest reading for ${sensorData[sensorId].device_id}`);
-					console.log(latest_reading);
 					for (let key in latest_reading) {
 						if (key === "time") {
 							console.log("processing time");
@@ -270,7 +269,6 @@
 							sensorData[sensorId][key] = latest_reading[key];
 						}
 					}
-					console.log(sensorData[sensorId]);
 				}
 				catch (error) {
 					console.error("ERROR: ", error)
@@ -323,7 +321,7 @@
 									<td>${sensorData[sensorId].voc}</td >
 								</tr >
 							</table >
-							Readings @ ${sensorData[sensorId].date}`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
+							Readings @ ${sensorData[sensorId].time}`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 				markers.push(circle)
 			};
 
