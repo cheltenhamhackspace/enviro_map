@@ -57,7 +57,7 @@ export async function onRequest(context) {
 
     }
     else if (context.request.method === "GET") {
-        const urlParams = new URL(request.url).searchParams;
+        const urlParams = new URL(context.request.url).searchParams;
 
         let timeFrom = urlParams.get("from");
         let timeTo = urlParams.get("to");
