@@ -57,23 +57,34 @@ export async function onRequest(context) {
 
     }
     else if (context.request.method === "GET") {
-        console.log(context.request);
-        console.log("readbody");
-        const reqBody = await readRequestBody(context.request);
-        console.log("parsebody");
-        const data = JSON.parse(reqBody);
-        console.log("logbody");
-        console.log(data);
+        const urlParams = new URL(request.url).searchParams;
 
-        const dbQueryAllData = context.env.READINGS_TABLE.prepare('SELECT event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox FROM sensor_readings WHERE device_id = ?1 AND event_time >= ?2');
-        const allData = await dbQueryAllData.bind(context.params.sensorid, Date.now() - 86400000).all();
+        let timeFrom = urlParams.get("from");
+        let timeTo = urlParams.get("to");
 
-        console.log(allData.meta);
-        if (allData.results.length > 0) {
-            return new Response(JSON.stringify(allData.results));
+        console.log(`From: ${timeFrom}, To: ${timeTo}`);
+
+        // ensure time fields are always present
+        if (timeFrom === null) {
+            timeFrom = Date.now() - 86400000;
+        }
+        if (timeTo === null) {
+            timeTo = Date.now();
+        }
+        if (timeFrom > timeTo) {
+            return new Response("500 - Times in wrong order", { status: 500 });
         }
         else {
-            return new Response("404 - No data", { status: 404 });
+            const dbQueryAllData = context.env.READINGS_TABLE.prepare('SELECT event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox FROM sensor_readings WHERE device_id = ?1 AND event_time >= ?2 AND event_time <= ?3');
+            const allData = await dbQueryAllData.bind(context.params.sensorid, timeFrom, timeTo).all();
+
+            console.log(allData.meta);
+            if (allData.results.length > 0) {
+                return new Response(JSON.stringify(allData.results));
+            }
+            else {
+                return new Response("404 - No data", { status: 404 });
+            }
         }
     }
 }
