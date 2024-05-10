@@ -262,7 +262,7 @@
 					console.log(`Got latest reading for ${sensorData[sensorId].device_id}`);
 					for (let key in latest_reading) {
 						if (key === "time") {
-							sensorData[sensorId][key] = Date(latest_reading[key]).toUTCString();
+							sensorData[sensorId][key] = new Date(latest_reading[key]).toUTCString();
 						}
 						else {
 							sensorData[sensorId][key] = latest_reading[key];
@@ -320,7 +320,7 @@
 									<td>${sensorData[sensorId].voc}</td >
 								</tr >
 							</table >
-							@ ${sensorData[sensorId].date}`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
+							Readings @ ${sensorData[sensorId].date}`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 				markers.push(circle)
 			};
 
