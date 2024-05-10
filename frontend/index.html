@@ -261,7 +261,7 @@
 					const latest_reading = await request.json();
 					console.log(`Got latest reading for ${sensorData[sensorId].device_id}`);
 					for (let key in latest_reading) {
-						if (key === "date") {
+						if (key === "time") {
 							sensorData[sensorId][key] = Date(latest_reading[key]).toUTCString();
 						}
 						else {
