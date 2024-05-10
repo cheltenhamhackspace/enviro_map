@@ -263,12 +263,14 @@
 					console.log(latest_reading);
 					for (let key in latest_reading) {
 						if (key === "time") {
+							console.log("processing time");
 							sensorData[sensorId][key] = new Date(latest_reading[key]).toUTCString();
 						}
 						else {
 							sensorData[sensorId][key] = latest_reading[key];
 						}
 					}
+					console.log(sensorData[sensorId]);
 				}
 				catch (error) {
 					console.error("ERROR: ", error)
