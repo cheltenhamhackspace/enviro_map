@@ -261,15 +261,18 @@
 					const latest_reading = await request.json();
 					console.log(`Got latest reading for ${sensorData[sensorId].device_id}`);
 					for (let key in latest_reading) {
-						sensorData[sensorId][key] = latest_reading[key];
+						if (key === "date") {
+							sensorData[sensorId][key] = Date(latest_reading[key]).toUTCString();
+						}
+						else {
+							sensorData[sensorId][key] = latest_reading[key];
+						}
 					}
 				}
 				catch (error) {
 					console.error("ERROR: ", error)
 					graph_data = {}
 				}
-
-
 
 				let circle = L.circleMarker([sensorData[sensorId].lat, sensorData[sensorId].long], {
 					color: getPMColour(sensorData[sensorId]),
@@ -316,7 +319,8 @@
 									<td>VOC Index</td>
 									<td>${sensorData[sensorId].voc}</td >
 								</tr >
-							</table >`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
+							</table >
+							@ ${sensorData[sensorId].date}`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 				markers.push(circle)
 			};
 
