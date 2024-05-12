@@ -135,7 +135,12 @@
 						position: "right"
 					},
 					tooltip: {
-						mode: "index"
+						mode: "index",
+						callbacks: {
+							label: (item) => {
+								return `${item.dataset.label}: ${item.formattedValue} °C`;
+							}
+						},
 					}
 				},
 				scales: {
@@ -192,12 +197,12 @@
 				apiUrl = `https://map.cheltenham.space/api/v1/sensor/${device_id}?from=${Date.now() - graph_timespan}`
 				const request = await fetch(apiUrl, { method: "GET" });
 				graph_data = await request.json();
-				console.log("Graph data finished processing")
-				console.log(graph_data)
+				console.log("Graph data finished processing");
+				console.log(graph_data);
 			}
 			catch (error) {
-				console.error("ERROR: ", error)
-				graph_data = {}
+				console.error("ERROR: ", error);
+				graph_data = {};
 			}
 			updateGraph()
 		}
@@ -205,25 +210,25 @@
 		function updateGraph() {
 			if (pmChart) {
 				//console.log(graph_data)
-				pmChart.data.datasets = []
+				pmChart.data.datasets = [];
 				if (Object.keys(graph_data).length === 0) {
 					console.log("No graphable data found")
-					pmChart.options.plugins.title.text = "NO DATA"
-					pmChart.options.scales.x.min = Date.now()
-					pmChart.options.scales.x.max = Date.now()
+					pmChart.options.plugins.title.text = "NO DATA";
+					pmChart.options.scales.x.min = Date.now();
+					pmChart.options.scales.x.max = Date.now();
 				}
 				else {
-					pmChart.data.labels = graph_data.map(a => a["event_time"])
+					pmChart.data.labels = graph_data.map(a => a["event_time"]);
 					for (index in graph_datasets) {
 						console.log(graph_datasets[index]);
-						pmChart.data.datasets.push({ label: graph_dataset_names[graph_datasets[index]], data: graph_data.map(a => a[graph_datasets[index]]) })
+						pmChart.data.datasets.push({ label: graph_dataset_names[graph_datasets[index]], data: graph_data.map(a => a[graph_datasets[index]]) });
 					}
-					pmChart.options.scales.x.min = Date.now() - graph_timespan
-					pmChart.options.scales.x.max = Date.now()
-					pmChart.options.plugins.title.text = graph_name
+					pmChart.options.scales.x.min = Date.now() - graph_timespan;
+					pmChart.options.scales.x.max = Date.now();
+					pmChart.options.plugins.title.text = graph_name;
 
 				}
-				pmChart.update()
+				pmChart.update();
 
 			}
 		}
