@@ -156,6 +156,7 @@
 		let device_id = ""
 		let graph_name = ""
 		let graph_datasets = ["pm2_5"]
+		let graph_dataset_names = { "pm1": "PM 1", "pm2_5": "PM 2.5", "pm4": "PM 4", "pm10": "PM 10", "voc": "VOC", "nox": "NOx" }
 		let graph_data = {}
 		let graph_timespan = 86400000;
 
@@ -215,7 +216,7 @@
 					pmChart.data.labels = graph_data.map(a => a["event_time"])
 					for (index in graph_datasets) {
 						console.log(graph_datasets[index]);
-						pmChart.data.datasets.push({ label: graph_datasets[index], data: graph_data.map(a => a[graph_datasets[index]]) })
+						pmChart.data.datasets.push({ label: graph_dataset_names[graph_datasets[index]], data: graph_data.map(a => a[graph_datasets[index]]) })
 					}
 					pmChart.options.scales.x.min = Date.now() - graph_timespan
 					pmChart.options.scales.x.max = Date.now()
