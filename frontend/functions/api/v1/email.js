@@ -29,6 +29,6 @@ export async function onRequest(context) {
         }),
     })
     const resp = await fetch(send_request)
-    console.log(JSON.stringify(resp));
+    console.log(JSON.stringify(await resp));
     return new Response(await resp.ok)
 }
