@@ -1,7 +1,7 @@
 export async function onRequest(context) {
     // For testing purpose, replace this with your personal email
     // so that you can see the message sent to your inbox
-    const receiver = env.owner_email;
+    const receiver = context.env.owner_email;
     console.log(receiver);
     // Replace <yourcompany.com> with the domain you set up earlier
     const sender = 'map@cheltenham.space'
