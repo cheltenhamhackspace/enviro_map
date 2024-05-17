@@ -26,9 +26,15 @@ CREATE TABLE IF NOT EXISTS sensors (
   id integer PRIMARY KEY AUTOINCREMENT,
   device_id text NOT NULL,
   name text NOT NULL,
-  created integer NOT NULL,
+  created_at integer NOT NULL,
   owner text NOT NULL,
   lat real NOT NULL,
   long real NOT NULL,
   token text NOT NULL
 );
+
+# Email sending
+Using Cloudflare and MailChannels
+https://developers.cloudflare.com/pages/functions/plugins/mailchannels/
+https://developers.cloudflare.com/pages/functions/plugins/mailchannels/#enable-mailchannels-for-your-account---domain-lockdown
+## DNS records

@@ -138,7 +138,7 @@
 						mode: "index",
 						callbacks: {
 							label: (item) => {
-								// if PM measurement
+								// if PM measurement add units
 								if (item.dataset.label.startsWith("PM ")) {
 									return `${item.dataset.label}: ${item.formattedValue} μg/m³`;
 								}
