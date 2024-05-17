@@ -30,6 +30,7 @@ export async function onRequest(context) {
         }),
     })
     const resp = await fetch(send_request)
-    console.log(JSON.stringify(await resp));
-    return new Response(await resp.ok)
+    const response = await resp.json();
+    console.log(response);
+    return new Response(response)
 }
