@@ -1,4 +1,7 @@
+import * as jose from 'jose'
+
 export async function onRequest(context) {
+    // validates a turnstile token
     async function verifyTurnstile(turnstile_response, remoteip) {
         // Validate the token by calling the
         // "/siteverify" API endpoint.
@@ -21,6 +24,7 @@ export async function onRequest(context) {
         return false;
     }
 
+    // validates the formatting of an email address
     function validateEmail(email) {
         return String(email)
             .toLowerCase()
@@ -36,6 +40,7 @@ export async function onRequest(context) {
     const remoteip = context.request.headers.get('CF-Connecting-IP');
     const email = body.get('email');
 
+    // check if turnstile passed checks
     const verifiedHuman = await verifyTurnstile(turnstile_response, remoteip);
 
     if (verifiedHuman && validateEmail(email)) {
@@ -60,7 +65,7 @@ export async function onRequest(context) {
                 content: [
                     {
                         type: 'text/html',
-                        value: '<h1>Hello from Cheltenham hackspace enviro map</h1>\nThis function is a work in progress at the moment... sorry.',
+                        value: '<h1>Hello from Cheltenham hackspace enviro map</h1>\nThis function is a work in progress at the moment... sorry.\n:)',
                     },
                 ],
             }),
@@ -68,7 +73,7 @@ export async function onRequest(context) {
         const resp = await fetch(send_request)
         const response = await resp.json();
         console.log(response);
-        return new Response("Email sent")
+        return new Response("<h1>Login email sent</h1>\nYou should recieve an email with a login link soon.\nIf you cant find the email, please check your spam folder.")
     }
     return new Response("Nope. Forbidden.", { status: 403 })
 }
