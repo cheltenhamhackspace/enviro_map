@@ -29,5 +29,6 @@ export async function onRequest(context) {
         }),
     })
     const resp = await fetch(send_request)
+    console.log(resp);
     return new Response(await resp.ok)
 }
