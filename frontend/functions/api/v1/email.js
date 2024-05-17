@@ -4,7 +4,7 @@ export async function onRequest(context) {
     const receiver = context.env.owner_email;
     console.log(receiver);
     // Replace <yourcompany.com> with the domain you set up earlier
-    const sender = 'map@cheltenham.space'
+    const sender = 'noreply@map.cheltenham.space'
     const send_request = new Request('https://api.mailchannels.net/tx/v1/send', {
         method: 'POST',
         headers: {
