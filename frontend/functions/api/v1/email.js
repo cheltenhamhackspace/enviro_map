@@ -18,9 +18,9 @@ export async function onRequest(context) {
             ],
             from: {
                 email: sender,
-                name: 'Cloudflare Workers - MailChannels integration',
+                name: 'Cheltenham Hackspace',
             },
-            subject: 'Look! No servers',
+            subject: 'Sign in link',
             content: [
                 {
                     type: 'text/html',
