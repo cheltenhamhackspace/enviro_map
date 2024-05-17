@@ -1,7 +1,8 @@
 export async function onRequest(context) {
     // For testing purpose, replace this with your personal email
     // so that you can see the message sent to your inbox
-    const receiver = context.env.owner_email;
+    const receiver = env.owner_email;
+    console.log(receiver);
     // Replace <yourcompany.com> with the domain you set up earlier
     const sender = 'map@cheltenham.space'
     const send_request = new Request('https://api.mailchannels.net/tx/v1/send', {
