@@ -71,7 +71,11 @@ export async function onRequest(context) {
         const resp = await fetch(send_request)
         const response = await resp.json();
         console.log(response);
-        return new Response("<h1>Login email sent</h1>\nYou should recieve an email with a login link soon.\nIf you cant find the email, please check your spam folder.")
+        return new Response("<h1>Login email sent</h1>\nYou should recieve an email with a login link soon.\nIf you cant find the email, please check your spam folder.", {
+            headers: {
+                "content-type": "text/html;charset=UTF-8",
+            }
+        });
     }
     return new Response("Nope. Forbidden.", { status: 403 })
 }
