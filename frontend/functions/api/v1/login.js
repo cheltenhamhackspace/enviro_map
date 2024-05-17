@@ -1,5 +1,3 @@
-import * as jose from 'jose'
-
 export async function onRequest(context) {
     // validates a turnstile token
     async function verifyTurnstile(turnstile_response, remoteip) {
