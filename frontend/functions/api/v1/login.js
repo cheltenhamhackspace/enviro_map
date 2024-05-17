@@ -1,9 +1,4 @@
 export async function onRequest(context) {
-    // For testing purpose, replace this with your personal email
-    // so that you can see the message sent to your inbox
-    const receiver = context.env.owner_email;
-    console.log(receiver);
-
     async function verifyTurnstile(turnstile_response, remoteip) {
         // Validate the token by calling the
         // "/siteverify" API endpoint.
@@ -26,15 +21,24 @@ export async function onRequest(context) {
         return false;
     }
 
+    function validateEmail(email) {
+        return String(email)
+            .toLowerCase()
+            .match(
+                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+            );
+    };
+
     // get body
     const body = await context.request.formData();
     // Turnstile injects a token in "cf-turnstile-response".
     const turnstile_response = body.get('cf-turnstile-response');
     const remoteip = context.request.headers.get('CF-Connecting-IP');
+    const email = body.get('email');
 
     const verifiedHuman = await verifyTurnstile(turnstile_response, remoteip);
 
-    if (verifiedHuman) {
+    if (verifiedHuman && validateEmail(email)) {
         // Replace <yourcompany.com> with the domain you set up earlier
         const sender = 'noreply@map.cheltenham.space'
         const send_request = new Request('https://api.mailchannels.net/tx/v1/send', {
@@ -45,7 +49,7 @@ export async function onRequest(context) {
             body: JSON.stringify({
                 personalizations: [
                     {
-                        to: [{ email: receiver, name: 'Test Recipient' }],
+                        to: [{ email: email, name: 'Recipient' }],
                     },
                 ],
                 from: {
@@ -56,7 +60,7 @@ export async function onRequest(context) {
                 content: [
                     {
                         type: 'text/html',
-                        value: '<h1>Hello from Cloudflare worker</h1>',
+                        value: '<h1>Hello from Cheltenham hackspace enviro map</h1>\nThis function is a work in progress at the moment... sorry.',
                     },
                 ],
             }),
@@ -66,5 +70,5 @@ export async function onRequest(context) {
         console.log(response);
         return new Response("Email sent")
     }
-    return new Response("Nope")
+    return new Response("Nope. Forbidden.", { status: 403 })
 }
