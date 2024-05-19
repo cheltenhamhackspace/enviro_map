@@ -25,6 +25,14 @@ export async function onRequest(context) {
             return new Response(`JWT validation error: ${error}`, { status: 500 })
         }
 
+        if (verifyResults.payload.isTestClaim) {
+            return new Response(`<h1>Test JWT verified ✅</h1>${JSON.stringify(verifyResults)}`, {
+                headers: {
+                    "content-type": "text/html;charset=UTF-8",
+                }
+            });
+        }
+
         return new Response(`<h1>JWT verified ✅</h1>${JSON.stringify(verifyResults)}`, {
             headers: {
                 "content-type": "text/html;charset=UTF-8",
