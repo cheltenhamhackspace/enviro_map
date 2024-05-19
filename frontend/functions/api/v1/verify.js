@@ -9,11 +9,13 @@ export async function onRequest(context) {
 
     if (jwt) {
 
+        const { payload, protectedHeader } = null;
+
         const alg = 'RS256';
         const publicKey = await jose.importSPKI(context.env.JWT_PUBLIC_KEY, alg);
 
         try {
-            const { payload, protectedHeader } = await jose.jwtVerify(jwt, publicKey, {
+            { payload, protectedHeader } = await jose.jwtVerify(jwt, publicKey, {
                 issuer: 'testIssuer',
                 audience: 'testAudience',
             });
