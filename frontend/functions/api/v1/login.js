@@ -49,7 +49,7 @@ export async function onRequest(context) {
         const privateKey = await jose.importPKCS8(context.env.JWT_PRIVATE_KEY, alg)
 
         const jwt = await new jose.SignJWT({ 'isTestClaim': true })
-            .setProtectedHeader({ alg })
+            .setProtectedHeader({ alg: alg, typ: "JWT" })
             .setIssuedAt()
             .setIssuer('testIssuer')
             .setAudience('testAudience')
