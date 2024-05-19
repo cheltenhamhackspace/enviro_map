@@ -9,7 +9,7 @@ export async function onRequest(context) {
 
     if (jwt) {
 
-        const { payload, protectedHeader } = null;
+        let payload, protectedHeader;
 
         const alg = 'RS256';
         const publicKey = await jose.importSPKI(context.env.JWT_PUBLIC_KEY, alg);
