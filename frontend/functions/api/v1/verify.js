@@ -17,7 +17,7 @@ export async function onRequest(context) {
         try {
             verifyResults = await jose.jwtVerify(jwt, publicKey, {
                 issuer: 'testIssuer',
-                audience: 'testAudience',
+                audience: 'testAudience1',
             });
         }
         catch (error) {
