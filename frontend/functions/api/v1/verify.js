@@ -25,7 +25,7 @@ export async function onRequest(context) {
             return new Response(`JWT validation error: ${error}`, { status: 500 })
         }
 
-        return new Response(`JWT verified ${JSON.stringify(verifyResults)}`, {
+        return new Response(`<h1>JWT verified ✅</h1>${JSON.stringify(verifyResults)}`, {
             headers: {
                 "content-type": "text/html;charset=UTF-8",
             }
