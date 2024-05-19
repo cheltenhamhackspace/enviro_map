@@ -21,7 +21,7 @@ export async function onRequest(context) {
             });
         }
         catch (error) {
-            Response(`JWT validation error: ${error}`, { status: 500 })
+            return new Response(`JWT validation error: ${error}`, { status: 500 })
         }
 
         return new Response(`JWT verified ${JSON.stringify(verifyResults)}`, {
