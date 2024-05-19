@@ -12,15 +12,22 @@ export async function onRequest(context) {
         const alg = 'RS256';
         const publicKey = await jose.importSPKI(context.env.JWT_PUBLIC_KEY, alg);
 
-        const { payload, protectedHeader } = await jose.jwtVerify(jwt, publicKey, {
-            issuer: 'testIssuer',
-            audience: 'testAudience',
-        });
+        try {
+            const { payload, protectedHeader } = await jose.jwtVerify(jwt, publicKey, {
+                issuer: 'testIssuer',
+                audience: 'testAudience',
+            });
+        }
+        catch (error) {
+            Response(`JWT validation error: ${error}`, { status: 500 })
+        }
+
+        const jsonString = JSON.stringify(payload);
 
         console.log(payload);
         console.log(protectedHeader);
 
-        return new Response(`<h1>${payload}</h1>${protectedHeader}`, {
+        return new Response(`JWT verified ${jsonString}`, {
             headers: {
                 "content-type": "text/html;charset=UTF-8",
             }
