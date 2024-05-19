@@ -11,7 +11,7 @@ export async function onRequest(context) {
 
         let verifyResults;
 
-        const alg = 'RS256';
+        const alg = 'EdDSA';
         const publicKey = await jose.importSPKI(context.env.JWT_PUBLIC_KEY, alg);
 
         try {

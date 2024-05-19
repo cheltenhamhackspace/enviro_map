@@ -43,8 +43,13 @@ https://developers.cloudflare.com/pages/functions/plugins/mailchannels/#enable-m
 # JWT support
 
 ## Key generation
+### RSA
 ```openssl genrsa -out privatekey.pem 2048```
 ```openssl rsa -in privatekey.pem -pubout -out publickey.pem```
+
+### ED25519 (what we use)
+```openssl genpkey -algorithm ed25519 -out private.pem```
+```openssl pkey -in private.pem -pubout -out public.pem```
 
 ## Key use
 Set the private key and public keys contents as an environment variable

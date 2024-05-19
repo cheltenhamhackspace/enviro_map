@@ -45,7 +45,7 @@ export async function onRequest(context) {
 
     if (verifiedHuman && validateEmail(email)) {
 
-        const alg = 'RS256'
+        const alg = 'EdDSA'
         const privateKey = await jose.importPKCS8(context.env.JWT_PRIVATE_KEY, alg)
 
         const jwt = await new jose.SignJWT({ sub: "PLACEHOLDER_UUID_HERE", 'isTestClaim': true, email: email, email_verified: false })
