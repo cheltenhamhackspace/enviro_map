@@ -53,7 +53,7 @@ export async function onRequest(context) {
             .setIssuedAt()
             .setIssuer('testIssuer')
             .setAudience('testAudience')
-            .setExpirationTime('2h')
+            .setExpirationTime('15m')
             .sign(privateKey)
 
         const sender = 'noreply@map.cheltenham.space'
