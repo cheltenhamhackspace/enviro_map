@@ -38,3 +38,12 @@ Using Cloudflare and MailChannels
 https://developers.cloudflare.com/pages/functions/plugins/mailchannels/
 https://developers.cloudflare.com/pages/functions/plugins/mailchannels/#enable-mailchannels-for-your-account---domain-lockdown
 ## DNS records
+
+
+# JWT support
+
+## Key generation
+```openssl genrsa -out privatekey.pem 2048```
+
+## Key use
+Set the private key contents as an environment variable

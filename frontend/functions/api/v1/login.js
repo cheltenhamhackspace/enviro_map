@@ -44,7 +44,18 @@ export async function onRequest(context) {
     const verifiedHuman = await verifyTurnstile(turnstile_response, remoteip);
 
     if (verifiedHuman && validateEmail(email)) {
-        // Replace <yourcompany.com> with the domain you set up earlier
+
+        const alg = 'RS256'
+        const privateKey = await jose.importPKCS8(context.env.JWT_PRIVATE_KEY, alg)
+
+        const jwt = await new jose.SignJWT({ 'isTestClaim': true })
+            .setProtectedHeader({ alg })
+            .setIssuedAt()
+            .setIssuer('testIssuer')
+            .setAudience('testAudience')
+            .setExpirationTime('2h')
+            .sign(privateKey)
+
         const sender = 'noreply@map.cheltenham.space'
         const send_request = new Request('https://api.mailchannels.net/tx/v1/send', {
             method: 'POST',
@@ -65,7 +76,7 @@ export async function onRequest(context) {
                 content: [
                     {
                         type: 'text/html',
-                        value: '<h1>Hello from Cheltenham hackspace enviro map</h1>\nThis function is a work in progress at the moment... sorry.\n:)',
+                        value: `<h1>Hello from Cheltenham hackspace enviro map</h1>\nThis function is a work in progress at the moment... sorry.\nTemp JWT: ${jwt}:)`,
                     },
                 ],
             }),
