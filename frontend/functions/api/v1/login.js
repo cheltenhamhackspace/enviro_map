@@ -48,7 +48,7 @@ export async function onRequest(context) {
         const alg = 'RS256'
         const privateKey = await jose.importPKCS8(context.env.JWT_PRIVATE_KEY, alg)
 
-        const jwt = await new jose.SignJWT({ 'isTestClaim': true })
+        const jwt = await new jose.SignJWT({ 'isTestClaim': true, email: email, email_verified: false, sub_id: "PLACEHOLDER" })
             .setProtectedHeader({ alg: alg, typ: "JWT" })
             .setIssuedAt()
             .setIssuer('testIssuer')
