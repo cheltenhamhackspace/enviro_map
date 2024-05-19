@@ -15,7 +15,7 @@ export async function onRequest(context) {
         const publicKey = await jose.importSPKI(context.env.JWT_PUBLIC_KEY, alg);
 
         try {
-            { payload, protectedHeader } = await jose.jwtVerify(jwt, publicKey, {
+            let { payload, protectedHeader } = await jose.jwtVerify(jwt, publicKey, {
                 issuer: 'testIssuer',
                 audience: 'testAudience',
             });
