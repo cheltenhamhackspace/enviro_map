@@ -76,7 +76,7 @@ export async function onRequest(context) {
                 content: [
                     {
                         type: 'text/html',
-                        value: `<h1>Hello from Cheltenham hackspace enviro map</h1><p>This function is a work in progress at the moment... sorry.<br />Temp JWT: ${jwt}</p><p>:</p>)`,
+                        value: `<h1>Hello from Cheltenham hackspace enviro map</h1><p>This function is a work in progress at the moment... sorry.<br /><a href="https://map.cheltenham.space/api/v1/verify?jwt=${jwt}">Temp JWT test</a></p><p>:)</p>`,
                     },
                 ],
             }),

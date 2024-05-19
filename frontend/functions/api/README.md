@@ -44,6 +44,7 @@ https://developers.cloudflare.com/pages/functions/plugins/mailchannels/#enable-m
 
 ## Key generation
 ```openssl genrsa -out privatekey.pem 2048```
+```openssl rsa -in privatekey.pem -pubout -out publickey.pem```
 
 ## Key use
-Set the private key contents as an environment variable
+Set the private key and public keys contents as an environment variable
