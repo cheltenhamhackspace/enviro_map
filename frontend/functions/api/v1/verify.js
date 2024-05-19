@@ -18,7 +18,6 @@ export async function onRequest(context) {
 
         try {
             console.log("payload", payload);
-            const jsonString = JSON.stringify(payload);
         }
         catch (error) {
             console.log(error);
@@ -31,7 +30,7 @@ export async function onRequest(context) {
             console.log(error);
         }
 
-        return new Response(`JWT verified ${jsonString}`, {
+        return new Response(`JWT verified ${JSON.stringify(payload)}`, {
             headers: {
                 "content-type": "text/html;charset=UTF-8",
             }
