@@ -22,10 +22,10 @@ export async function onRequest(context) {
             Response(`JWT validation error: ${error}`, { status: 500 })
         }
 
-        const jsonString = JSON.stringify(payload);
+        console.log("payload", payload);
+        console.log("protectedHeader", protectedHeader);
 
-        console.log(payload);
-        console.log(protectedHeader);
+        const jsonString = JSON.stringify(payload);
 
         return new Response(`JWT verified ${jsonString}`, {
             headers: {
