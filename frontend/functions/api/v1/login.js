@@ -1,4 +1,4 @@
-import * as jose from 'jose'
+const jose = require('jose');
 
 export async function onRequest(context) {
     // validates a turnstile token
