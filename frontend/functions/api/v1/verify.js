@@ -17,10 +17,11 @@ export async function onRequest(context) {
         try {
             verifyResults = await jose.jwtVerify(jwt, publicKey, {
                 issuer: 'testIssuer',
-                audience: 'testAudience1',
+                audience: 'testAudience',
             });
         }
         catch (error) {
+            console.error(error);
             return new Response(`JWT validation error: ${error}`, { status: 500 })
         }
 
