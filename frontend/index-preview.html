@@ -294,6 +294,8 @@
 						console.log(graph_datasets[index]);
 						options.series.push({ name: graph_dataset_names[graph_datasets[index]], data: graph_data.map(a => [a.event_time, a[graph_datasets[index]]]) });
 					}
+					options.xaxis.min = Date.now() - graph_timespan;
+					options.xaxis.max = Date.now();
 					pmChart.updateOptions(options);
 
 				}
