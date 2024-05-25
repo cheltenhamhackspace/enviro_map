@@ -10,48 +10,32 @@
 
 	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
 
+
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
 		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
 		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"
-		integrity="sha512-ZwR1/gSZM3ai6vCdI+LVF1zSq/5HznD3ZSTk7kajkaj4D292NLuduDCO1c/NT8Id+jE58KYLKT7hXnbtryGmMg=="
-		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment-with-locales.min.js"
-		integrity="sha512-4F1cxYdMiAW98oomSLaygEwmCnIP38pb4Kx70yQYqRwLVCs3DbRumfBq82T08g/4LJ/smbFGFpmeFlQgoDccgg=="
-		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1"></script>
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-		integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"
 		integrity="sha512-KhIBJeCI4oTEeqOmRi2gDJ7m+JARImhUYgXWiOTIp9qqySpFUAJs09erGKem4E5IPuxxSTjavuurvBitBmwE0w=="
 		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
 		integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w=="
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
-	<style>
-		html,
-		body {
-			height: 100%;
-			margin: 0;
-		}
 
+	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+	<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.2/dist/nouislider.min.js"
+		integrity="sha256-mV1eAb0l7MOOqzqnLfbryr3GlZtpPqGkkBwqGMpuNqY=" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.2/dist/nouislider.min.css"
+		integrity="sha256-nckVXP1jMdH1YpiBrAvGOSgkP6TB2DsXzkkhtSAL4K4=" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
+
+	<style>
 		.leaflet-container {
 			height: 400px;
 			width: 600px;
 			max-width: 100%;
 			max-height: 100%;
-		}
-
-		table,
-		th,
-		td {
-			border: 1px solid black;
-			border-collapse: collapse;
-		}
-
-		tr:nth-child(even) {
-			background-color: #D6EEEE;
 		}
 
 		.leaflet-tooltip-pane .text {
@@ -68,100 +52,189 @@
 </head>
 
 <body>
-	<nav class="navbar navbar-expand-lg navbar-dark bg-dark" aria-label="Eighth navbar example">
-		<div class="container">
-			<a class="navbar-brand" href="#">Enviro Map</a>
-			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample07"
-				aria-controls="navbarsExample07" aria-expanded="false" aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
-			</button>
-
-			<div class="collapse navbar-collapse" id="navbarsExample07">
-				<ul class="navbar-nav me-auto mb-2 mb-lg-0">
-					<li class="nav-item">
-						<a class="nav-link active" aria-current="page" href="#">Home</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="/login">Login/Sign Up</a>
-					</li>
-					<li class="nav-item dropdown">
-						<a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"
-							aria-expanded="false">About</a>
-						<ul class="dropdown-menu">
-							<li><a class="dropdown-item" href="https://cheltenhamhackspace.org">Cheltenham Hackspace</a>
-							</li>
-						</ul>
-					</li>
-				</ul>
-				<form role="search">
-					<input class="form-control" type="search" placeholder="Search" aria-label="Search">
-				</form>
+	<div class="page">
+		<!-- Sidebar -->
+		<aside class="navbar navbar-vertical navbar-expand-sm navbar-dark">
+			<div class="container-fluid">
+				<button class="navbar-toggler" type="button">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<h1 class="navbar-brand navbar-brand-autodark">
+					Cheltenham Hackspace<br>
+					Enviro Map
+				</h1>
+				<div class="collapse navbar-collapse" id="sidebar-menu">
+					<ul class="navbar-nav pt-lg-3">
+						<li class="nav-item">
+							<a class="nav-link" href="./">
+								<span class="nav-link-title">
+									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+										stroke-linejoin="round"
+										class="icon icon-tabler icons-tabler-outline icon-tabler-home">
+										<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+										<path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+										<path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+										<path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+									</svg>
+									Home
+								</span>
+							</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/login">
+								<span class="nav-link-title">
+									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+										stroke-linejoin="round"
+										class="icon icon-tabler icons-tabler-outline icon-tabler-login">
+										<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+										<path
+											d="M15 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+										<path d="M21 12h-13l3 -3" />
+										<path d="M11 15l-3 -3" />
+									</svg>
+									Login/Sign Up
+								</span>
+							</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="https://www.cheltenhamhackspace.org/">
+								<span class="nav-link-title">
+									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+										stroke-linejoin="round"
+										class="icon icon-tabler icons-tabler-outline icon-tabler-external-link">
+										<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+										<path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" />
+										<path d="M11 13l9 -9" />
+										<path d="M15 4h5v5" />
+									</svg>
+									Cheltenham Hackspace
+								</span>
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</aside>
+		<!-- Main page -->
+		<div class="page-wrapper">
+			<div class="page-header d-print-none">
+				<div class="container-xl">
+					<div class="row g-2 align-items-center">
+						<div class="col">
+							<h2 class="page-title">
+								Our Sensors
+							</h2>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="page-body">
+				<div class="container-xl">
+					<div class="row row-deck row-cards">
+						<div class="col-sm-6 col-lg-3">
+							<div class="card">
+								<div class="card-body" style="height: 10rem"></div>
+							</div>
+						</div>
+						<div class="col-sm-6 col-lg-3">
+							<div class="card">
+								<div class="card-body" style="height: 10rem"></div>
+							</div>
+						</div>
+						<div class="col-sm-6 col-lg-3">
+							<div class="card">
+								<div class="card-body" style="height: 10rem"></div>
+							</div>
+						</div>
+						<div class="col-sm-6 col-lg-3">
+							<div class="card">
+								<div class="card-body" style="height: 10rem"></div>
+							</div>
+						</div>
+						<div class="col-12">
+							<div class="card">
+								<div id="map" class="card-body" style="height: 40rem; width: 100%;"></div>
+							</div>
+						</div>
+						<div class="col-md-12 col-lg-6">
+							<div class="card">
+								<div class="card-body" style="height: 5rem">
+									<div id="datasetToggle">
+										<button class="btn" onClick="setGraphDatasets('pm1')">PM 1</button>
+										<button class="btn" onClick="setGraphDatasets('pm2_5')">PM 2.5</button>
+										<button class="btn" onClick="setGraphDatasets('pm4')">PM 4</button>
+										<button class="btn" onClick="setGraphDatasets('pm10')">PM 10</button>
+										<button class="btn" onClick="setGraphDatasets('voc')">VOC</button>
+										<button class="btn" onClick="setGraphDatasets('nox')">NOx</button>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6 col-lg-4"></div>
+						<div class="col-md-6 col-lg-2">
+							<div class="card">
+								<div class="card-body" style="height: 5rem">
+									<div class="dropdown">
+										<a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown">
+											Timespan
+										</a>
+										<div class="dropdown-menu">
+											<a class="dropdown-item" onClick="setGraphTimespan(86400000)">24 Hours</a>
+											<a class="dropdown-item" onClick="setGraphTimespan(172800000)">48 Hours</a>
+											<a class="dropdown-item" onClick="setGraphTimespan(604800000)">7 Days</a>
+											<!--<a class="dropdown-item" onClick="setGraphTimespan(1209600000)">14 Days</a>-->
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-12">
+							<div class="card">
+								<div class="card-body" style="height: 20rem; width: 100%">
+									<div id="timeChart" class="chart-lg"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
-	</nav>
-
-	<div id="map" style="width: 100%; height: 65%;"></div>
-
-	<div id="datasetToggle">
-		<button onClick="setGraphDatasets('pm1')">PM 1</button>
-		<button onClick="setGraphDatasets('pm2_5')">PM 2.5</button>
-		<button onClick="setGraphDatasets('pm4')">PM 4</button>
-		<button onClick="setGraphDatasets('pm10')">PM 10</button>
-		<button onClick="setGraphDatasets('voc')">VOC</button>
-		<button onClick="setGraphDatasets('nox')">NOx</button>
 	</div>
-	<select id="timespanSelect" onchange="setGraphTimespan()">
-		<option value="86400000" selected>24 Hours</option>
-		<option value="172800000">48 Hours</option>
-		<option value="604800000">7 Days</option>
-		<!--<option value="1209600000">14 Days</option>-->
-	</select>
 
-	<canvas id="pmChart" style="width: 100%; height: 25%;"></canvas>
+
 
 	<script>
-		let pmChart = new Chart("pmChart", {
-			type: "line",
-			data: {
-
+		let options = {
+			chart: {
+				height: 300,
+				type: 'line',
 			},
-			options: {
-				plugins: {
-					title: {
-						display: true,
-						text: 'Country Wide Average',
-					},
-					legend: {
-						position: "right"
-					},
-					tooltip: {
-						mode: "index",
-						callbacks: {
-							label: (item) => {
-								// if PM measurement add units
-								if (item.dataset.label.startsWith("PM ")) {
-									return `${item.dataset.label}: ${item.formattedValue} μg/m³`;
-								}
-								else {
-									return `${item.dataset.label}: ${item.formattedValue}`;
-								}
-							}
-						},
-					}
-				},
-				scales: {
-					x: {
-						type: "time",
-						distribution: "linear"
-					}
-				},
-				elements: {
-					point: {
-						radius: 2
-					}
+			series: [],
+			title: {
+				text: 'Sensor Data',
+				align: 'center'
+			},
+			noData: {
+				text: 'No data to show'
+			},
+			xaxis: {
+				type: 'datetime',
+				tickAmount: 8
+			},
+			tooltip: {
+				x: {
+					format: 'dd MMM yyyy hh:mm:ss'
 				}
 			}
-		});
+		};
+		let pmChart = new ApexCharts(
+			document.querySelector("#timeChart"),
+			options
+		);
+		pmChart.render();
 
 
 		let device_id = ""
@@ -184,15 +257,15 @@
 			updateGraph()
 		}
 
-		function setGraphTimespan() {
-			graph_timespan = document.getElementById("timespanSelect").value;
+		function setGraphTimespan(timespan) {
+			graph_timespan = timespan
 			console.log(`Timespan: ${graph_timespan}`);
 			getTimeSeriesData()
 		}
 
 		function setGraphNodeMapEvent(e) {
 			device_id = e.sourceTarget.options.device_id
-			graph_name = e.sourceTarget.options.name
+			graph_name = `Sensor: ${e.sourceTarget.options.name}`
 			getTimeSeriesData()
 		}
 
@@ -216,25 +289,23 @@
 		function updateGraph() {
 			if (pmChart) {
 				//console.log(graph_data)
-				pmChart.data.datasets = [];
 				if (Object.keys(graph_data).length === 0) {
 					console.log("No graphable data found")
-					pmChart.options.plugins.title.text = "NO DATA";
-					pmChart.options.scales.x.min = Date.now();
-					pmChart.options.scales.x.max = Date.now();
+					options.series = [];
+					pmChart.updateOptions(options);
 				}
 				else {
-					pmChart.data.labels = graph_data.map(a => a["event_time"]);
+					options.series = [];
 					for (index in graph_datasets) {
 						console.log(graph_datasets[index]);
-						pmChart.data.datasets.push({ label: graph_dataset_names[graph_datasets[index]], data: graph_data.map(a => a[graph_datasets[index]]) });
+						options.series.push({ name: graph_dataset_names[graph_datasets[index]], data: graph_data.map(a => [a.event_time, a[graph_datasets[index]]]) });
 					}
-					pmChart.options.scales.x.min = Date.now() - graph_timespan;
-					pmChart.options.scales.x.max = Date.now();
-					pmChart.options.plugins.title.text = graph_name;
+					options.title.text = graph_name;
+					options.xaxis.min = Date.now() - graph_timespan;
+					options.xaxis.max = Date.now();
+					pmChart.updateOptions(options);
 
 				}
-				pmChart.update();
 
 			}
 		}
@@ -257,7 +328,7 @@
 			}
 		}
 
-		const map = L.map('map').setView([51.8994, -2.0783], 13);
+		const map = L.map('map').setView([51.8994, -2.0783], 7);
 
 		const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			maxZoom: 19,
@@ -308,44 +379,46 @@
 					radius: 20,
 					device_id: sensorData[sensorId].device_id,
 					name: sensorData[sensorId].name
-				}).bindPopup(`<table>
-								<tr>
-									<td>Name</td>
-									<td>${sensorData[sensorId].name}</td>
-								</tr>
-								<tr>
-									<td>Temperature</td>
-									<td>${sensorData[sensorId].temperature} °C</td >
-								</tr >
-								<tr>
-									<td>Relative Humidity</td>
-									<td>${sensorData[sensorId].relative_humidity} %</td >
-								</tr >
-								<tr>
-									<td>PM 1</td>
-									<td>${sensorData[sensorId].pm1} μg/m³</td>
-								</tr>
-								<tr>
-									<td>PM 2.5</td>
-									<td>${sensorData[sensorId].pm2_5} μg/m³</td >
-								</tr >
-								<tr>
-									<td>PM 4</td>
-									<td>${sensorData[sensorId].pm4} μg/m³</td >
-								</tr >
-								<tr>
-									<td>PM 10</td>
-									<td>${sensorData[sensorId].pm10} μg/m³</td >
-								</tr >
-								<tr>
-									<td>NOx Index</td>
-									<td>${sensorData[sensorId].nox}</td >
-								</tr >
-								<tr>
-									<td>VOC Index</td>
-									<td>${sensorData[sensorId].voc}</td >
-								</tr >
-							</table >
+				}).bindPopup(`<div class="table-responsive">
+								<table class="table table-vcenter">
+									<tr>
+										<td>Name</td>
+										<td>${sensorData[sensorId].name}</td>
+									</tr>
+									<tr>
+										<td>Temperature</td>
+										<td>${sensorData[sensorId].temperature} °C</td >
+									</tr >
+									<tr>
+										<td>Relative Humidity</td>
+										<td>${sensorData[sensorId].relative_humidity} %</td >
+									</tr >
+									<tr>
+										<td>PM 1</td>
+										<td>${sensorData[sensorId].pm1} μg/m³</td>
+									</tr>
+									<tr>
+										<td>PM 2.5</td>
+										<td>${sensorData[sensorId].pm2_5} μg/m³</td >
+									</tr >
+									<tr>
+										<td>PM 4</td>
+										<td>${sensorData[sensorId].pm4} μg/m³</td >
+									</tr >
+									<tr>
+										<td>PM 10</td>
+										<td>${sensorData[sensorId].pm10} μg/m³</td >
+									</tr >
+									<tr>
+										<td>NOx Index</td>
+										<td>${sensorData[sensorId].nox}</td >
+									</tr >
+									<tr>
+										<td>VOC Index</td>
+										<td>${sensorData[sensorId].voc}</td >
+									</tr >
+								</table >
+							</div>
 							${sensorData[sensorId].time}`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 				markers.push(circle)
 			};
@@ -361,10 +434,6 @@
 		map.on('moveend', testFunc);
 
 	</script>
-
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-		integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-		crossorigin="anonymous"></script>
 </body>
 
 </html>
