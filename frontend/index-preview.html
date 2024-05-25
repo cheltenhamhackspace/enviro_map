@@ -185,12 +185,17 @@
 						<div class="col-md-6 col-lg-2">
 							<div class="card">
 								<div class="card-body" style="height: 5rem">
-									<select id="timespanSelect" onchange="setGraphTimespan()">
-										<option value="86400000" selected>24 Hours</option>
-										<option value="172800000">48 Hours</option>
-										<option value="604800000">7 Days</option>
-										<!--<option value="1209600000">14 Days</option>-->
-									</select>
+									<div class="dropdown">
+										<a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown">
+											Timespan
+										</a>
+										<div class="dropdown-menu">
+											<a class="dropdown-item" onClick="setGraphTimespan(86400000)">24 Hours</a>
+											<a class="dropdown-item" onClick="setGraphTimespan(172800000)">48 Hours</a>
+											<a class="dropdown-item" onClick="setGraphTimespan(604800000)">7 Days</a>
+											<!--<a class="dropdown-item" onClick="setGraphTimespan(1209600000)">14 Days</a>-->
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -274,8 +279,8 @@
 			updateGraph()
 		}
 
-		function setGraphTimespan() {
-			graph_timespan = document.getElementById("timespanSelect").value;
+		function setGraphTimespan(timespan) {
+			graph_timespan = timespan
 			console.log(`Timespan: ${graph_timespan}`);
 			getTimeSeriesData()
 		}
