@@ -31,32 +31,19 @@
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+	<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.2/dist/nouislider.min.js"
+		integrity="sha256-mV1eAb0l7MOOqzqnLfbryr3GlZtpPqGkkBwqGMpuNqY=" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.2/dist/nouislider.min.css"
+		integrity="sha256-nckVXP1jMdH1YpiBrAvGOSgkP6TB2DsXzkkhtSAL4K4=" crossorigin="anonymous">
 	<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
 
 	<style>
-		html,
-		body {
-			height: 100%;
-			margin: 0;
-		}
-
 		.leaflet-container {
 			height: 400px;
 			width: 600px;
 			max-width: 100%;
 			max-height: 100%;
-		}
-
-		table,
-		th,
-		td {
-			border: 1px solid black;
-			border-collapse: collapse;
-		}
-
-		tr:nth-child(even) {
-			background-color: #D6EEEE;
 		}
 
 		.leaflet-tooltip-pane .text {
@@ -411,44 +398,46 @@
 					radius: 20,
 					device_id: sensorData[sensorId].device_id,
 					name: sensorData[sensorId].name
-				}).bindPopup(`<table>
-								<tr>
-									<td>Name</td>
-									<td>${sensorData[sensorId].name}</td>
-								</tr>
-								<tr>
-									<td>Temperature</td>
-									<td>${sensorData[sensorId].temperature} °C</td >
-								</tr >
-								<tr>
-									<td>Relative Humidity</td>
-									<td>${sensorData[sensorId].relative_humidity} %</td >
-								</tr >
-								<tr>
-									<td>PM 1</td>
-									<td>${sensorData[sensorId].pm1} μg/m³</td>
-								</tr>
-								<tr>
-									<td>PM 2.5</td>
-									<td>${sensorData[sensorId].pm2_5} μg/m³</td >
-								</tr >
-								<tr>
-									<td>PM 4</td>
-									<td>${sensorData[sensorId].pm4} μg/m³</td >
-								</tr >
-								<tr>
-									<td>PM 10</td>
-									<td>${sensorData[sensorId].pm10} μg/m³</td >
-								</tr >
-								<tr>
-									<td>NOx Index</td>
-									<td>${sensorData[sensorId].nox}</td >
-								</tr >
-								<tr>
-									<td>VOC Index</td>
-									<td>${sensorData[sensorId].voc}</td >
-								</tr >
-							</table >
+				}).bindPopup(`<div class="table-responsive">
+								<table class="table table-vcenter">
+									<tr>
+										<td>Name</td>
+										<td>${sensorData[sensorId].name}</td>
+									</tr>
+									<tr>
+										<td>Temperature</td>
+										<td>${sensorData[sensorId].temperature} °C</td >
+									</tr >
+									<tr>
+										<td>Relative Humidity</td>
+										<td>${sensorData[sensorId].relative_humidity} %</td >
+									</tr >
+									<tr>
+										<td>PM 1</td>
+										<td>${sensorData[sensorId].pm1} μg/m³</td>
+									</tr>
+									<tr>
+										<td>PM 2.5</td>
+										<td>${sensorData[sensorId].pm2_5} μg/m³</td >
+									</tr >
+									<tr>
+										<td>PM 4</td>
+										<td>${sensorData[sensorId].pm4} μg/m³</td >
+									</tr >
+									<tr>
+										<td>PM 10</td>
+										<td>${sensorData[sensorId].pm10} μg/m³</td >
+									</tr >
+									<tr>
+										<td>NOx Index</td>
+										<td>${sensorData[sensorId].nox}</td >
+									</tr >
+									<tr>
+										<td>VOC Index</td>
+										<td>${sensorData[sensorId].voc}</td >
+									</tr >
+								</table >
+							</div>
 							${sensorData[sensorId].time}`).bindTooltip(String(sensorData[sensorId].pm2_5), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 				markers.push(circle)
 			};
