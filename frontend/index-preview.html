@@ -217,11 +217,16 @@
 				text: 'Sensor Data',
 			},
 			noData: {
-				text: 'No Data'
+				text: 'No data to show'
 			},
 			xaxis: {
 				type: 'datetime',
 				tickAmount: 8
+			},
+			tooltip: {
+				x: {
+					format: 'dd MMM yyyy hh:mm:ss'
+				}
 			}
 		};
 		let pmChart = new ApexCharts(
@@ -259,7 +264,7 @@
 
 		function setGraphNodeMapEvent(e) {
 			device_id = e.sourceTarget.options.device_id
-			graph_name = e.sourceTarget.options.name
+			graph_name = `Sensor: ${e.sourceTarget.options.name}`
 			getTimeSeriesData()
 		}
 
@@ -294,6 +299,7 @@
 						console.log(graph_datasets[index]);
 						options.series.push({ name: graph_dataset_names[graph_datasets[index]], data: graph_data.map(a => [a.event_time, a[graph_datasets[index]]]) });
 					}
+					options.title.text = graph_name;
 					options.xaxis.min = Date.now() - graph_timespan;
 					options.xaxis.max = Date.now();
 					pmChart.updateOptions(options);
