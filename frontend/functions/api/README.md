@@ -30,8 +30,13 @@ CREATE TABLE IF NOT EXISTS sensors (
   owner text NOT NULL,
   lat real NOT NULL,
   long real NOT NULL,
-  token text NOT NULL
+  token text NOT NULL,
+  private integer NOT NULL,
+  active integer NOT NULL
 );
+
+## Get total number of sensors
+SELECT COUNT(device_id) AS sensors FROM sensors WHERE active = 1 AND private = 0
 
 # Email sending
 Using Cloudflare and MailChannels
