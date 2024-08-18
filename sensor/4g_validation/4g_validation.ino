@@ -305,7 +305,8 @@ void loop() {
     } else {
       DBG("POST request failed");
     }
-    delay(30000);
+    //15 minutes
+    delay(900000);
   }
 }
 
