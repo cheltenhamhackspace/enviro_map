@@ -28,7 +28,7 @@ export async function onRequest(context) {
 
     async function standardiseReadingData(readingData) {
         function checkUndefinedSetNull(item) {
-            if (readingData[item] === undefined || readingData[item] === "inf") {
+            if (readingData[item] === undefined || readingData[item] === "inf" || readingData[item] === "nan") {
                 readingData[item] = null;
             };
         }
@@ -40,15 +40,6 @@ export async function onRequest(context) {
         let reqBody = await readRequestBody(context.request);
         let data = JSON.parse(reqBody);
         console.log(data);
-
-        for (let key in data) {
-            let value = data[key];
-            if (typeof value !== "number" || isNaN(value))  {
-                console.log(`${key} is not a number: ${value}`);
-                data[key] = null;
-            }
-        }
-
 
         if (data.pm1) {
             standardiseReadingData(data);
