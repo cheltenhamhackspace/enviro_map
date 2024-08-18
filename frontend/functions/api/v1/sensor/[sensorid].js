@@ -43,7 +43,7 @@ export async function onRequest(context) {
 
         for (let key in data) {
             let value = data[key];
-            if (typeof value !== "number") {
+            if (typeof value !== "number" || isNaN(value))  {
                 console.log(`${key} is not a number: ${value}`);
                 data[key] = null;
             }
