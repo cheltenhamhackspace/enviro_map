@@ -37,8 +37,8 @@ export async function onRequest(context) {
     }
 
     if (context.request.method === "POST") {
-        const reqBody = await readRequestBody(context.request);
-        const data = JSON.parse(reqBody);
+        let reqBody = await readRequestBody(context.request);
+        let data = JSON.parse(reqBody);
         console.log(data);
 
         for (let key in data) {
