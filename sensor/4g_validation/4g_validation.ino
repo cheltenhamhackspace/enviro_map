@@ -1,14 +1,3 @@
-/**************************************************************
- *
- * TinyGSM Getting Started guide:
- *   https://tiny.cc/tinygsm-readme
- *
- * NOTE:
- * Some of the functions may be unavailable for your modem.
- * Just comment them out.
- *
- **************************************************************/
-
 #include "utilities.h"
 #include <ESP_SSLClient.h>
 #include <ArduinoJson.h>
@@ -109,6 +98,43 @@ const char wifiPass[] = "YourWiFiPass";
 const char server[]   = "www.cloudflare.com";
 const char resource[] = "/robots.txt";
 
+
+
+// Delays
+unsigned long currentTime = 0;
+unsigned long lastReadingTime = 0;
+unsigned long lastReportTime = 0;
+unsigned long readingInterval = 60000; // 1 minute
+unsigned long reportInterval = 900000; // 15 minutes
+
+// Define the number of readings to store
+const int numReadings = 15;
+
+// Arrays to store the last 15 readings for sensor1
+float sensor1_pm1p0Readings[numReadings];
+float sensor1_pm2p5Readings[numReadings];
+float sensor1_pm4p0Readings[numReadings];
+float sensor1_pm10p0Readings[numReadings];
+float sensor1_humidityReadings[numReadings];
+float sensor1_temperatureReadings[numReadings];
+float sensor1_vocIndexReadings[numReadings];
+float sensor1_noxIndexReadings[numReadings];
+
+// Arrays to store the last 15 readings for sensor2
+float sensor2_pm1p0Readings[numReadings];
+float sensor2_pm2p5Readings[numReadings];
+float sensor2_pm4p0Readings[numReadings];
+float sensor2_pm10p0Readings[numReadings];
+float sensor2_humidityReadings[numReadings];
+float sensor2_temperatureReadings[numReadings];
+float sensor2_vocIndexReadings[numReadings];
+float sensor2_noxIndexReadings[numReadings];
+
+// Index for the current reading
+int readingIndex = 0;
+
+
+
 #include <TinyGsmClient.h>
 
 #if TINY_GSM_TEST_GPRS && not defined TINY_GSM_MODEM_HAS_GPRS
@@ -140,9 +166,6 @@ TinyGsm        modem(SerialAT);
 
 unsigned char serialNumber[32];
 uint8_t serialNumberSize = 32;
-
-unsigned long previousMillis = 0;
-unsigned long interval = 300000;
 
 SEN5xSensor sensor1(Wire);
 SEN5xSensor sensor2(Wire1);
@@ -252,61 +275,94 @@ void loop() {
   //   client.stop();
   // }
 
-  // Do nothing forevermore
   while (true) {
-    modem.maintain();
+    currentTime = millis();
 
-    // Create a JSON document
-    StaticJsonDocument<200> doc;
-    String json;
+    if (currentTime - lastReadingTime >= readingInterval) {
+      DBG("READING");
+      
+      // Read sensor1 data
+      float pm1p0, pm2p5, pm4p0, pm10p0, humidity, temperature, vocIndex, noxIndex;
+      sensor1.getReadings(pm1p0, pm2p5, pm4p0, pm10p0, humidity, temperature, vocIndex, noxIndex);
+      DBG("Sensor1: :", pm1p0, pm2p5, pm4p0, pm10p0, humidity, temperature, vocIndex, noxIndex);
 
+      // Store the readings in the sensor1 arrays
+      sensor1_pm1p0Readings[readingIndex] = pm1p0;
+      sensor1_pm2p5Readings[readingIndex] = pm2p5;
+      sensor1_pm4p0Readings[readingIndex] = pm4p0;
+      sensor1_pm10p0Readings[readingIndex] = pm10p0;
+      sensor1_humidityReadings[readingIndex] = humidity;
+      sensor1_temperatureReadings[readingIndex] = temperature;
+      sensor1_vocIndexReadings[readingIndex] = vocIndex;
+      sensor1_noxIndexReadings[readingIndex] = noxIndex;
 
-    float pm1p0, pm2p5, pm4p0, pm10p0, humidity, temperature, vocIndex, noxIndex;
-    sensor1.getReadings(pm1p0, pm2p5, pm4p0, pm10p0, humidity, temperature, vocIndex, noxIndex);
-    DBG("Sensor1: :", pm1p0, pm2p5, pm4p0, pm10p0, humidity, temperature, vocIndex, noxIndex);
+      // Read sensor2 data
+      sensor2.getReadings(pm1p0, pm2p5, pm4p0, pm10p0, humidity, temperature, vocIndex, noxIndex);
+      DBG("Sensor2: :", pm1p0, pm2p5, pm4p0, pm10p0, humidity, temperature, vocIndex, noxIndex);
 
-    // Add values to the document
-    doc["relative_humidity"] = String(humidity);
-    doc["temperature"] = String(temperature);
-    doc["pm1"] = String(pm1p0);
-    doc["pm2_5"] = String(pm2p5);
-    doc["pm4"] = String(pm4p0);
-    doc["pm10"] = String(pm10p0);
-    doc["voc"] = String(vocIndex);
-    doc["nox"] = String(noxIndex);
+      // Store the readings in the sensor2 arrays
+      sensor2_pm1p0Readings[readingIndex] = pm1p0;
+      sensor2_pm2p5Readings[readingIndex] = pm2p5;
+      sensor2_pm4p0Readings[readingIndex] = pm4p0;
+      sensor2_pm10p0Readings[readingIndex] = pm10p0;
+      sensor2_humidityReadings[readingIndex] = humidity;
+      sensor2_temperatureReadings[readingIndex] = temperature;
+      sensor2_vocIndexReadings[readingIndex] = vocIndex;
+      sensor2_noxIndexReadings[readingIndex] = noxIndex;
 
-    // Convert the document to a string
-    serializeJson(doc, json);
+      // Increment the index for the next reading
+      readingIndex = (readingIndex + 1) % numReadings;
 
-    if (httpsPost("map.cheltenham.space", "/api/v1/sensor/verification-node-1-uuid-1", json.c_str())) {
-      DBG("POST request successful");
-    } else {
-      DBG("POST request failed");
+      lastReadingTime = currentTime;
     }
 
-    sensor2.getReadings(pm1p0, pm2p5, pm4p0, pm10p0, humidity, temperature, vocIndex, noxIndex);
-    DBG("Sensor2: :", pm1p0, pm2p5, pm4p0, pm10p0, humidity, temperature, vocIndex, noxIndex);
+    if (currentTime - lastReportTime >= reportInterval) {
+      modem.maintain();
 
-    // Add values to the document
-    doc["relative_humidity"] = String(humidity);
-    doc["temperature"] = String(temperature);
-    doc["pm1"] = String(pm1p0);
-    doc["pm2_5"] = String(pm2p5);
-    doc["pm4"] = String(pm4p0);
-    doc["pm10"] = String(pm10p0);
-    doc["voc"] = String(vocIndex);
-    doc["nox"] = String(noxIndex);
+      // Create a JSON document
+      StaticJsonDocument<200> doc;
+      String json;
 
-    // Convert the document to a string
-    serializeJson(doc, json);
+      // Add values to the document
+      doc["relative_humidity"] = String(calculateAverage(sensor1_humidityReadings, numReadings));
+      doc["temperature"] = String(calculateAverage(sensor1_temperatureReadings, numReadings));
+      doc["pm1"] = String(calculateAverage(sensor1_pm1p0Readings, numReadings));
+      doc["pm2_5"] = String(calculateAverage(sensor1_pm2p5Readings, numReadings));
+      doc["pm4"] = String(calculateAverage(sensor1_pm4p0Readings, numReadings));
+      doc["pm10"] = String(calculateAverage(sensor1_pm10p0Readings, numReadings));
+      doc["voc"] = String(calculateAverage(sensor1_vocIndexReadings, numReadings));
+      doc["nox"] = String(calculateAverage(sensor1_noxIndexReadings, numReadings));
 
-    if (httpsPost("map.cheltenham.space", "/api/v1/sensor/verification-node-1-uuid-2", json.c_str())) {
-      DBG("POST request successful");
-    } else {
-      DBG("POST request failed");
+      // Convert the document to a string
+      serializeJson(doc, json);
+
+      if (httpsPost("map.cheltenham.space", "/api/v1/sensor/verification-node-1-uuid-1", json.c_str())) {
+        DBG("POST request successful");
+      } else {
+        DBG("POST request failed");
+      }
+
+
+      // Add values to the document
+      doc["relative_humidity"] = String(calculateAverage(sensor2_humidityReadings, numReadings));
+      doc["temperature"] = String(calculateAverage(sensor2_temperatureReadings, numReadings));
+      doc["pm1"] = String(calculateAverage(sensor2_pm1p0Readings, numReadings));
+      doc["pm2_5"] = String(calculateAverage(sensor2_pm2p5Readings, numReadings));
+      doc["pm4"] = String(calculateAverage(sensor2_pm4p0Readings, numReadings));
+      doc["pm10"] = String(calculateAverage(sensor2_pm10p0Readings, numReadings));
+      doc["voc"] = String(calculateAverage(sensor2_vocIndexReadings, numReadings));
+      doc["nox"] = String(calculateAverage(sensor2_noxIndexReadings, numReadings));
+
+      // Convert the document to a string
+      serializeJson(doc, json);
+
+      if (httpsPost("map.cheltenham.space", "/api/v1/sensor/verification-node-1-uuid-2", json.c_str())) {
+        DBG("POST request successful");
+      } else {
+        DBG("POST request failed");
+      }
+      lastReportTime = currentTime;
     }
-    //15 minutes
-    delay(900000);
   }
 }
 

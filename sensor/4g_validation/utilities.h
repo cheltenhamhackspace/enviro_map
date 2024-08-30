@@ -85,3 +85,12 @@ class SEN5xSensor {
       }
     }
 };
+
+// Calculate the average of an array of floats
+float calculateAverage(float values[], int size) {
+  float sum = 0;
+  for (int i = 0; i < size; i++) {
+    sum += values[i];
+  }
+  return sum / size;
+}
