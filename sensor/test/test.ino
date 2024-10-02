@@ -5,7 +5,7 @@
 
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <Arduino_JSON.h>
+#include <ArduinoJson.h>
 #include <Arduino.h>
 #include <SensirionI2CSen5x.h>
 #include <Wire.h>
@@ -37,6 +37,16 @@ uint8_t serialNumberSize = 32;
 
 unsigned long previousMillis = 0;
 unsigned long interval = 300000;
+// Variables to keep track of the total readings and the number of readings taken
+float totalMassConcentrationPm1p0 = 0;
+float totalMassConcentrationPm2p5 = 0;
+float totalMassConcentrationPm4p0 = 0;
+float totalMassConcentrationPm10p0 = 0;
+float totalAmbientHumidity = 0;
+float totalAmbientTemperature = 0;
+float totalVocIndex = 0;
+float totalNoxIndex = 0;
+int readingsTaken = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -129,90 +139,89 @@ void loop() {
   float ambientTemperature;
   float vocIndex;
   float noxIndex;
-  if (currentMillis - previousMillis >= interval) {
-    error = sen5x.readMeasuredValues(
-      massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0,
-      massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex,
-      noxIndex);
 
-    if (error) {
-      Serial.print("Error trying to execute readMeasuredValues(): ");
-      errorToString(error, errorMessage, 256);
-      Serial.println(errorMessage);
-    } else {
-      Serial.print("MassConcentrationPm1p0:");
-      Serial.print(massConcentrationPm1p0);
-      Serial.print("\t");
-      Serial.print("MassConcentrationPm2p5:");
-      Serial.print(massConcentrationPm2p5);
-      Serial.print("\t");
-      Serial.print("MassConcentrationPm4p0:");
-      Serial.print(massConcentrationPm4p0);
-      Serial.print("\t");
-      Serial.print("MassConcentrationPm10p0:");
-      Serial.print(massConcentrationPm10p0);
-      Serial.print("\t");
-      Serial.print("AmbientHumidity:");
-      if (isnan(ambientHumidity)) {
-          Serial.print("n/a");
-      } else {
-          Serial.print(ambientHumidity);
-      }
-      Serial.print("\t");
-      Serial.print("AmbientTemperature:");
-      if (isnan(ambientTemperature)) {
-          Serial.print("n/a");
-      } else {
-          Serial.print(ambientTemperature);
-      }
-      Serial.print("\t");
-      Serial.print("VocIndex:");
-      if (isnan(vocIndex)) {
-          Serial.print("n/a");
-      } else {
-          Serial.print(vocIndex);
-      }
-      Serial.print("\t");
-      Serial.print("NoxIndex:");
-      if (isnan(noxIndex)) {
-          Serial.println("n/a");
-      } else {
-          Serial.println(noxIndex);
-      }
-    }
+  delay(250);
+
+  error = sen5x.readMeasuredValues(
+    massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0,
+    massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex,
+    noxIndex);
+
+  if (error) {
+    Serial.print("Error trying to execute readMeasuredValues(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+  } else {
+    // Add the current readings to the totals
+    totalMassConcentrationPm1p0 += massConcentrationPm1p0;
+    totalMassConcentrationPm2p5 += massConcentrationPm2p5;
+    totalMassConcentrationPm4p0 += massConcentrationPm4p0;
+    totalMassConcentrationPm10p0 += massConcentrationPm10p0;
+    totalAmbientHumidity += ambientHumidity;
+    totalAmbientTemperature += ambientTemperature;
+    totalVocIndex += vocIndex;
+    totalNoxIndex += noxIndex;
+    readingsTaken++;
+  }
+
+  if (currentMillis - previousMillis >= interval) {
+    // Calculate the averages
+    float avgMassConcentrationPm1p0 = totalMassConcentrationPm1p0 / readingsTaken;
+    float avgMassConcentrationPm2p5 = totalMassConcentrationPm2p5 / readingsTaken;
+    float avgMassConcentrationPm4p0 = totalMassConcentrationPm4p0 / readingsTaken;
+    float avgMassConcentrationPm10p0 = totalMassConcentrationPm10p0 / readingsTaken;
+    float avgAmbientHumidity = totalAmbientHumidity / readingsTaken;
+    float avgAmbientTemperature = totalAmbientTemperature / readingsTaken;
+    float avgVocIndex = totalVocIndex / readingsTaken;
+    float avgNoxIndex = totalNoxIndex / readingsTaken;
+
+    // Print the averages (optional)
+    Serial.print("Average MassConcentrationPm1p0:");
+    Serial.print(avgMassConcentrationPm1p0);
+    // ... (print other averages)
 
     // Use WiFiClient class to create TCP connections
     WiFiClient client;
     HTTPClient https;
     Serial.println("[HTTPS] begin...");
     Serial.println("[HTTPS] using insecure SSL, not validating certificate");
-    https.setInsecure(); 
+    https.setInsecure();
     if (https.begin("https://map.cheltenham.space/api/v1/sensor/test-node-2-uuid")) {  // HTTPS
 
       Serial.println("[HTTPS] POST...");
-      
+
       https.addHeader("Content-Type", "application/json");
+      StaticJsonDocument<200> doc;
+      doc["relative_humidity"] = avgAmbientHumidity;
+      doc["temperature"] = avgAmbientTemperature;
+      doc["pm1"] = avgMassConcentrationPm1p0;
+      doc["pm2_5"] = avgMassConcentrationPm2p5;
+      doc["pm4"] = avgMassConcentrationPm4p0;
+      doc["pm10"] = avgMassConcentrationPm10p0;
+      doc["voc"] = avgVocIndex;
+      doc["nox"] = avgNoxIndex;
+
+      String payload;
+      serializeJson(doc, payload);
+
+      int httpCode = https.POST(payload);
       // start connection and send HTTP header
-      int httpCode = https.POST("{\"relative_humidity\":\"" + String(ambientHumidity) + "\", \"temperature\":\"" + String(ambientTemperature) + "\", \"pm1\":\"" + String(massConcentrationPm1p0) + "\", \"pm2_5\":\"" + String(massConcentrationPm2p5) + "\", \"pm4\":\"" + String(massConcentrationPm4p0) + "\", \"pm10\":\"" + String(massConcentrationPm10p0) + "\", \"voc\":\"" + String(vocIndex) + "\", \"nox\":\"" + String(noxIndex) + "\"}");
+      //int httpCode = https.POST("{\"relative_humidity\":\"" + String(avgAmbientHumidity) + "\", \"temperature\":\"" + String(avgAmbientTemperature) + "\", \"pm1\":\"" + String(avgMassConcentrationPm1p0) + "\", \"pm2_5\":\"" + String(avgMassConcentrationPm2p5) + "\", \"pm4\":\"" + String(avgMassConcentrationPm4p0) + "\", \"pm10\":\"" + String(avgMassConcentrationPm10p0) + "\", \"voc\":\"" + String(avgVocIndex) + "\", \"nox\":\"" + String(avgNoxIndex) + "\"}");
 
-      // httpCode will be negative on error
-      if (httpCode > 0) {
-        // HTTP header has been send and Server response header has been handled
-        Serial.printf("[HTTPS] POST... code: %d\n\r", httpCode);
-
-        // file found at server
-        if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-          String payload = https.getString();
-          Serial.println(payload);
-        }
-      } else {
-        Serial.printf("[HTTPS] GET... failed, error: %s\n\r", https.errorToString(httpCode).c_str());
-      }
-
-      https.end();
-    } else {
-      Serial.printf("[HTTPS] Unable to connect\n\r");
+      // ... (rest of the HTTPS code)
     }
+
+    // Reset the totals and the number of readings taken
+    totalMassConcentrationPm1p0 = 0;
+    totalMassConcentrationPm2p5 = 0;
+    totalMassConcentrationPm4p0 = 0;
+    totalMassConcentrationPm10p0 = 0;
+    totalAmbientHumidity = 0;
+    totalAmbientTemperature = 0;
+    totalVocIndex = 0;
+    totalNoxIndex = 0;
+    readingsTaken = 0;
+
     previousMillis = currentMillis;
   }
 }
