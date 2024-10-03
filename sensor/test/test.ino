@@ -25,10 +25,15 @@ SensirionI2CSen5x sen5x;
 #ifndef STASSID
 #define STASSID "YOUR SSID HERE"
 #define STAPSK "YOUR PASSWORD HERE"
+#define UUID "YOUR UUID HERE"
+#define FWVERSION "0.1.1"
+
+#define BASEURL "https://map.cheltenham.space/api/v1/sensor/"
 #endif
 
 const char* ssid = STASSID;
 const char* password = STAPSK;
+String url = String(BASEURL) + String(UUID);
 
 WiFiMulti multi;
 
@@ -117,7 +122,7 @@ void setup() {
       errorToString(error, errorMessage, 256);
       Serial.println(errorMessage);
   }
-
+  delay(10000); // wait 10 seconds for the sensor to wake up
 }
 
 void loop() {
@@ -152,6 +157,29 @@ void loop() {
     errorToString(error, errorMessage, 256);
     Serial.println(errorMessage);
   } else {
+    Serial.print("PM1.0: ");
+    Serial.println(massConcentrationPm1p0);
+
+    Serial.print("PM2.5: ");
+    Serial.println(massConcentrationPm2p5);
+
+    Serial.print("PM4.0: ");
+    Serial.println(massConcentrationPm4p0);
+
+    Serial.print("PM10.0: ");
+    Serial.println(massConcentrationPm10p0);
+
+    Serial.print("Humidity: ");
+    Serial.println(ambientHumidity);
+
+    Serial.print("Temperature: ");
+    Serial.println(ambientTemperature);
+
+    Serial.print("VOC Index: ");
+    Serial.println(vocIndex);
+
+    Serial.print("NOx Index: ");
+    Serial.println(noxIndex);
     // Add the current readings to the totals
     totalMassConcentrationPm1p0 += massConcentrationPm1p0;
     totalMassConcentrationPm2p5 += massConcentrationPm2p5;
@@ -186,7 +214,7 @@ void loop() {
     Serial.println("[HTTPS] begin...");
     Serial.println("[HTTPS] using insecure SSL, not validating certificate");
     https.setInsecure();
-    if (https.begin("https://map.cheltenham.space/api/v1/sensor/test-node-2-uuid")) {  // HTTPS
+    if (https.begin(url)) {  // HTTPS
 
       Serial.println("[HTTPS] POST...");
 
@@ -200,6 +228,9 @@ void loop() {
       doc["pm10"] = avgMassConcentrationPm10p0;
       doc["voc"] = avgVocIndex;
       doc["nox"] = avgNoxIndex;
+      doc["sensor_serial"] = (char*)serialNumber;
+      doc["version"] = FWVERSION;
+      doc["uptime"] = millis();
 
       String payload;
       serializeJson(doc, payload);
