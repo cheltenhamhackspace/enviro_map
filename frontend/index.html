@@ -419,7 +419,7 @@
 									</tr >
 								</table >
 							</div>
-							${sensorData[sensorId].time}`).bindTooltip(String(sensorData[sensorId].pm2_5.toFixed(2)), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
+							${sensorData[sensorId].time}`).bindTooltip(String((typeof sensorData[sensorId].pm2_5 === 'undefined') ? "" : sensorData[sensorId].pm2_5.toFixed(2)), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
 				markers.push(circle)
 			};
 
