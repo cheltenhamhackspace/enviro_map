@@ -1,34 +1,24 @@
-/*
-    This sketch establishes a TCP connection to a "quote of the day" service.
-    It sends a "hello" message, and then prints received data.
-*/
-
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <Arduino.h>
 #include <SensirionI2CSen5x.h>
 #include <Wire.h>
+#include <malloc.h>
 
-// The used commands use up to 48 bytes. On some Arduino's the default buffer
-// space is not large enough
 #define MAXBUF_REQUIREMENT 48
-
-#if (defined(I2C_BUFFER_LENGTH) &&                 \
-     (I2C_BUFFER_LENGTH >= MAXBUF_REQUIREMENT)) || \
-    (defined(BUFFER_LENGTH) && BUFFER_LENGTH >= MAXBUF_REQUIREMENT)
-#define USE_PRODUCT_INFO
+#if (defined(I2C_BUFFER_LENGTH) && (I2C_BUFFER_LENGTH >= MAXBUF_REQUIREMENT)) || (defined(BUFFER_LENGTH) && BUFFER_LENGTH >= MAXBUF_REQUIREMENT)
+    #define USE_PRODUCT_INFO
 #endif
 
 SensirionI2CSen5x sen5x;
 
 #ifndef STASSID
-#define STASSID "YOUR SSID HERE"
-#define STAPSK "YOUR PASSWORD HERE"
-#define UUID "YOUR UUID HERE"
-#define FWVERSION "0.1.1"
-
-#define BASEURL "https://map.cheltenham.space/api/v1/sensor/"
+    #define STASSID "SSID HERE"
+    #define STAPSK "SSID PASSWORD HERE"
+    #define UUID "UUID HERE"
+    #define FWVERSION "0.1.2"
+    #define BASEURL "https://map.cheltenham.space/api/v1/sensor/"
 #endif
 
 const char* ssid = STASSID;
@@ -42,7 +32,7 @@ uint8_t serialNumberSize = 32;
 
 unsigned long previousMillis = 0;
 unsigned long interval = 300000;
-// Variables to keep track of the total readings and the number of readings taken
+
 float totalMassConcentrationPm1p0 = 0;
 float totalMassConcentrationPm2p5 = 0;
 float totalMassConcentrationPm4p0 = 0;
@@ -53,134 +43,114 @@ float totalVocIndex = 0;
 float totalNoxIndex = 0;
 int readingsTaken = 0;
 
-void setup() {
-  Serial.begin(115200);
-
-  // We start by connecting to a WiFi network
-
-  Serial.println();
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-
-  multi.addAP(ssid, password);
-
-  if (multi.run() != WL_CONNECTED) {
-    Serial.println("Unable to connect to network, rebooting in 10 seconds...");
-    delay(10000);
-    rp2040.reboot();
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-
-  Wire.begin();
-
-  sen5x.begin(Wire);
-
-  uint16_t error;
-  char errorMessage[256];
-  error = sen5x.deviceReset();
-  if (error) {
-      Serial.print("Error trying to execute deviceReset(): ");
-      errorToString(error, errorMessage, 256);
-      Serial.println(errorMessage);
-  }
-
-   
-
-  error = sen5x.getSerialNumber(serialNumber, serialNumberSize);
-  if (error) {
-      Serial.print("Error trying to execute getSerialNumber(): ");
-      errorToString(error, errorMessage, 256);
-      Serial.println(errorMessage);
-  } else {
-      Serial.print("SerialNumber:");
-      Serial.println((char*)serialNumber);
-  }
-  
-  // Adjust tempOffset to account for additional temperature offsets
-  // exceeding the SEN module's self heating.
-  float tempOffset = 0.0;
-  error = sen5x.setTemperatureOffsetSimple(tempOffset);
-  if (error) {
-      Serial.print("Error trying to execute setTemperatureOffsetSimple(): ");
-      errorToString(error, errorMessage, 256);
-      Serial.println(errorMessage);
-  } else {
-      Serial.print("Temperature Offset set to ");
-      Serial.print(tempOffset);
-      Serial.println(" deg. Celsius (SEN54/SEN55 only)");
-  }
-
-  // Start Measurement
-  error = sen5x.startMeasurement();
-  if (error) {
-      Serial.print("Error trying to execute startMeasurement(): ");
-      errorToString(error, errorMessage, 256);
-      Serial.println(errorMessage);
-  }
-  delay(10000); // wait 10 seconds for the sensor to wake up
+void printMemoryStats() {
+    struct mallinfo mi = mallinfo();
+    Serial.printf("Total non-mmapped bytes (arena): %d\n", mi.arena);
+    Serial.printf("Free chunks (ordblks): %d\n", mi.ordblks);
+    Serial.printf("Free bytes (fordblks): %d\n", mi.fordblks);
+    Serial.printf("Allocated chunks: %d\n", mi.uordblks);
 }
 
-void loop() {
-  unsigned long currentMillis = millis();
-  if (multi.run() != WL_CONNECTED) {
-    Serial.println("Unable to connect to network, rebooting...");
-    delay(10000);
-    rp2040.reboot();
-  }
-  uint16_t error;
-  char errorMessage[256];
+void setupWiFi() {
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+    
+    multi.addAP(ssid, password);
+    int attempts = 0;
+    const int maxAttempts = 10;
+    
+    while (multi.run() != WL_CONNECTED && attempts < maxAttempts) {
+        attempts++;
+        delay(1000);
+        Serial.printf("Attempt %d/%d to connect to WiFi\n", attempts, maxAttempts);
+    }
+    
+    if (multi.run() != WL_CONNECTED) {
+        Serial.println("Failed to connect after maximum attempts. Rebooting...");
+        delay(10000);
+        rp2040.reboot();
+    }
 
-  // Read Measurement
-  float massConcentrationPm1p0;
-  float massConcentrationPm2p5;
-  float massConcentrationPm4p0;
-  float massConcentrationPm10p0;
-  float ambientHumidity;
-  float ambientTemperature;
-  float vocIndex;
-  float noxIndex;
+    Serial.println("WiFi connected");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+}
 
-  delay(250);
+void resetSensor() {
+    uint16_t error;
+    char errorMessage[256];
+    error = sen5x.deviceReset();
+    if (error) {
+        errorToString(error, errorMessage, sizeof(errorMessage));
+        Serial.printf("Sensor reset failed: %s\n", errorMessage);
+    }
+}
 
-  error = sen5x.readMeasuredValues(
-    massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0,
-    massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex,
-    noxIndex);
+void fetchSensorSerial() {
+    uint16_t error;
+    char errorMessage[256];
+    error = sen5x.getSerialNumber(serialNumber, serialNumberSize);
+    if (error) {
+        errorToString(error, errorMessage, sizeof(errorMessage));
+        Serial.printf("Failed to fetch serial number: %s\n", errorMessage);
+    } else {
+        Serial.print("Sensor Serial Number: ");
+        Serial.println((char*)serialNumber);
+    }
+}
 
-  if (error) {
-    Serial.print("Error trying to execute readMeasuredValues(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
-  } else {
-    Serial.print("PM1.0: ");
-    Serial.println(massConcentrationPm1p0);
+void setTemperatureOffset() {
+    float tempOffset = 0.0;
+    uint16_t error = sen5x.setTemperatureOffsetSimple(tempOffset);
+    if (error) {
+        char errorMessage[256];
+        errorToString(error, errorMessage, sizeof(errorMessage));
+        Serial.printf("Failed to set temperature offset: %s\n", errorMessage);
+    } else {
+        Serial.printf("Temperature Offset set to %.1f deg. Celsius\n", tempOffset);
+    }
+}
 
-    Serial.print("PM2.5: ");
-    Serial.println(massConcentrationPm2p5);
+void handleWiFiReconnection() {
+    if (multi.run() != WL_CONNECTED) {
+        Serial.println("WiFi lost. Attempting reconnection...");
 
-    Serial.print("PM4.0: ");
-    Serial.println(massConcentrationPm4p0);
+        int retries = 0;
+        const int maxRetries = 10;
 
-    Serial.print("PM10.0: ");
-    Serial.println(massConcentrationPm10p0);
+        while (multi.run() != WL_CONNECTED && retries < maxRetries) {
+            retries++;
+            delay(1000);
+            Serial.printf("Reconnection attempt %d/%d\n", retries, maxRetries);
+        }
 
-    Serial.print("Humidity: ");
-    Serial.println(ambientHumidity);
+        if (multi.run() != WL_CONNECTED) {
+            Serial.println("Failed to reconnect. Rebooting...");
+            delay(1000);
+            rp2040.reboot();
+        } else {
+            Serial.println("Reconnected to WiFi.");
+        }
+    }
+}
 
-    Serial.print("Temperature: ");
-    Serial.println(ambientTemperature);
+void readAndStoreMeasurements() {
+    uint16_t error;
+    char errorMessage[256];
 
-    Serial.print("VOC Index: ");
-    Serial.println(vocIndex);
+    float massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0, massConcentrationPm10p0;
+    float ambientHumidity, ambientTemperature, vocIndex, noxIndex;
 
-    Serial.print("NOx Index: ");
-    Serial.println(noxIndex);
-    // Add the current readings to the totals
+    error = sen5x.readMeasuredValues(
+        massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0,
+        massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex, noxIndex);
+
+    if (error) {
+        errorToString(error, errorMessage, sizeof(errorMessage));
+        Serial.printf("Failed to read sensor values: %s\n", errorMessage);
+        return;
+    }
+
     totalMassConcentrationPm1p0 += massConcentrationPm1p0;
     totalMassConcentrationPm2p5 += massConcentrationPm2p5;
     totalMassConcentrationPm4p0 += massConcentrationPm4p0;
@@ -190,10 +160,14 @@ void loop() {
     totalVocIndex += vocIndex;
     totalNoxIndex += noxIndex;
     readingsTaken++;
-  }
+}
 
-  if (currentMillis - previousMillis >= interval) {
-    // Calculate the averages
+void sendDataToServer() {
+    if (readingsTaken == 0) {
+        Serial.println("No data to send.");
+        return;
+    }
+
     float avgMassConcentrationPm1p0 = totalMassConcentrationPm1p0 / readingsTaken;
     float avgMassConcentrationPm2p5 = totalMassConcentrationPm2p5 / readingsTaken;
     float avgMassConcentrationPm4p0 = totalMassConcentrationPm4p0 / readingsTaken;
@@ -203,46 +177,45 @@ void loop() {
     float avgVocIndex = totalVocIndex / readingsTaken;
     float avgNoxIndex = totalNoxIndex / readingsTaken;
 
-    // Print the averages (optional)
-    Serial.print("Average MassConcentrationPm1p0:");
-    Serial.print(avgMassConcentrationPm1p0);
-    // ... (print other averages)
-
-    // Use WiFiClient class to create TCP connections
     WiFiClient client;
     HTTPClient https;
-    Serial.println("[HTTPS] begin...");
-    Serial.println("[HTTPS] using insecure SSL, not validating certificate");
-    https.setInsecure();
-    if (https.begin(url)) {  // HTTPS
 
-      Serial.println("[HTTPS] POST...");
+    https.setInsecure();  // Skip SSL verification
+    if (https.begin(url)) {
+        https.addHeader("Content-Type", "application/json");
+        StaticJsonDocument<500> doc;
+        doc["relative_humidity"] = avgAmbientHumidity;
+        doc["temperature"] = avgAmbientTemperature;
+        doc["pm1"] = avgMassConcentrationPm1p0;
+        doc["pm2_5"] = avgMassConcentrationPm2p5;
+        doc["pm4"] = avgMassConcentrationPm4p0;
+        doc["pm10"] = avgMassConcentrationPm10p0;
+        doc["voc"] = avgVocIndex;
+        doc["nox"] = avgNoxIndex;
+        doc["sensor_serial"] = (char*)serialNumber;
+        doc["version"] = FWVERSION;
+        doc["uptime"] = millis();
 
-      https.addHeader("Content-Type", "application/json");
-      StaticJsonDocument<200> doc;
-      doc["relative_humidity"] = avgAmbientHumidity;
-      doc["temperature"] = avgAmbientTemperature;
-      doc["pm1"] = avgMassConcentrationPm1p0;
-      doc["pm2_5"] = avgMassConcentrationPm2p5;
-      doc["pm4"] = avgMassConcentrationPm4p0;
-      doc["pm10"] = avgMassConcentrationPm10p0;
-      doc["voc"] = avgVocIndex;
-      doc["nox"] = avgNoxIndex;
-      doc["sensor_serial"] = (char*)serialNumber;
-      doc["version"] = FWVERSION;
-      doc["uptime"] = millis();
+        String payload;
+        serializeJson(doc, payload);
 
-      String payload;
-      serializeJson(doc, payload);
+        int httpCode = https.POST(payload);
 
-      int httpCode = https.POST(payload);
-      // start connection and send HTTP header
-      //int httpCode = https.POST("{\"relative_humidity\":\"" + String(avgAmbientHumidity) + "\", \"temperature\":\"" + String(avgAmbientTemperature) + "\", \"pm1\":\"" + String(avgMassConcentrationPm1p0) + "\", \"pm2_5\":\"" + String(avgMassConcentrationPm2p5) + "\", \"pm4\":\"" + String(avgMassConcentrationPm4p0) + "\", \"pm10\":\"" + String(avgMassConcentrationPm10p0) + "\", \"voc\":\"" + String(avgVocIndex) + "\", \"nox\":\"" + String(avgNoxIndex) + "\"}");
+        if (httpCode > 0) {
+            Serial.printf("POST Response: %d\n", httpCode);
+            if (httpCode == HTTP_CODE_OK) {
+                String response = https.getString();
+                Serial.println(response);
+            }
+        } else {
+            Serial.printf("POST Failed: %s\n", https.errorToString(httpCode).c_str());
+        }
 
-      // ... (rest of the HTTPS code)
+        https.end();
+    } else {
+        Serial.println("Failed to connect to the server.");
     }
 
-    // Reset the totals and the number of readings taken
     totalMassConcentrationPm1p0 = 0;
     totalMassConcentrationPm2p5 = 0;
     totalMassConcentrationPm4p0 = 0;
@@ -252,7 +225,40 @@ void loop() {
     totalVocIndex = 0;
     totalNoxIndex = 0;
     readingsTaken = 0;
+}
 
-    previousMillis = currentMillis;
-  }
+void setup() {
+    Serial.begin(115200);
+
+    setupWiFi();
+
+    Wire.begin();
+    sen5x.begin(Wire);
+
+    resetSensor();
+    fetchSensorSerial();
+    setTemperatureOffset();
+
+    // Start Measurement
+    uint16_t error = sen5x.startMeasurement();
+    if (error) {
+        char errorMessage[256];
+        errorToString(error, errorMessage, sizeof(errorMessage));
+        Serial.printf("Failed to start sensor measurement: %s\n", errorMessage);
+    }
+    
+    delay(10000);  // Wait for sensor to stabilize
+}
+
+void loop() {
+    unsigned long currentMillis = millis();
+    
+    handleWiFiReconnection();
+    readAndStoreMeasurements();
+
+    if ((currentMillis - previousMillis) >= interval) {
+        sendDataToServer();
+        previousMillis = currentMillis;
+        printMemoryStats();
+    }
 }
