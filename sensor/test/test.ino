@@ -6,33 +6,42 @@
 #include <Wire.h>
 #include <malloc.h>
 
+// Define buffer size requirement for I2C communication
 #define MAXBUF_REQUIREMENT 48
+
+// Check if the buffer size meets the requirement, define USE_PRODUCT_INFO if true
 #if (defined(I2C_BUFFER_LENGTH) && (I2C_BUFFER_LENGTH >= MAXBUF_REQUIREMENT)) || (defined(BUFFER_LENGTH) && BUFFER_LENGTH >= MAXBUF_REQUIREMENT)
     #define USE_PRODUCT_INFO
 #endif
 
+// Sensor object for the Sensirion SEN5x sensor
 SensirionI2CSen5x sen5x;
 
+// WiFi credentials and other constant definitions
 #ifndef STASSID
-    #define STASSID "SSID HERE"
-    #define STAPSK "SSID PASSWORD HERE"
-    #define UUID "UUID HERE"
-    #define FWVERSION "0.1.2"
-    #define BASEURL "https://map.cheltenham.space/api/v1/sensor/"
+    #define STASSID "SSID HERE"  // WiFi SSID
+    #define STAPSK "SSID PASSWORD HERE"            // WiFi Password
+    #define UUID "UUID HERE"          // Unique identifier for the sensor node
+    #define FWVERSION "0.1.1"                // Firmware version
+    #define BASEURL "https://map.cheltenham.space/api/v1/sensor/"  // Base URL for data submission
 #endif
 
+// WiFi credentials
 const char* ssid = STASSID;
 const char* password = STAPSK;
-String url = String(BASEURL) + String(UUID);
+String url = String(BASEURL) + String(UUID);  // Construct the full URL for API endpoint
 
-WiFiMulti multi;
+WiFiMulti multi;  // WiFiMulti allows for multiple access point connections
 
+// Sensor serial number buffer and size
 unsigned char serialNumber[32];
 uint8_t serialNumberSize = 32;
 
+// Timing variables for periodic measurements and data submission
 unsigned long previousMillis = 0;
-unsigned long interval = 300000;
+unsigned long interval = 300000;  // Interval for sending data (5 minutes)
 
+// Variables to accumulate sensor readings for averaging
 float totalMassConcentrationPm1p0 = 0;
 float totalMassConcentrationPm2p5 = 0;
 float totalMassConcentrationPm4p0 = 0;
@@ -41,8 +50,9 @@ float totalAmbientHumidity = 0;
 float totalAmbientTemperature = 0;
 float totalVocIndex = 0;
 float totalNoxIndex = 0;
-int readingsTaken = 0;
+int readingsTaken = 0;  // Counter for how many readings have been taken
 
+// Function to print memory stats for debugging purposes
 void printMemoryStats() {
     struct mallinfo mi = mallinfo();
     Serial.printf("Total non-mmapped bytes (arena): %d\n", mi.arena);
@@ -51,34 +61,40 @@ void printMemoryStats() {
     Serial.printf("Allocated chunks: %d\n", mi.uordblks);
 }
 
+// Function to connect to the WiFi network
 void setupWiFi() {
     Serial.print("Connecting to ");
     Serial.println(ssid);
-    
-    multi.addAP(ssid, password);
+
+    multi.addAP(ssid, password);  // Add the WiFi network to the list of available networks
     int attempts = 0;
-    const int maxAttempts = 10;
+    const int maxAttempts = 10;  // Maximum number of WiFi connection attempts
     
+    // Try connecting to WiFi within a maximum number of attempts
     while (multi.run() != WL_CONNECTED && attempts < maxAttempts) {
         attempts++;
         delay(1000);
         Serial.printf("Attempt %d/%d to connect to WiFi\n", attempts, maxAttempts);
     }
     
+    // If connection fails after max attempts, reboot the device "the Microsoft approach"
     if (multi.run() != WL_CONNECTED) {
         Serial.println("Failed to connect after maximum attempts. Rebooting...");
         delay(10000);
-        rp2040.reboot();
+        rp2040.reboot();  // Reboot function for RP2040 boards
     }
 
     Serial.println("WiFi connected");
     Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+    Serial.println(WiFi.localIP());  // Print the local IP address
 }
 
+// Function to reset the sensor
 void resetSensor() {
     uint16_t error;
     char errorMessage[256];
+    
+    // Reset the sensor and handle any errors
     error = sen5x.deviceReset();
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
@@ -86,9 +102,12 @@ void resetSensor() {
     }
 }
 
+// Function to retrieve and print the sensor's serial number
 void fetchSensorSerial() {
     uint16_t error;
     char errorMessage[256];
+    
+    // Fetch the serial number of the sensor
     error = sen5x.getSerialNumber(serialNumber, serialNumberSize);
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
@@ -99,9 +118,12 @@ void fetchSensorSerial() {
     }
 }
 
+// Function to set a temperature offset for the sensor
 void setTemperatureOffset() {
     float tempOffset = 0.0;
     uint16_t error = sen5x.setTemperatureOffsetSimple(tempOffset);
+    
+    // Check for errors in setting the temperature offset
     if (error) {
         char errorMessage[256];
         errorToString(error, errorMessage, sizeof(errorMessage));
@@ -111,19 +133,22 @@ void setTemperatureOffset() {
     }
 }
 
+// Function to handle WiFi reconnection if the connection drops
 void handleWiFiReconnection() {
     if (multi.run() != WL_CONNECTED) {
         Serial.println("WiFi lost. Attempting reconnection...");
 
         int retries = 0;
-        const int maxRetries = 10;
+        const int maxRetries = 10;  // Maximum number of reconnection attempts
 
+        // Attempt to reconnect to WiFi
         while (multi.run() != WL_CONNECTED && retries < maxRetries) {
             retries++;
             delay(1000);
             Serial.printf("Reconnection attempt %d/%d\n", retries, maxRetries);
         }
 
+        // If reconnection fails, reboot the device
         if (multi.run() != WL_CONNECTED) {
             Serial.println("Failed to reconnect. Rebooting...");
             delay(1000);
@@ -134,6 +159,7 @@ void handleWiFiReconnection() {
     }
 }
 
+// Function to read sensor measurements and accumulate them for averaging
 void readAndStoreMeasurements() {
     uint16_t error;
     char errorMessage[256];
@@ -141,16 +167,19 @@ void readAndStoreMeasurements() {
     float massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0, massConcentrationPm10p0;
     float ambientHumidity, ambientTemperature, vocIndex, noxIndex;
 
+    // Read sensor values
     error = sen5x.readMeasuredValues(
         massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0,
         massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex, noxIndex);
 
+    // Check for errors in reading sensor values
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
         Serial.printf("Failed to read sensor values: %s\n", errorMessage);
         return;
     }
 
+    // Accumulate readings for averaging
     totalMassConcentrationPm1p0 += massConcentrationPm1p0;
     totalMassConcentrationPm2p5 += massConcentrationPm2p5;
     totalMassConcentrationPm4p0 += massConcentrationPm4p0;
@@ -159,15 +188,18 @@ void readAndStoreMeasurements() {
     totalAmbientTemperature += ambientTemperature;
     totalVocIndex += vocIndex;
     totalNoxIndex += noxIndex;
-    readingsTaken++;
+    readingsTaken++;  // Increment the count of readings taken
 }
 
+// Function to send the averaged data to the server
 void sendDataToServer() {
+    // Ensure that at least one reading has been taken before sending data
     if (readingsTaken == 0) {
         Serial.println("No data to send.");
         return;
     }
 
+    // Calculate average values of the accumulated data
     float avgMassConcentrationPm1p0 = totalMassConcentrationPm1p0 / readingsTaken;
     float avgMassConcentrationPm2p5 = totalMassConcentrationPm2p5 / readingsTaken;
     float avgMassConcentrationPm4p0 = totalMassConcentrationPm4p0 / readingsTaken;
@@ -180,9 +212,11 @@ void sendDataToServer() {
     WiFiClient client;
     HTTPClient https;
 
-    https.setInsecure();  // Skip SSL verification
-    if (https.begin(url)) {
+    https.setInsecure();  // Disable SSL certificate verification
+    if (https.begin(url)) {  // Begin the HTTPS connection
         https.addHeader("Content-Type", "application/json");
+        
+        // Prepare the JSON payload with sensor data
         StaticJsonDocument<500> doc;
         doc["relative_humidity"] = avgAmbientHumidity;
         doc["temperature"] = avgAmbientTemperature;
@@ -199,8 +233,10 @@ void sendDataToServer() {
         String payload;
         serializeJson(doc, payload);
 
+        // Send the POST request to the server
         int httpCode = https.POST(payload);
 
+        // Handle the server response
         if (httpCode > 0) {
             Serial.printf("POST Response: %d\n", httpCode);
             if (httpCode == HTTP_CODE_OK) {
@@ -211,11 +247,12 @@ void sendDataToServer() {
             Serial.printf("POST Failed: %s\n", https.errorToString(httpCode).c_str());
         }
 
-        https.end();
+        https.end();  // End the HTTPS connection
     } else {
         Serial.println("Failed to connect to the server.");
     }
 
+    // Reset the accumulated data after sending
     totalMassConcentrationPm1p0 = 0;
     totalMassConcentrationPm2p5 = 0;
     totalMassConcentrationPm4p0 = 0;
@@ -227,19 +264,20 @@ void sendDataToServer() {
     readingsTaken = 0;
 }
 
+// Setup function runs once when the microcontroller starts
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(115200);  // Start serial communication
 
-    setupWiFi();
+    setupWiFi();  // Connect to WiFi
 
-    Wire.begin();
-    sen5x.begin(Wire);
+    Wire.begin();  // Initialize I2C bus
+    sen5x.begin(Wire);  // Start communication with the sensor
 
-    resetSensor();
-    fetchSensorSerial();
-    setTemperatureOffset();
+    resetSensor();  // Reset the sensor
+    fetchSensorSerial();  // Retrieve and print the sensor serial number
+    setTemperatureOffset();  // Set the temperature offset
 
-    // Start Measurement
+    // Start the sensor measurement
     uint16_t error = sen5x.startMeasurement();
     if (error) {
         char errorMessage[256];
@@ -247,18 +285,20 @@ void setup() {
         Serial.printf("Failed to start sensor measurement: %s\n", errorMessage);
     }
     
-    delay(10000);  // Wait for sensor to stabilize
+    delay(10000);  // Wait for the sensor to stabilize before taking measurements
 }
 
+// Loop function runs repeatedly after the setup function
 void loop() {
-    unsigned long currentMillis = millis();
-    
-    handleWiFiReconnection();
-    readAndStoreMeasurements();
+    unsigned long currentMillis = millis();  // Get the current time
 
+    handleWiFiReconnection();  // Check and maintain WiFi connection
+    readAndStoreMeasurements();  // Read and accumulate sensor data
+
+    // Check if it's time to send data to the server based on the set interval
     if ((currentMillis - previousMillis) >= interval) {
-        sendDataToServer();
-        previousMillis = currentMillis;
-        printMemoryStats();
+        sendDataToServer();  // Send the data to the server
+        previousMillis = currentMillis;  // Reset the previousMillis to current time
+        printMemoryStats();  // Print memory stats for debugging
     }
 }
