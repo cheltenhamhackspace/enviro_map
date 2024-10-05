@@ -210,6 +210,50 @@
 			chart: {
 				height: 300,
 				type: 'line',
+				toolbar: {
+					show: true,
+					offsetX: 0,
+					offsetY: 0,
+					tools: {
+						download: true,
+						selection: true,
+						zoom: true,
+						zoomin: true,
+						zoomout: true,
+						pan: true,
+						reset: true,
+						customIcons: []
+					},
+					export: {
+						csv: {
+							filename: 'sensor_data', // Optional: Set your desired filename
+							columnDelimiter: ',',    // Optional: Set delimiter if needed
+							headerCategory: 'category',
+							headerValue: 'value',
+							categoryFormatter(x) {
+								// Include both date and time in the CSV export
+								return new Date(x).toLocaleString('en-GB', {
+									year: 'numeric',
+									month: 'short',
+									day: 'numeric',
+									hour: '2-digit',
+									minute: '2-digit',
+									second: '2-digit'
+								});
+							},
+							valueFormatter(y) {
+								return y;  // Leave this as is to format the value
+							}
+						},
+						svg: {
+							filename: 'sensor_chart', // Optional: Set your desired filename for SVG
+						},
+						png: {
+							filename: 'sensor_chart', // Optional: Set your desired filename for PNG
+						}
+					},
+					autoSelected: 'zoom'
+				}
 			},
 			series: [],
 			title: {
@@ -223,23 +267,12 @@
 				type: 'datetime',
 				tickAmount: 8,
 				labels: {
-            		datetimeUTC: false  // Disable UTC if you want local time
-        		}
+					datetimeUTC: false  // Disable UTC if you want local time
+				}
 			},
 			tooltip: {
 				x: {
 					format: 'dd MMM yyyy hh:mm:ss'  // Ensuring the tooltip shows both date and time
-				}
-			},
-			export: {
-				csv: {
-					categoryFormatter: function(timestamp) {
-						// Format the timestamp in the CSV as "YYYY-MM-DD HH:mm:ss"
-						const date = new Date(timestamp);
-						console.log(timestamp);
-						console.log(date);
-						return date.toISOString().replace('T', ' ').split('.')[0]; // Custom date formatting
-					}
 				}
 			}
 		};
