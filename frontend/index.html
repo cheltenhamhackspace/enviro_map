@@ -225,14 +225,15 @@
 			},
 			tooltip: {
 				x: {
-					format: 'dd MMM yyyy hh:mm:ss'
+					format: 'dd MMM yyyy hh:mm:ss'  // Ensuring the tooltip shows both date and time
 				}
 			},
 			export: {
 				csv: {
-					dateFormatter: function (val) {
-						let date = new Date(val);
-						return date.toISOString().replace('T', ' ').substring(0, 19); // Will output 'yyyy-MM-dd hh:mm:ss'
+					dateFormatter: function(timestamp) {
+						// Format the timestamp in the CSV as "YYYY-MM-DD HH:mm:ss"
+						const date = new Date(timestamp);
+						return date.toISOString().replace('T', ' ').split('.')[0]; // Custom date formatting
 					}
 				}
 			}
