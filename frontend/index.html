@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Cheltenham Hackspace - enviro_map Demo</title>
+
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"
+		integrity="sha512-KhIBJeCI4oTEeqOmRi2gDJ7m+JARImhUYgXWiOTIp9qqySpFUAJs09erGKem4E5IPuxxSTjavuurvBitBmwE0w=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+		integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+	<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.2/dist/nouislider.min.js"
+		integrity="sha256-mV1eAb0l7MOOqzqnLfbryr3GlZtpPqGkkBwqGMpuNqY=" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.2/dist/nouislider.min.css"
+		integrity="sha256-nckVXP1jMdH1YpiBrAvGOSgkP6TB2DsXzkkhtSAL4K4=" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
+
+	<style>
+		.leaflet-container {
+			height: 400px;
+			width: 600px;
+			max-width: 100%;
+			max-height: 100%;
+		}
+
+		.leaflet-tooltip-pane .text {
+			color: rgb(0, 0, 0);
+			font-weight: bold;
+			background: transparent;
+			border: 0;
+			box-shadow: none;
+			font-size: 1.5em;
+		}
+	</style>
+
+
+</head>
+
+<body>
+	<div class="page">
+		<!-- Sidebar -->
+		<aside class="navbar navbar-vertical navbar-expand-sm navbar-dark">
+			<div class="container-fluid">
+				<button class="navbar-toggler" type="button">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<h1 class="navbar-brand navbar-brand-autodark">
+					Cheltenham Hackspace<br>
+					Enviro Map
+				</h1>
+				<div class="collapse navbar-collapse" id="sidebar-menu">
+					<ul class="navbar-nav pt-lg-3">
+						<li class="nav-item">
+							<a class="nav-link" href="./">
+								<span class="nav-link-title">
+									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+										stroke-linejoin="round"
+										class="icon icon-tabler icons-tabler-outline icon-tabler-home">
+										<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+										<path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+										<path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+										<path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+									</svg>
+									Home
+								</span>
+							</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/login">
+								<span class="nav-link-title">
+									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+										stroke-linejoin="round"
+										class="icon icon-tabler icons-tabler-outline icon-tabler-login">
+										<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+										<path
+											d="M15 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+										<path d="M21 12h-13l3 -3" />
+										<path d="M11 15l-3 -3" />
+									</svg>
+									Login/Sign Up
+								</span>
+							</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="https://www.cheltenhamhackspace.org/">
+								<span class="nav-link-title">
+									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+										stroke-linejoin="round"
+										class="icon icon-tabler icons-tabler-outline icon-tabler-external-link">
+										<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+										<path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" />
+										<path d="M11 13l9 -9" />
+										<path d="M15 4h5v5" />
+									</svg>
+									Cheltenham Hackspace
+								</span>
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</aside>
+		<!-- Main page -->
+		<div class="page-wrapper">
+			<div class="page-header d-print-none">
+				<div class="container-xl">
+					<div class="row g-2 align-items-center">
+						<div class="col">
+							<h2 class="page-title">
+								Our Sensors
+							</h2>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="page-body">
+				<div class="container-xl">
+					<div class="row row-deck row-cards">
+						<!-- <div class="col-sm-6 col-lg-3">
+							<div class="card">
+								<div class="card-body" style="height: 10rem"></div>
+							</div>
+						</div>
+						<div class="col-sm-6 col-lg-3">
+							<div class="card">
+								<div class="card-body" style="height: 10rem"></div>
+							</div>
+						</div>
+						<div class="col-sm-6 col-lg-3">
+							<div class="card">
+								<div class="card-body" style="height: 10rem"></div>
+							</div>
+						</div>
+						<div class="col-sm-6 col-lg-3">
+							<div class="card">
+								<div class="card-body" style="height: 10rem"></div>
+							</div>
+						</div> -->
+						<div class="col-12">
+							<div class="card">
+								<div id="map" class="card-body" style="height: 40rem; width: 100%;"></div>
+							</div>
+						</div>
+						<div class="col-md-12 col-lg-6">
+							<div class="card">
+								<div class="card-body" style="height: 5rem">
+									<div id="datasetToggle">
+										<button class="btn" onClick="setGraphDatasets('pm1')">PM 1</button>
+										<button class="btn" onClick="setGraphDatasets('pm2_5')">PM 2.5</button>
+										<button class="btn" onClick="setGraphDatasets('pm4')">PM 4</button>
+										<button class="btn" onClick="setGraphDatasets('pm10')">PM 10</button>
+										<button class="btn" onClick="setGraphDatasets('voc')">VOC</button>
+										<button class="btn" onClick="setGraphDatasets('nox')">NOx</button>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6 col-lg-4"></div>
+						<div class="col-md-6 col-lg-2">
+							<div class="card">
+								<div class="card-body" style="height: 5rem">
+									<div class="dropdown">
+										<a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown">
+											Timespan
+										</a>
+										<div class="dropdown-menu">
+											<a class="dropdown-item" onClick="setGraphTimespan(86400000)">24 Hours</a>
+											<a class="dropdown-item" onClick="setGraphTimespan(172800000)">48 Hours</a>
+											<a class="dropdown-item" onClick="setGraphTimespan(604800000)">7 Days</a>
+											<!--<a class="dropdown-item" onClick="setGraphTimespan(1209600000)">14 Days</a>-->
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-12">
+							<div class="card">
+								<div class="card-body" style="height: 20rem; width: 100%">
+									<div id="timeChart" class="chart-lg"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+
+	<script>
+		let options = {
+			chart: {
+				height: 300,
+				type: 'line',
+			},
+			series: [],
+			title: {
+				text: 'Sensor Data',
+				align: 'center'
+			},
+			noData: {
+				text: 'No data to show'
+			},
+			xaxis: {
+				type: 'datetime',
+				tickAmount: 8
+			},
+			tooltip: {
+				x: {
+					format: 'dd MMM yyyy hh:mm:ss'
+				}
+			}
+		};
+		let pmChart = new ApexCharts(
+			document.querySelector("#timeChart"),
+			options
+		);
+		pmChart.render();
+
+
+		let device_id = ""
+		let graph_name = ""
+		let graph_datasets = ["pm2_5"]
+		let graph_dataset_names = { "pm1": "PM 1", "pm2_5": "PM 2.5", "pm4": "PM 4", "pm10": "PM 10", "voc": "VOC Index", "nox": "NOx Index" }
+		let graph_data = {}
+		let graph_timespan = 86400000;
+
+		function setGraphDatasets(dataset) {
+			let index = graph_datasets.indexOf(dataset)
+			if (index == -1) {
+				graph_datasets.push(dataset)
+			}
+			else {
+				graph_datasets.splice(index, 1)
+			}
+			graph_datasets.sort()
+			console.log(graph_datasets)
+			updateGraph()
+		}
+
+		function setGraphTimespan(timespan) {
+			graph_timespan = timespan
+			console.log(`Timespan: ${graph_timespan}`);
+			getTimeSeriesData()
+		}
+
+		function setGraphNodeMapEvent(e) {
+			device_id = e.sourceTarget.options.device_id
+			graph_name = `Sensor: ${e.sourceTarget.options.name}`
+			getTimeSeriesData()
+		}
+
+		async function getTimeSeriesData() {
+			console.log(device_id)
+			graph_data = {}
+			try {
+				apiUrl = `https://map.cheltenham.space/api/v1/sensor/${device_id}?from=${Date.now() - graph_timespan}`
+				const request = await fetch(apiUrl, { method: "GET" });
+				graph_data = await request.json();
+				console.log("Graph data finished processing");
+				console.log(graph_data);
+			}
+			catch (error) {
+				console.error("ERROR: ", error);
+				graph_data = {};
+			}
+			updateGraph()
+		}
+
+		function updateGraph() {
+			if (pmChart) {
+				//console.log(graph_data)
+				if (Object.keys(graph_data).length === 0) {
+					console.log("No graphable data found")
+					options.series = [];
+					pmChart.updateOptions(options);
+				}
+				else {
+					options.series = [];
+					for (index in graph_datasets) {
+						console.log(graph_datasets[index]);
+						options.series.push({ name: graph_dataset_names[graph_datasets[index]], data: graph_data.map(a => [a.event_time, a[graph_datasets[index]]]) });
+					}
+					options.title.text = graph_name;
+					options.xaxis.min = Date.now() - graph_timespan;
+					options.xaxis.max = Date.now();
+					pmChart.updateOptions(options);
+
+				}
+
+			}
+		}
+
+	</script>
+
+	<script>
+		function getPMColour(sensor) {
+			if (typeof sensor.pm2_5 === 'undefined') {
+				return '#888'
+			}
+			let greenLimit = 12,
+				amberLimit = 20
+
+			if (sensor.pm2_5 <= greenLimit) {
+				return '#0f0'
+			}
+			else if (sensor.pm2_5 > greenLimit && sensor.pm2_5 <= amberLimit) {
+				return '#f70'
+			}
+			else {
+				return '#f00'
+			}
+		}
+
+		const map = L.map('map').setView([51.8994, -2.0783], 7);
+
+		const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 19,
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+		}).addTo(map);
+
+		markers = []
+		async function drawNodeMarkers(map) {
+			apiUrl = `https://map.cheltenham.space/api/v1/sensors`
+			const nodes_request = await fetch(apiUrl, { method: "GET" });
+			const sensorData = await nodes_request.json();
+
+			console.log(sensorData);
+
+
+			// BEGIN HANDLE_TEST_DATA
+			for (sensorId in sensorData) {
+				// bodge the value of pm2_5 to show values inside the circles
+				//sensorData[sensorId].pm2_5 = String(Math.floor(Math.random() * 150) + 1);
+				// draw a circle for each item
+
+				// get latest data for the sensor
+				try {
+					apiUrl = `https://map.cheltenham.space/api/v1/sensor/${sensorData[sensorId].device_id}/latest`
+					const request = await fetch(apiUrl, { method: "GET" });
+					const latest_reading = await request.json();
+					console.log(`Got latest reading for ${sensorData[sensorId].device_id}`);
+					for (let key in latest_reading) {
+						if (key === "time") {
+							console.log("processing time");
+							sensorData[sensorId][key] = new Date(latest_reading[key]).toUTCString();
+						}
+						else {
+							sensorData[sensorId][key] = latest_reading[key];
+						}
+					}
+				}
+				catch (error) {
+					console.error("ERROR: ", error)
+					graph_data = {}
+				}
+
+				let circle = L.circleMarker([sensorData[sensorId].lat, sensorData[sensorId].long], {
+					color: getPMColour(sensorData[sensorId]),
+					fillColor: getPMColour(sensorData[sensorId]),
+					fillOpacity: 0.6,
+					opacity: 1,
+					radius: 20,
+					device_id: sensorData[sensorId].device_id,
+					name: sensorData[sensorId].name
+				}).bindPopup(`<div class="table-responsive">
+								<table class="table table-vcenter">
+									<tr>
+										<td>Name</td>
+										<td>${sensorData[sensorId].name}</td>
+									</tr>
+									<tr>
+										<td>Temperature</td>
+										<td>${sensorData[sensorId].temperature} °C</td >
+									</tr >
+									<tr>
+										<td>Relative Humidity</td>
+										<td>${sensorData[sensorId].relative_humidity} %</td >
+									</tr >
+									<tr>
+										<td>PM 1</td>
+										<td>${sensorData[sensorId].pm1} μg/m³</td>
+									</tr>
+									<tr>
+										<td>PM 2.5</td>
+										<td>${sensorData[sensorId].pm2_5} μg/m³</td >
+									</tr >
+									<tr>
+										<td>PM 4</td>
+										<td>${sensorData[sensorId].pm4} μg/m³</td >
+									</tr >
+									<tr>
+										<td>PM 10</td>
+										<td>${sensorData[sensorId].pm10} μg/m³</td >
+									</tr >
+									<tr>
+										<td>NOx Index</td>
+										<td>${sensorData[sensorId].nox}</td >
+									</tr >
+									<tr>
+										<td>VOC Index</td>
+										<td>${sensorData[sensorId].voc}</td >
+									</tr >
+								</table >
+							</div>
+							${sensorData[sensorId].time}`).bindTooltip(String((typeof sensorData[sensorId].pm2_5 === 'undefined') ? "" : sensorData[sensorId].pm2_5.toFixed(2)), { direction: 'center', className: 'text', permanent: true }).addTo(map).on('click', setGraphNodeMapEvent)
+				markers.push(circle)
+			};
+
+			// END HANDLE_TEST_DATA
+		}
+
+		drawNodeMarkers(map);
+
+		function testFunc(e) {
+			console.log(map.getBounds());
+		}
+		map.on('moveend', testFunc);
+
+	</script>
+</body>
+
+</html>

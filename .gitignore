@@ -162,3 +162,8 @@ backend/.terraform.lock.hcl
 backend/.terraform/**
 backend/terraform.tfstate
 backend/terraform.tfstate.backup
+.vscode/c_cpp_properties.json
+.vscode/settings.json
+.vscode/arduino.json
+.vscode/tasks.json
+sensor/sensor_v1/node_credentials.csv

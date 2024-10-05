@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Login</h1>
+        <div class="text-center mb-4">This page does not currently work!</div>
+        <form action="/api/v1/login" method="POST">
+            <div class="form-group">
+                <label for="email">Email address:</label>
+                <input type="text" class="form-control" id="email" name="email" required>
+            </div>
+            <!-- Center the cf-turnstile div element -->
+            <div class="d-flex justify-content-center">
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAAAab6VRei8w_NqAG"></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
+        </form>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
+</body>
+
+</html>

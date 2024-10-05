@@ -1,9 +1,22 @@
 /*
-    This sketch establishes a TCP connection to a "quote of the day" service.
-    It sends a "hello" message, and then prints received data.
+    This sketch is intended to become a validation fixture for an upcoming test using an
+    ESP32 based main board with a SIM7600 LTE module for backhaul comms.
+
+    Progress:
+      New sensor object added to backend
+      Sensor 1 up and reading
+      Second i2c bus initialised. Not figured out reading the second sensor yet since we might have to re-use things that dont support multiple instances.
+
+    TODO:
+      Add a per unit sensor id to the backend?
+      Add a battery voltage field to backend?
+      Get sensor 2 reading
+      Figure out the no 5v power problem (we only have 3.3 available and the sensors dont work properly at that voltage)
+      Make a box
 */
 
 #include <WiFi.h>
+#include <WiFiMulti.h>
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
 #include <Arduino.h>
@@ -26,6 +39,12 @@ SensirionI2CSen5x sen5x;
 #define STASSID "YOUR SSID HERE"
 #define STAPSK "YOUR PASSWORD HERE"
 #endif
+
+#define I2C_SDA1 5
+#define I2C_SCL1 3
+
+#define I2C_SDA2 1
+#define I2C_SCL2 2
 
 const char* ssid = STASSID;
 const char* password = STAPSK;
@@ -53,7 +72,7 @@ void setup() {
   if (multi.run() != WL_CONNECTED) {
     Serial.println("Unable to connect to network, rebooting in 10 seconds...");
     delay(10000);
-    rp2040.reboot();
+//    rp2040.reboot();
   }
 
   Serial.println("");
@@ -61,7 +80,8 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
-  Wire.begin();
+  Wire.begin(I2C_SDA1, I2C_SCL1);
+  Wire1.begin(I2C_SDA2, I2C_SCL2);
 
   sen5x.begin(Wire);
 
@@ -115,7 +135,7 @@ void loop() {
   if (multi.run() != WL_CONNECTED) {
     Serial.println("Unable to connect to network, rebooting...");
     delay(10000);
-    rp2040.reboot();
+//    rp2040.reboot();
   }
   uint16_t error;
   char errorMessage[256];
@@ -186,12 +206,14 @@ void loop() {
     HTTPClient https;
     Serial.println("[HTTPS] begin...");
     Serial.println("[HTTPS] using insecure SSL, not validating certificate");
-    https.setInsecure(); 
-    if (https.begin("https://api.ntf.systems/v1/sensor")) {  // HTTPS
+    //https.setInsecure(); 
+    if (https.begin("https://map.cheltenham.space/api/v1/sensor/verification-node-1-uuid")) {  // HTTPS
 
       Serial.println("[HTTPS] POST...");
+      
+      https.addHeader("Content-Type", "application/json");
       // start connection and send HTTP header
-      int httpCode = https.POST("{\"DeviceId\":\"test-node-3-uuid\", \"RelativeHumidity\":\"" + String(ambientHumidity) + "\", \"Temperature\":\"" + String(ambientTemperature) + "\", \"PM1\":\"" + String(massConcentrationPm1p0) + "\", \"PM2_5\":\"" + String(massConcentrationPm2p5) + "\", \"PM4\":\"" + String(massConcentrationPm4p0) + "\", \"PM10\":\"" + String(massConcentrationPm10p0) + "\", \"VOC\":\"" + String(vocIndex) + "\", \"NOx\":\"" + String(noxIndex) + "\"}");
+      int httpCode = https.POST("{\"relative_humidity\":\"" + String(ambientHumidity) + "\", \"temperature\":\"" + String(ambientTemperature) + "\", \"pm1\":\"" + String(massConcentrationPm1p0) + "\", \"pm2_5\":\"" + String(massConcentrationPm2p5) + "\", \"pm4\":\"" + String(massConcentrationPm4p0) + "\", \"pm10\":\"" + String(massConcentrationPm10p0) + "\", \"voc\":\"" + String(vocIndex) + "\", \"nox\":\"" + String(noxIndex) + "\"}");
 
       // httpCode will be negative on error
       if (httpCode > 0) {
