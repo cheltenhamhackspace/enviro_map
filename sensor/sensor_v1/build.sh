@@ -3,7 +3,8 @@
 # Check if arduino-cli is installed, if not, slap yourself.
 if ! command -v arduino-cli &> /dev/null
 then
-    echo "arduino-cli is not installed. Install it first, then rerun"
+    echo "arduino-cli is not installed. Install it first, then rerun."
+    echo "If on fedora linux, use `curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/.local/bin sh`"
     exit 1
 fi
 
@@ -11,7 +12,7 @@ fi
 echo "Updating platform index..."
 arduino-cli core update-index
 
-# Install the RP2040 core if you haven't already (because you're incompetent)
+# Install the RP2040 core if you haven't already
 echo "Installing the RP2040 core..."
 arduino-cli core install rp2040:rp2040
 
@@ -21,7 +22,7 @@ BOARD_NAME="rp2040:rp2040:rpipicow"
 # Check if the sketch file exists
 SKETCH_PATH="./sensor_v1.ino"
 if [ ! -f "$SKETCH_PATH" ]; then
-    echo "Sketch file not found at $SKETCH_PATH. Try looking for your brain instead."
+    echo "Sketch file not found at $SKETCH_PATH"
     exit 1
 fi
 
@@ -41,38 +42,39 @@ mkdir -p $OUT_DIR
 # Clean up old builds
 rm -rf $OUT_DIR/*
 
-
 # Compile for each set of variables in the input file
-while IFS=',' read -r NAME STASSID STAPSK UUID
+while IFS=',' read -r SENSORNAME STASSID STAPSK UUID
 do
-    if [ -z "$NAME" ] || [ -z "$STASSID" ] || [ -z "$STAPSK" ] || [ -z "$UUID" ]; then
+    echo "----------------------------------------------------------"
+    if [ -z "$SENSORNAME" ] || [ -z "$STASSID" ] || [ -z "$STAPSK" ] || [ -z "$UUID" ]; then
         echo "Skipping incomplete line in $INPUT_FILE. Fix your formatting."
         continue
     fi
 
-    echo "Compiling sketch with NAME: $NAME, SSID: $STASSID, PSK: $STAPSK, UUID: $UUID"
+    echo "Compiling sketch with NAME: $SENSORNAME, SSID: $STASSID, PSK: $STAPSK, UUID: $UUID"
 
+    # Quote all variables that could contain spaces
     arduino-cli compile \
-        --fqbn $BOARD_NAME $SKETCH_PATH \
-        --build-property "build.extra_flags=-DSTASSID=\"$STASSID\" -DSTAPSK=\"$STAPSK\" -DUUID=\"$UUID\""
+        --fqbn "$BOARD_NAME" "$SKETCH_PATH" -e \
+        --build-property "build.extra_flags=\"-DUUID=\"$UUID\"\" \"-DSTAPSK=\"$STAPSK\"\" \"-DSTASSID=\"$STASSID\"\""
 
     # Check if the build was successful by verifying if the .uf2 file exists
     FIRMWARE_FILE="$BUILD_DIR/sensor_v1.ino.uf2"
-    echo $FIRMWARE_FILE
     if [ ! -f "$FIRMWARE_FILE" ]; then
-        echo "Compilation failed for NAME: $NAME. Try fixing your code."
+        echo "Compilation failed for NAME: $SENSORNAME. Try fixing your code."
         continue
     fi
 
     # Create a sensible output filename, using the UUID or SSID in the filename
-    OUTPUT_FILE="${OUT_DIR}/${NAME}_firmware.uf2"
+    OUTPUT_FILE="${OUT_DIR}/${SENSORNAME// /_}_firmware.uf2"  # Replace spaces in the filename with underscores
 
     # Move and rename the .uf2 file
-    cp "$FIRMWARE_FILE" "$OUTPUT_FILE"
-    echo "Firmware for $NAME saved as $OUTPUT_FILE"
+    mv "$FIRMWARE_FILE" "$OUTPUT_FILE"
+    rm -rf $BUILD_DIR
+    echo "Firmware for $SENSORNAME saved as $OUTPUT_FILE"
 
-    echo "Done compiling for $NAME"
+    echo "Done compiling for $SENSORNAME"
 
 done < "$INPUT_FILE"
 
-echo "All builds completed! Let's see how you managed to screw this up."
+echo "All builds completed"
