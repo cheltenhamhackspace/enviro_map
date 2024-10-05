@@ -280,6 +280,10 @@ void sendDataToServer() {
 void setup() {
     Serial.begin(115200);  // Start serial communication
 
+    delay(2000);    // Sleep so the serial port can show up in time
+    Serial.print("Node UUID: ");
+    Serial.println(UUID);
+
     setupWiFi();  // Connect to WiFi
 
     Wire.begin();  // Initialize I2C bus
