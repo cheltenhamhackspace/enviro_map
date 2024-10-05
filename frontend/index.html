@@ -227,6 +227,14 @@
 				x: {
 					format: 'dd MMM yyyy hh:mm:ss'
 				}
+			},
+			export: {
+				csv: {
+					dateFormatter: function (val) {
+						let date = new Date(val);
+						return date.toLocaleString(); // This ensures both date and time are exported
+					}
+				}
 			}
 		};
 		let pmChart = new ApexCharts(
