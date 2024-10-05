@@ -226,26 +226,24 @@
 					},
 					export: {
 						csv: {
-							filename: 'sensor_data', // Optional: Set your desired filename
-							columnDelimiter: ',',    // Optional: Set delimiter if needed
+							filename: 'sensor_data', // Set your desired filename
+							columnDelimiter: ',',    // Keep the delimiter as comma
 							headerCategory: 'category',
+							headerValue: 'value',
 							categoryFormatter(x) {
-								// Include both date and time in the CSV export
-								return new Date(x).toLocaleString('en-GB', {
-									year: 'numeric',
-									month: 'short',
-									day: 'numeric',
-									hour: '2-digit',
-									minute: '2-digit',
-									second: '2-digit'
-								});
+								// Manually format the date and time to avoid commas
+								const date = new Date(x);
+								return `${date.getDate()} ${date.toLocaleString('en-GB', { month: 'short' })} ${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+							},
+							valueFormatter(y) {
+								return y;  // Leave this as is to format the value
 							}
 						},
 						svg: {
-							filename: 'sensor_chart', // Optional: Set your desired filename for SVG
+							filename: 'sensor_chart', // Set your desired filename for SVG
 						},
 						png: {
-							filename: 'sensor_chart', // Optional: Set your desired filename for PNG
+							filename: 'sensor_chart', // Set your desired filename for PNG
 						}
 					},
 					autoSelected: 'zoom'
