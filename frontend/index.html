@@ -230,7 +230,7 @@
 			},
 			export: {
 				csv: {
-					dateFormatter: function(timestamp) {
+					categoryFormatter: function(timestamp) {
 						// Format the timestamp in the CSV as "YYYY-MM-DD HH:mm:ss"
 						const date = new Date(timestamp);
 						return date.toISOString().replace('T', ' ').split('.')[0]; // Custom date formatting
