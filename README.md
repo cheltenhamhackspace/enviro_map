@@ -21,7 +21,7 @@ WIP (Preferably raw html/javascript)
 [Front page](https://map.cheltenham.space/)
 
 ## Back End
-WIP (Currently Cloudflare Pages & D1)
+Cloudflare Pages & D1
 
 ## TODO
 - Everything
@@ -40,10 +40,10 @@ WIP (Currently Cloudflare Pages & D1)
     - Stable and ~~sensible API structure~~
         - Device Registration
         - ~~Sensor Data~~
-        - Make graph timescales selectable
+        - ~~Make graph timescales selectable~~
     - Full terraform refactor
 - Sensor
-    - Full refactor
-    - Send averaged readings, not instantaneous
+    - ~~Full refactor~~
+    - ~~Send averaged readings, not instantaneous~~
     - Prevent bad readings from being sent
         - Uninitialised sensor etc
