@@ -229,7 +229,6 @@
 							filename: 'sensor_data', // Optional: Set your desired filename
 							columnDelimiter: ',',    // Optional: Set delimiter if needed
 							headerCategory: 'category',
-							headerValue: 'value',
 							categoryFormatter(x) {
 								// Include both date and time in the CSV export
 								return new Date(x).toLocaleString('en-GB', {
@@ -240,9 +239,6 @@
 									minute: '2-digit',
 									second: '2-digit'
 								});
-							},
-							valueFormatter(y) {
-								return y;  // Leave this as is to format the value
 							}
 						},
 						svg: {
