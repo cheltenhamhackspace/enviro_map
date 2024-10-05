@@ -221,7 +221,10 @@
 			},
 			xaxis: {
 				type: 'datetime',
-				tickAmount: 8
+				tickAmount: 8,
+				labels: {
+            		datetimeUTC: false  // Disable UTC if you want local time
+        		}
 			},
 			tooltip: {
 				x: {
@@ -233,6 +236,8 @@
 					categoryFormatter: function(timestamp) {
 						// Format the timestamp in the CSV as "YYYY-MM-DD HH:mm:ss"
 						const date = new Date(timestamp);
+						console.log(timestamp);
+						console.log(date);
 						return date.toISOString().replace('T', ' ').split('.')[0]; // Custom date formatting
 					}
 				}
