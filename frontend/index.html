@@ -230,10 +230,9 @@
 			},
 			export: {
 				csv: {
-					headerCategory: 'datetime',
-					categoryFormatter: function (val) {
+					dateFormatter: function (val) {
 						let date = new Date(val);
-						return date.toLocaleString(); // This ensures both date and time are exported
+						return date.toISOString().replace('T', ' ').substring(0, 19); // Will output 'yyyy-MM-dd hh:mm:ss'
 					}
 				}
 			}
