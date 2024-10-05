@@ -19,10 +19,22 @@ SensirionI2CSen5x sen5x;
 
 // WiFi credentials and other constant definitions
 #ifndef STASSID
-    #define STASSID "SSID HERE"  // WiFi SSID
-    #define STAPSK "SSID PASSWORD HERE"            // WiFi Password
-    #define UUID "UUID HERE"          // Unique identifier for the sensor node
-    #define FWVERSION "0.1.2"                // Firmware version
+    #define STASSID "DEFAULT_SSID"  // WiFi SSID
+#endif
+
+#ifndef STAPSK
+    #define STAPSK "DEFAULT_PASSWORD"  // WiFi Password
+#endif
+
+#ifndef UUID
+    #define UUID "DEFAULT_UUID"  // Unique identifier for the sensor node
+#endif
+
+#ifndef FWVERSION
+    #define FWVERSION "0.1.2"  // Firmware version
+#endif
+
+#ifndef BASEURL
     #define BASEURL "https://map.cheltenham.space/api/v1/sensor/"  // Base URL for data submission
 #endif
 
