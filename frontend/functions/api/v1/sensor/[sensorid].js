@@ -39,6 +39,7 @@ export async function onRequest(context) {
     if (context.request.method === "POST") {
         let reqBody = await readRequestBody(context.request);
         let data = JSON.parse(reqBody);
+        console.log(context.params.sensorid);
         console.log(data);
 
         if (data.pm1) {
