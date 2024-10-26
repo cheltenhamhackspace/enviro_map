@@ -48,11 +48,11 @@
         }
 
 		.leaflet-tooltip.uninitialized-tooltip {
-			font-size: 10px; /* Adjust as needed */
+			font-size: 1.0em; /* Adjust as needed */
 		}
 
 		.leaflet-tooltip.inactive-tooltip {
-			font-size: 10px; /* Adjust as needed */
+			font-size: 1.0em; /* Adjust as needed */
 		}
 
         /* Adjust map height */
@@ -390,7 +390,7 @@
 							} else if (latestResponse.status === 404) {
 								console.warn(`No data for sensor ${sensor.device_id}, status: ${latestResponse.status}`);
 								isUninitialized = true;
-								// Do not set latestData; we'll handle it as uninitialized
+								// Do not set latestData; handle as uninitialized
 							} else {
 								console.warn(`Error fetching data for sensor ${sensor.device_id}, status: ${latestResponse.status}`);
 								latestData = {
@@ -423,7 +423,7 @@
 						// Determine if the sensor is inactive
 						const now = Date.now();
 						const dataTime = latestData.time ? new Date(latestData.time).getTime() : null;
-						const isInactive = dataTime ? (now - dataTime) > 3 * 3600 * 1000 : true; // 3 hours in milliseconds
+						const isInactive = dataTime ? (now - dataTime) > 3 * 3600 * 1000 : false; // 3 hours in milliseconds
 
 						const pm2_5Value = latestData.pm2_5;
 						let pm2_5Display = '';
@@ -435,31 +435,38 @@
 							name: sensor.name
 						};
 
+						let tooltipClass = 'text'; // Base class
+
 						if (isUninitialized) {
 							// Uninitialized node
 							pm2_5Display = 'Uninitialized';
 							markerOptions.color = '#000000'; // Black color
 							markerOptions.fillColor = '#000000';
 							markerOptions.fillOpacity = 0.4;
+							markerOptions.radius = 10;
+							tooltipClass += ' uninitialized-tooltip'; // Add class
 						} else if (isInactive) {
 							// Inactive node
 							pm2_5Display = 'Inactive';
 							markerOptions.color = '#808080'; // Gray color
 							markerOptions.fillColor = '#808080';
 							markerOptions.fillOpacity = 0.4;
+							markerOptions.radius = 10;
+							tooltipClass += ' inactive-tooltip'; // Add class
 						} else {
 							// Active node
 							pm2_5Display = Number.isFinite(pm2_5Value) ? pm2_5Value.toFixed(2) : 'N/A';
 							markerOptions.color = getPMColor(pm2_5Value);
 							markerOptions.fillColor = getPMColor(pm2_5Value);
 							markerOptions.fillOpacity = 0.6;
+							markerOptions.radius = 10; // Default radius
 						}
 
 						const marker = L.circleMarker([sensor.lat, sensor.long], markerOptions)
 							.bindPopup(createPopupContent(sensor, latestData, isUninitialized))
 							.bindTooltip(pm2_5Display, {
 								direction: 'center',
-								className: 'text',
+								className: tooltipClass,
 								permanent: true
 							})
 							.addTo(map)
