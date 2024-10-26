@@ -31,6 +31,17 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
 
     <style>
+		.inactive-banner {
+			background-color: #ffc107; /* Yellow color for visibility */
+			color: #000; /* Black text for contrast */
+			padding: 10px;
+			text-align: center;
+			font-weight: bold;
+			font-size: 1.2em;
+			border-radius: 4px 4px 0 0; /* Rounded top corners */
+			margin-bottom: 10px;
+		}
+
         .leaflet-container {
             height: 400px;
             width: 600px;
@@ -479,7 +490,11 @@
 
             function createPopupContent(sensor, data, isInactive, isUninitialized) {
 				if (isUninitialized) {
-					return `<div><strong>${sensor.name || 'Unknown'}</strong><br>No data available for this sensor.</br><br>Probably because its new to the system and hasnt sent any data yet.</br></div>`;
+					return `<div>
+								<strong>${sensor.name || 'Unknown'}</strong>
+								<br>No data available for this sensor.</br>
+								<br>Probably because it's new to the system and hasn't sent any data yet.</br>
+							</div>`;
 				}
 
 				const formatValue = (value, unit = '') => Number.isFinite(value) ? `${value.toFixed(2)} ${unit}` : 'N/A';
@@ -497,15 +512,17 @@
 					'Last Updated': data.time ? new Date(data.time).toLocaleString() : 'N/A'
 				}).map(([key, value]) => `<tr><td>${key}</td><td>${value}</td></tr>`).join('');
 
+				// Add an inactive banner if the sensor is inactive
+				let banner = '';
 				if (isInactive) {
-					return `<div class="table-responsive"><strong>Inactive Sensor</strong><br><table class="table table-vcenter">${rows}</table></br></div>`;
+					banner = `<div class="inactive-banner">Inactive Sensor</div>`;
 				}
 
-				return `<div class="table-responsive"><table class="table table-vcenter">${rows}</table></div>`;
+				return `<div class="table-responsive">
+							${banner}
+							<table class="table table-vcenter">${rows}</table>
+						</div>`;
 			}
-
-
-
 
             loadSensors();
         </script>
