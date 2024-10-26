@@ -381,7 +381,7 @@
                     'PM 10': `${data.pm10} μg/m³`,
                     'NOx Index': data.nox,
                     'VOC Index': data.voc,
-                    'Last Updated': new Date(data.event_time).toLocaleString()
+                    'Last Updated': new Date(data.time).toLocaleString()
                 }).map(([key, value]) => `<tr><td>${key}</td><td>${value}</td></tr>`).join('');
 
                 return `<div class="table-responsive"><table class="table table-vcenter">${rows}</table></div>`;
