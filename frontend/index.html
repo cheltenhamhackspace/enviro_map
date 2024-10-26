@@ -287,40 +287,65 @@
             }
 
             async function fetchSensorData() {
-                try {
-                    const response = await fetch(`https://map.cheltenham.space/api/v1/sensor/${deviceId}?from=${Date.now() - timespan}`);
-                    const data = await response.json();
-                    updateChartData(data);
-                } catch (error) {
-                    console.error('Error fetching sensor data:', error);
-                }
-            }
+				try {
+					const response = await fetch(`https://map.cheltenham.space/api/v1/sensor/${deviceId}?from=${Date.now() - timespan}`);
+					if (response.status === 404) {
+						// Update the chart to display "No data is available"
+						chart.updateOptions({
+							series: [],
+							title: { text: sensorName },
+							noData: { text: 'No data is available' }
+						});
+					} else if (response.ok) {
+						const data = await response.json();
+						updateChartData(data);
+					} else {
+						// Handle other HTTP errors
+						console.error(`Error fetching sensor data: ${response.statusText}`);
+						chart.updateOptions({
+							series: [],
+							title: { text: sensorName },
+							noData: { text: 'Error fetching data' }
+						});
+					}
+				} catch (error) {
+					console.error('Error fetching sensor data:', error);
+					chart.updateOptions({
+						series: [],
+						title: { text: sensorName },
+						noData: { text: 'Error fetching data' }
+					});
+				}
+			}
 
             function updateChartData(data) {
-                const seriesData = selectedDatasets.map(dataset => ({
-                    name: datasetNames[dataset],
-                    data: data.map(entry => [entry.event_time, entry[dataset]])
-                }));
-                chart.updateOptions({
-                    series: seriesData,
-                    title: { text: sensorName },
-                    xaxis: {
-                        min: Date.now() - timespan,
-                        max: Date.now()
-                    }
-                });
-            }
+				const seriesData = selectedDatasets.map(dataset => ({
+					name: datasetNames[dataset],
+					data: data.map(entry => [entry.event_time, entry[dataset]])
+				}));
+				chart.updateOptions({
+					series: seriesData,
+					title: { text: sensorName },
+					xaxis: {
+						min: Date.now() - timespan,
+						max: Date.now()
+					},
+					noData: { text: '' } // Clear the "No data is available" message
+				});
+			}
+
 
             function updateChart() {
-                if (deviceId) {
-                    fetchSensorData();
-                } else {
-                    chart.updateOptions({
-                        series: [],
-                        title: { text: 'Sensor Data' }
-                    });
-                }
-            }
+				if (deviceId) {
+					fetchSensorData();
+				} else {
+					chart.updateOptions({
+						series: [],
+						title: { text: 'Sensor Data' },
+						noData: { text: 'Select a sensor to display data' }
+					});
+				}
+			}
         </script>
 
         <!-- Leaflet Map Script -->
