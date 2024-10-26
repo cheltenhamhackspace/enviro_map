@@ -407,30 +407,39 @@
 							};
 						}
 
-						const pm2_5Value = latestData.pm2_5;
-						const pm2_5Display = Number.isFinite(pm2_5Value) ? pm2_5Value.toFixed(2) : 'N/A';
+						// Calculate if the sensor is inactive
+						const now = Date.now();
+						const dataTime = latestData.time ? new Date(latestData.time).getTime() : null;
+						const isInactive = dataTime ? (now - dataTime) > 3 * 3600 * 1000 : true; // 3 hours in milliseconds
 
-						const marker = L.circleMarker([sensor.lat, sensor.long], {
-							color: getPMColor(pm2_5Value),
-							fillColor: getPMColor(pm2_5Value),
-							fillOpacity: 0.6,
+						const pm2_5Value = latestData.pm2_5;
+						const pm2_5Display = isInactive ? 'Inactive' : (Number.isFinite(pm2_5Value) ? pm2_5Value.toFixed(2) : 'N/A');
+
+						// Adjust marker options based on activity status
+						const markerOptions = {
+							color: isInactive ? '#808080' : getPMColor(pm2_5Value),
+							fillColor: isInactive ? '#808080' : getPMColor(pm2_5Value),
+							fillOpacity: isInactive ? 0.4 : 0.6,
 							radius: 10,
 							device_id: sensor.device_id,
 							name: sensor.name
-						})
-						.bindPopup(createPopupContent(sensor, latestData))
-						.bindTooltip(pm2_5Display, {
-							direction: 'center',
-							className: 'text',
-							permanent: true
-						})
-						.addTo(map)
-						.on('click', handleMapClick);
+						};
+
+						const marker = L.circleMarker([sensor.lat, sensor.long], markerOptions)
+							.bindPopup(createPopupContent(sensor, latestData))
+							.bindTooltip(pm2_5Display, {
+								direction: 'center',
+								className: 'text',
+								permanent: true
+							})
+							.addTo(map)
+							.on('click', handleMapClick);
 					}
 				} catch (error) {
 					console.error('Error loading sensors:', error);
 				}
 			}
+
 
 
 
