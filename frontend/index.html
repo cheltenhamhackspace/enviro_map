@@ -58,7 +58,7 @@
             font-size: 1.5em;
         }
 
-		.leaflet-tooltip.uninitialized-tooltip {
+		.leaflet-tooltip.uninitialised-tooltip {
 			font-size: 0.8em; /* Adjust as needed */
 		}
 
@@ -393,15 +393,15 @@
 
 					for (const sensor of Object.values(sensors)) {
 						let latestData = {};
-						let isUninitialized = false;
+						let isUninitialised = false;
 						try {
 							const latestResponse = await fetch(`https://map.cheltenham.space/api/v1/sensor/${sensor.device_id}/latest`);
 							if (latestResponse.ok) {
 								latestData = await latestResponse.json();
 							} else if (latestResponse.status === 404) {
 								console.warn(`No data for sensor ${sensor.device_id}, status: ${latestResponse.status}`);
-								isUninitialized = true;
-								// Do not set latestData; handle as uninitialized
+								isUninitialised = true;
+								// Do not set latestData; handle as uninitialised
 							} else {
 								console.warn(`Error fetching data for sensor ${sensor.device_id}, status: ${latestResponse.status}`);
 								latestData = {
@@ -448,14 +448,14 @@
 
 						let tooltipClass = 'text'; // Base class
 
-						if (isUninitialized) {
-							// Uninitialized node
-							pm2_5Display = 'Uninitialized';
+						if (isUninitialised) {
+							// Uninitialised node
+							pm2_5Display = 'Uninitialised';
 							markerOptions.color = '#000000'; // Black color
 							markerOptions.fillColor = '#000000';
 							markerOptions.fillOpacity = 0.4;
 							markerOptions.radius = 14;
-							tooltipClass += ' uninitialized-tooltip'; // Add class
+							tooltipClass += ' uninitialised-tooltip'; // Add class
 						} else if (isInactive) {
 							// Inactive node
 							pm2_5Display = 'Inactive';
@@ -474,7 +474,7 @@
 						}
 
 						const marker = L.circleMarker([sensor.lat, sensor.long], markerOptions)
-							.bindPopup(createPopupContent(sensor, latestData, isInactive, isUninitialized))
+							.bindPopup(createPopupContent(sensor, latestData, isInactive, isUninitialised))
 							.bindTooltip(pm2_5Display, {
 								direction: 'center',
 								className: tooltipClass,
@@ -488,9 +488,10 @@
 				}
 			}
 
-            function createPopupContent(sensor, data, isInactive, isUninitialized) {
-				if (isUninitialized) {
+            function createPopupContent(sensor, data, isInactive, isUninitialised) {
+				if (isUninitialised) {
 					return `<div>
+								<div class="inactive-banner">Uninitialised Sensor</div>
 								<strong>${sensor.name || 'Unknown'}</strong>
 								<br>No data available for this sensor.</br>
 								<br>Probably because it's new to the system and hasn't sent any data yet.</br>
