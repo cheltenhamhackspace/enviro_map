@@ -47,6 +47,14 @@
             font-size: 1.5em;
         }
 
+		.leaflet-tooltip.uninitialized-tooltip {
+			font-size: 10px; /* Adjust as needed */
+		}
+
+		.leaflet-tooltip.inactive-tooltip {
+			font-size: 10px; /* Adjust as needed */
+		}
+
         /* Adjust map height */
         #map {
             height: 40rem;
@@ -374,12 +382,17 @@
 
 					for (const sensor of Object.values(sensors)) {
 						let latestData = {};
+						let isUninitialized = false;
 						try {
 							const latestResponse = await fetch(`https://map.cheltenham.space/api/v1/sensor/${sensor.device_id}/latest`);
 							if (latestResponse.ok) {
 								latestData = await latestResponse.json();
+							} else if (latestResponse.status === 404) {
+								console.warn(`No data for sensor ${sensor.device_id}, status: ${latestResponse.status}`);
+								isUninitialized = true;
+								// Do not set latestData; we'll handle it as uninitialized
 							} else {
-								console.warn(`No latest data for sensor ${sensor.device_id}, status: ${latestResponse.status}`);
+								console.warn(`Error fetching data for sensor ${sensor.device_id}, status: ${latestResponse.status}`);
 								latestData = {
 									temperature: null,
 									relative_humidity: null,
@@ -393,7 +406,7 @@
 								};
 							}
 						} catch (error) {
-							console.error(`Error fetching latest data for sensor ${sensor.device_id}:`, error);
+							console.error(`Error fetching data for sensor ${sensor.device_id}:`, error);
 							latestData = {
 								temperature: null,
 								relative_humidity: null,
@@ -407,26 +420,43 @@
 							};
 						}
 
-						// Calculate if the sensor is inactive
+						// Determine if the sensor is inactive
 						const now = Date.now();
 						const dataTime = latestData.time ? new Date(latestData.time).getTime() : null;
 						const isInactive = dataTime ? (now - dataTime) > 3 * 3600 * 1000 : true; // 3 hours in milliseconds
 
 						const pm2_5Value = latestData.pm2_5;
-						const pm2_5Display = isInactive ? 'Inactive' : (Number.isFinite(pm2_5Value) ? pm2_5Value.toFixed(2) : 'N/A');
+						let pm2_5Display = '';
 
-						// Adjust marker options based on activity status
+						// Adjust marker options based on sensor status
 						const markerOptions = {
-							color: isInactive ? '#808080' : getPMColor(pm2_5Value),
-							fillColor: isInactive ? '#808080' : getPMColor(pm2_5Value),
-							fillOpacity: isInactive ? 0.4 : 0.6,
 							radius: 10,
 							device_id: sensor.device_id,
 							name: sensor.name
 						};
 
+						if (isUninitialized) {
+							// Uninitialized node
+							pm2_5Display = 'Uninitialized';
+							markerOptions.color = '#000000'; // Black color
+							markerOptions.fillColor = '#000000';
+							markerOptions.fillOpacity = 0.4;
+						} else if (isInactive) {
+							// Inactive node
+							pm2_5Display = 'Inactive';
+							markerOptions.color = '#808080'; // Gray color
+							markerOptions.fillColor = '#808080';
+							markerOptions.fillOpacity = 0.4;
+						} else {
+							// Active node
+							pm2_5Display = Number.isFinite(pm2_5Value) ? pm2_5Value.toFixed(2) : 'N/A';
+							markerOptions.color = getPMColor(pm2_5Value);
+							markerOptions.fillColor = getPMColor(pm2_5Value);
+							markerOptions.fillOpacity = 0.6;
+						}
+
 						const marker = L.circleMarker([sensor.lat, sensor.long], markerOptions)
-							.bindPopup(createPopupContent(sensor, latestData))
+							.bindPopup(createPopupContent(sensor, latestData, isUninitialized))
 							.bindTooltip(pm2_5Display, {
 								direction: 'center',
 								className: 'text',
@@ -440,11 +470,11 @@
 				}
 			}
 
+            function createPopupContent(sensor, data, isUninitialized) {
+				if (isUninitialized) {
+					return `<div><strong>${sensor.name || 'Unknown'}</strong><br>No data available for this sensor. Probably because its new to the system and hasnt sent any data yet.</div>`;
+				}
 
-
-
-
-            function createPopupContent(sensor, data) {
 				const formatValue = (value, unit = '') => Number.isFinite(value) ? `${value.toFixed(2)} ${unit}` : 'N/A';
 
 				const rows = Object.entries({
@@ -462,6 +492,7 @@
 
 				return `<div class="table-responsive"><table class="table table-vcenter">${rows}</table></div>`;
 			}
+
 
 
 
