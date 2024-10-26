@@ -31,7 +31,7 @@ SensirionI2CSen5x sen5x;
 #endif
 
 #ifndef FWVERSION
-    #define FWVERSION "0.1.2"  // Firmware version
+    #define FWVERSION "0.1.3"  // Firmware version
 #endif
 
 #ifndef BASEURL
@@ -229,7 +229,7 @@ void sendDataToServer() {
         https.addHeader("Content-Type", "application/json");
         
         // Prepare the JSON payload with sensor data
-        StaticJsonDocument<500> doc;
+        JsonDocument doc;  // Specify the size of the document
         doc["relative_humidity"] = avgAmbientHumidity;
         doc["temperature"] = avgAmbientTemperature;
         doc["pm1"] = avgMassConcentrationPm1p0;
