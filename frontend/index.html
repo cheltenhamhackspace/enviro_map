@@ -326,11 +326,10 @@
         <!-- Leaflet Map Script -->
         <script>
             function getPMColor(pm2_5) {
-				if (!isFinite(pm2_5)) {
-					// Return a default color when pm2_5 is not a number
+				if (!Number.isFinite(pm2_5)) {
+					// Return a default color when pm2_5 is not a finite number
 					return '#808080'; // Gray color
 				}
-                if (pm2_5 === undefined) return '#888';
                 if (pm2_5 <= 12) return '#0f0';
                 if (pm2_5 <= 20) return '#f70';
                 return '#f00';
@@ -384,7 +383,7 @@
 						}
 
 						const pm2_5Value = latestData.pm2_5;
-						const pm2_5Display = isFinite(pm2_5Value) ? pm2_5Value.toFixed(2) : 'N/A';
+						const pm2_5Display = Number.isFinite(pm2_5Value) ? pm2_5Value.toFixed(2) : 'N/A';
 
 						const marker = L.circleMarker([sensor.lat, sensor.long], {
 							color: getPMColor(pm2_5Value),
@@ -410,8 +409,9 @@
 
 
 
+
             function createPopupContent(sensor, data) {
-				const formatValue = (value, unit = '') => isFinite(value) ? `${value.toFixed(2)} ${unit}` : 'N/A';
+				const formatValue = (value, unit = '') => Number.isFinite(value) ? `${value.toFixed(2)} ${unit}` : 'N/A';
 
 				const rows = Object.entries({
 					'Name': sensor.name || 'Unknown',
@@ -421,13 +421,14 @@
 					'PM 2.5': formatValue(data.pm2_5, 'μg/m³'),
 					'PM 4': formatValue(data.pm4, 'μg/m³'),
 					'PM 10': formatValue(data.pm10, 'μg/m³'),
-					'NOx Index': isFinite(data.nox) ? data.nox : 'N/A',
-					'VOC Index': isFinite(data.voc) ? data.voc : 'N/A',
+					'NOx Index': Number.isFinite(data.nox) ? data.nox : 'N/A',
+					'VOC Index': Number.isFinite(data.voc) ? data.voc : 'N/A',
 					'Last Updated': data.time ? new Date(data.time).toLocaleString() : 'N/A'
 				}).map(([key, value]) => `<tr><td>${key}</td><td>${value}</td></tr>`).join('');
 
 				return `<div class="table-responsive"><table class="table table-vcenter">${rows}</table></div>`;
 			}
+
 
 
             loadSensors();
