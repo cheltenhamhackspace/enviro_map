@@ -326,6 +326,10 @@
         <!-- Leaflet Map Script -->
         <script>
             function getPMColor(pm2_5) {
+				if (!isFinite(pm2_5)) {
+					// Return a default color when pm2_5 is not a number
+					return '#808080'; // Gray color
+				}
                 if (pm2_5 === undefined) return '#888';
                 if (pm2_5 <= 12) return '#0f0';
                 if (pm2_5 <= 20) return '#f70';
@@ -352,45 +356,46 @@
 								latestData = await latestResponse.json();
 							} else {
 								console.warn(`No latest data for sensor ${sensor.device_id}, status: ${latestResponse.status}`);
-								// You can choose to skip this sensor or set default values
-								// continue; // Uncomment this line if you want to skip the sensor
 								latestData = {
-									temperature: 'N/A',
-									relative_humidity: 'N/A',
-									pm1: 'N/A',
-									pm2_5: 'N/A',
-									pm4: 'N/A',
-									pm10: 'N/A',
-									nox: 'N/A',
-									voc: 'N/A',
-									time: 'N/A'
+									temperature: null,
+									relative_humidity: null,
+									pm1: null,
+									pm2_5: null,
+									pm4: null,
+									pm10: null,
+									nox: null,
+									voc: null,
+									time: null
 								};
 							}
 						} catch (error) {
 							console.error(`Error fetching latest data for sensor ${sensor.device_id}:`, error);
 							latestData = {
-								temperature: 'N/A',
-								relative_humidity: 'N/A',
-								pm1: 'N/A',
-								pm2_5: 'N/A',
-								pm4: 'N/A',
-								pm10: 'N/A',
-								nox: 'N/A',
-								voc: 'N/A',
-								time: 'N/A'
+								temperature: null,
+								relative_humidity: null,
+								pm1: null,
+								pm2_5: null,
+								pm4: null,
+								pm10: null,
+								nox: null,
+								voc: null,
+								time: null
 							};
 						}
 
+						const pm2_5Value = latestData.pm2_5;
+						const pm2_5Display = isFinite(pm2_5Value) ? pm2_5Value.toFixed(2) : 'N/A';
+
 						const marker = L.circleMarker([sensor.lat, sensor.long], {
-							color: getPMColor(latestData.pm2_5),
-							fillColor: getPMColor(latestData.pm2_5),
+							color: getPMColor(pm2_5Value),
+							fillColor: getPMColor(pm2_5Value),
 							fillOpacity: 0.6,
 							radius: 10,
 							device_id: sensor.device_id,
 							name: sensor.name
 						})
 						.bindPopup(createPopupContent(sensor, latestData))
-						.bindTooltip(latestData.pm2_5 ? latestData.pm2_5.toFixed(2) : 'N/A', {
+						.bindTooltip(pm2_5Display, {
 							direction: 'center',
 							className: 'text',
 							permanent: true
@@ -404,22 +409,26 @@
 			}
 
 
-            function createPopupContent(sensor, data) {
-                const rows = Object.entries({
-                    'Name': sensor.name,
-                    'Temperature': `${data.temperature} °C`,
-                    'Relative Humidity': `${data.relative_humidity} %`,
-                    'PM 1': `${data.pm1} μg/m³`,
-                    'PM 2.5': `${data.pm2_5} μg/m³`,
-                    'PM 4': `${data.pm4} μg/m³`,
-                    'PM 10': `${data.pm10} μg/m³`,
-                    'NOx Index': data.nox,
-                    'VOC Index': data.voc,
-                    'Last Updated': new Date(data.time).toLocaleString()
-                }).map(([key, value]) => `<tr><td>${key}</td><td>${value}</td></tr>`).join('');
 
-                return `<div class="table-responsive"><table class="table table-vcenter">${rows}</table></div>`;
-            }
+            function createPopupContent(sensor, data) {
+				const formatValue = (value, unit = '') => isFinite(value) ? `${value.toFixed(2)} ${unit}` : 'N/A';
+
+				const rows = Object.entries({
+					'Name': sensor.name || 'Unknown',
+					'Temperature': formatValue(data.temperature, '°C'),
+					'Relative Humidity': formatValue(data.relative_humidity, '%'),
+					'PM 1': formatValue(data.pm1, 'μg/m³'),
+					'PM 2.5': formatValue(data.pm2_5, 'μg/m³'),
+					'PM 4': formatValue(data.pm4, 'μg/m³'),
+					'PM 10': formatValue(data.pm10, 'μg/m³'),
+					'NOx Index': isFinite(data.nox) ? data.nox : 'N/A',
+					'VOC Index': isFinite(data.voc) ? data.voc : 'N/A',
+					'Last Updated': data.time ? new Date(data.time).toLocaleString() : 'N/A'
+				}).map(([key, value]) => `<tr><td>${key}</td><td>${value}</td></tr>`).join('');
+
+				return `<div class="table-responsive"><table class="table table-vcenter">${rows}</table></div>`;
+			}
+
 
             loadSensors();
         </script>
