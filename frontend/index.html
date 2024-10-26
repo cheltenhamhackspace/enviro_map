@@ -5,9 +5,7 @@
     <base target="_top">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Cheltenham Hackspace - enviro_map Demo</title>
-
+    <title>Cheltenham Hackspace - Enviro Map Demo</title>
     <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
 
     <!-- Include Leaflet CSS and JS -->
@@ -151,13 +149,13 @@
                         <div class="col-md-12 col-lg-6">
                             <div class="card">
                                 <div class="card-body" style="height: 5rem">
-                                    <div id="datasetToggle">
-                                        <button class="btn" onclick="setGraphDatasets('pm1')">PM 1</button>
-                                        <button class="btn" onclick="setGraphDatasets('pm2_5')">PM 2.5</button>
-                                        <button class="btn" onclick="setGraphDatasets('pm4')">PM 4</button>
-                                        <button class="btn" onclick="setGraphDatasets('pm10')">PM 10</button>
-                                        <button class="btn" onclick="setGraphDatasets('voc')">VOC</button>
-                                        <button class="btn" onclick="setGraphDatasets('nox')">NOx</button>
+                                    <div id="datasetToggle" class="btn-group" role="group">
+                                        <button class="btn btn-outline-primary" onclick="toggleDataset('pm1')">PM 1</button>
+                                        <button class="btn btn-outline-primary" onclick="toggleDataset('pm2_5')">PM 2.5</button>
+                                        <button class="btn btn-outline-primary" onclick="toggleDataset('pm4')">PM 4</button>
+                                        <button class="btn btn-outline-primary" onclick="toggleDataset('pm10')">PM 10</button>
+                                        <button class="btn btn-outline-primary" onclick="toggleDataset('voc')">VOC</button>
+                                        <button class="btn btn-outline-primary" onclick="toggleDataset('nox')">NOx</button>
                                     </div>
                                 </div>
                             </div>
@@ -168,14 +166,14 @@
                             <div class="card">
                                 <div class="card-body" style="height: 5rem">
                                     <div class="dropdown">
-                                        <a href="#" class="btn dropdown-toggle" data-bs-toggle="dropdown">
+                                        <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
                                             Timespan
-                                        </a>
+                                        </button>
                                         <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="#" onclick="setGraphTimespan(86400000); return false;">24 Hours</a>
-                                            <a class="dropdown-item" href="#" onclick="setGraphTimespan(172800000); return false;">48 Hours</a>
-                                            <a class="dropdown-item" href="#" onclick="setGraphTimespan(604800000); return false;">7 Days</a>
-                                            <a class="dropdown-item" href="#" onclick="setGraphTimespan(1209600000); return false;">14 Days</a>
+                                            <a class="dropdown-item" href="#" onclick="setTimespan(86400000); return false;">24 Hours</a>
+                                            <a class="dropdown-item" href="#" onclick="setTimespan(172800000); return false;">48 Hours</a>
+                                            <a class="dropdown-item" href="#" onclick="setTimespan(604800000); return false;">7 Days</a>
+                                            <a class="dropdown-item" href="#" onclick="setTimespan(1209600000); return false;">14 Days</a>
                                         </div>
                                     </div>
                                 </div>
@@ -196,14 +194,12 @@
 
         <!-- ApexCharts Script -->
         <script>
-            let options = {
+            const options = {
                 chart: {
                     height: 300,
                     type: 'line',
                     toolbar: {
                         show: true,
-                        offsetX: 0,
-                        offsetY: 0,
                         tools: {
                             download: true,
                             selection: true,
@@ -212,28 +208,20 @@
                             zoomout: true,
                             pan: true,
                             reset: true,
-                            customIcons: []
                         },
                         export: {
                             csv: {
                                 filename: 'sensor_data',
                                 columnDelimiter: ',',
-                                headerCategory: 'category',
-                                headerValue: 'value',
-                                categoryFormatter(x) {
-                                    const date = new Date(x);
-                                    return `${date.getDate()} ${date.toLocaleString('en-GB', { month: 'short' })} ${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                                headerCategory: 'Time',
+                                headerValue: 'Value',
+                                dateFormatter: (timestamp) => {
+                                    const date = new Date(timestamp);
+                                    return date.toLocaleString();
                                 },
-                                valueFormatter(y) {
-                                    return y;
-                                }
                             },
-                            svg: {
-                                filename: 'sensor_chart',
-                            },
-                            png: {
-                                filename: 'sensor_chart',
-                            }
+                            svg: { filename: 'sensor_chart' },
+                            png: { filename: 'sensor_chart' }
                         },
                         autoSelected: 'zoom'
                     }
@@ -244,11 +232,10 @@
                     align: 'center'
                 },
                 noData: {
-                    text: 'No data to show'
+                    text: 'Select a sensor to display data'
                 },
                 xaxis: {
                     type: 'datetime',
-                    tickAmount: 8,
                     labels: {
                         datetimeUTC: false
                     }
@@ -260,196 +247,147 @@
                 }
             };
 
-            let pmChart = new ApexCharts(
-                document.querySelector("#timeChart"),
-                options
-            );
-            pmChart.render();
+            const chart = new ApexCharts(document.querySelector("#timeChart"), options);
+            chart.render();
 
-            let device_id = "";
-            let graph_name = "";
-            let graph_datasets = ["pm2_5"];
-            let graph_dataset_names = { "pm1": "PM 1", "pm2_5": "PM 2.5", "pm4": "PM 4", "pm10": "PM 10", "voc": "VOC Index", "nox": "NOx Index" };
-            let graph_data = [];
-            let graph_timespan = 86400000;
+            let selectedDatasets = ['pm2_5'];
+            const datasetNames = {
+                pm1: 'PM 1',
+                pm2_5: 'PM 2.5',
+                pm4: 'PM 4',
+                pm10: 'PM 10',
+                voc: 'VOC Index',
+                nox: 'NOx Index'
+            };
+            let timespan = 86400000;
+            let deviceId = '';
+            let sensorName = '';
 
-            function setGraphDatasets(dataset) {
-                let index = graph_datasets.indexOf(dataset);
-                if (index == -1) {
-                    graph_datasets.push(dataset);
+            function toggleDataset(dataset) {
+                const index = selectedDatasets.indexOf(dataset);
+                if (index === -1) {
+                    selectedDatasets.push(dataset);
                 } else {
-                    graph_datasets.splice(index, 1);
+                    selectedDatasets.splice(index, 1);
                 }
-                graph_datasets.sort();
-                console.log(graph_datasets);
-                updateGraph();
+                updateChart();
             }
 
-            function setGraphTimespan(timespan) {
-                graph_timespan = timespan;
-                console.log(`Timespan: ${graph_timespan}`);
-                getTimeSeriesData();
+            function setTimespan(value) {
+                timespan = value;
+                if (deviceId) {
+                    fetchSensorData();
+                }
             }
 
-            function setGraphNodeMapEvent(e) {
-                device_id = e.sourceTarget.options.device_id;
-                graph_name = `Sensor: ${e.sourceTarget.options.name}`;
-                getTimeSeriesData();
+            function handleMapClick(e) {
+                deviceId = e.target.options.device_id;
+                sensorName = `Sensor: ${e.target.options.name}`;
+                fetchSensorData();
             }
 
-            async function getTimeSeriesData() {
-                console.log(device_id);
-                graph_data = [];
+            async function fetchSensorData() {
                 try {
-                    let apiUrl = `https://map.cheltenham.space/api/v1/sensor/${device_id}?from=${Date.now() - graph_timespan}`;
-                    const request = await fetch(apiUrl, { method: "GET" });
-                    graph_data = await request.json();
-                    console.log("Graph data finished processing");
-                    console.log(graph_data);
+                    const response = await fetch(`https://map.cheltenham.space/api/v1/sensor/${deviceId}?from=${Date.now() - timespan}`);
+                    const data = await response.json();
+                    updateChartData(data);
                 } catch (error) {
-                    console.error("ERROR: ", error);
-                    graph_data = [];
+                    console.error('Error fetching sensor data:', error);
                 }
-                updateGraph();
             }
 
-            function updateGraph() {
-                if (pmChart) {
-                    if (graph_data.length === 0) {
-                        console.log("No graphable data found");
-                        options.series = [];
-                        pmChart.updateOptions(options);
-                    } else {
-                        options.series = [];
-                        for (let i = 0; i < graph_datasets.length; i++) {
-                            let dataset = graph_datasets[i];
-                            console.log(dataset);
-                            options.series.push({
-                                name: graph_dataset_names[dataset],
-                                data: graph_data.map(a => [a.event_time, a[dataset]])
-                            });
-                        }
-                        options.title.text = graph_name;
-                        options.xaxis.min = Date.now() - graph_timespan;
-                        options.xaxis.max = Date.now();
-                        pmChart.updateOptions(options);
+            function updateChartData(data) {
+                const seriesData = selectedDatasets.map(dataset => ({
+                    name: datasetNames[dataset],
+                    data: data.map(entry => [entry.event_time, entry[dataset]])
+                }));
+                chart.updateOptions({
+                    series: seriesData,
+                    title: { text: sensorName },
+                    xaxis: {
+                        min: Date.now() - timespan,
+                        max: Date.now()
                     }
+                });
+            }
+
+            function updateChart() {
+                if (deviceId) {
+                    fetchSensorData();
+                } else {
+                    chart.updateOptions({
+                        series: [],
+                        title: { text: 'Sensor Data' }
+                    });
                 }
             }
         </script>
 
         <!-- Leaflet Map Script -->
         <script>
-            function getPMColour(sensor) {
-                if (typeof sensor.pm2_5 === 'undefined') {
-                    return '#888';
-                }
-                let greenLimit = 12,
-                    amberLimit = 20;
-
-                if (sensor.pm2_5 <= greenLimit) {
-                    return '#0f0';
-                } else if (sensor.pm2_5 > greenLimit && sensor.pm2_5 <= amberLimit) {
-                    return '#f70';
-                } else {
-                    return '#f00';
-                }
+            function getPMColor(pm2_5) {
+                if (pm2_5 === undefined) return '#888';
+                if (pm2_5 <= 12) return '#0f0';
+                if (pm2_5 <= 20) return '#f70';
+                return '#f00';
             }
 
             const map = L.map('map').setView([51.8994, -2.0783], 7);
 
-            const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                attribution: '&copy; OpenStreetMap'
             }).addTo(map);
 
-            let markers = [];
-            async function drawNodeMarkers(map) {
-                let apiUrl = `https://map.cheltenham.space/api/v1/sensors`;
-                const nodes_request = await fetch(apiUrl, { method: "GET" });
-                const sensorData = await nodes_request.json();
+            async function loadSensors() {
+                try {
+                    const response = await fetch('https://map.cheltenham.space/api/v1/sensors');
+                    const sensors = await response.json();
 
-                console.log(sensorData);
+                    for (const sensor of Object.values(sensors)) {
+                        const latestResponse = await fetch(`https://map.cheltenham.space/api/v1/sensor/${sensor.device_id}/latest`);
+                        const latestData = await latestResponse.json();
 
-                for (let sensorId in sensorData) {
-                    try {
-                        let apiUrl = `https://map.cheltenham.space/api/v1/sensor/${sensorData[sensorId].device_id}/latest`;
-                        const request = await fetch(apiUrl, { method: "GET" });
-                        const latest_reading = await request.json();
-                        console.log(`Got latest reading for ${sensorData[sensorId].device_id}`);
-                        for (let key in latest_reading) {
-                            if (key === "time") {
-                                console.log("processing time");
-                                sensorData[sensorId][key] = new Date(latest_reading[key]).toUTCString();
-                            } else {
-                                sensorData[sensorId][key] = latest_reading[key];
-                            }
-                        }
-                    } catch (error) {
-                        console.error("ERROR: ", error);
+                        const marker = L.circleMarker([sensor.lat, sensor.long], {
+                            color: getPMColor(latestData.pm2_5),
+                            fillColor: getPMColor(latestData.pm2_5),
+                            fillOpacity: 0.6,
+                            radius: 10,
+                            device_id: sensor.device_id,
+                            name: sensor.name
+                        })
+                        .bindPopup(createPopupContent(sensor, latestData))
+                        .bindTooltip(latestData.pm2_5 ? latestData.pm2_5.toFixed(2) : '', {
+                            direction: 'center',
+                            className: 'text',
+                            permanent: true
+                        })
+                        .addTo(map)
+                        .on('click', handleMapClick);
                     }
-
-                    let circle = L.circleMarker([sensorData[sensorId].lat, sensorData[sensorId].long], {
-                        color: getPMColour(sensorData[sensorId]),
-                        fillColor: getPMColour(sensorData[sensorId]),
-                        fillOpacity: 0.6,
-                        opacity: 1,
-                        radius: 20,
-                        device_id: sensorData[sensorId].device_id,
-                        name: sensorData[sensorId].name
-                    }).bindPopup(`<div class="table-responsive">
-                                    <table class="table table-vcenter">
-                                        <tr>
-                                            <td>Name</td>
-                                            <td>${sensorData[sensorId].name}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Temperature</td>
-                                            <td>${sensorData[sensorId].temperature} °C</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Relative Humidity</td>
-                                            <td>${sensorData[sensorId].relative_humidity} %</td>
-                                        </tr>
-                                        <tr>
-                                            <td>PM 1</td>
-                                            <td>${sensorData[sensorId].pm1} μg/m³</td>
-                                        </tr>
-                                        <tr>
-                                            <td>PM 2.5</td>
-                                            <td>${sensorData[sensorId].pm2_5} μg/m³</td>
-                                        </tr>
-                                        <tr>
-                                            <td>PM 4</td>
-                                            <td>${sensorData[sensorId].pm4} μg/m³</td>
-                                        </tr>
-                                        <tr>
-                                            <td>PM 10</td>
-                                            <td>${sensorData[sensorId].pm10} μg/m³</td>
-                                        </tr>
-                                        <tr>
-                                            <td>NOx Index</td>
-                                            <td>${sensorData[sensorId].nox}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>VOC Index</td>
-                                            <td>${sensorData[sensorId].voc}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Last Updated</td>
-                                            <td>${sensorData[sensorId].time}</td>
-                                        </tr>
-                                    </table>
-                                </div>`).bindTooltip(String((typeof sensorData[sensorId].pm2_5 === 'undefined') ? "" : sensorData[sensorId].pm2_5.toFixed(2)), {
-                        direction: 'center',
-                        className: 'text',
-                        permanent: true
-                    }).addTo(map).on('click', setGraphNodeMapEvent);
-                    markers.push(circle);
+                } catch (error) {
+                    console.error('Error loading sensors:', error);
                 }
             }
 
-            drawNodeMarkers(map);
+            function createPopupContent(sensor, data) {
+                const rows = Object.entries({
+                    'Name': sensor.name,
+                    'Temperature': `${data.temperature} °C`,
+                    'Relative Humidity': `${data.relative_humidity} %`,
+                    'PM 1': `${data.pm1} μg/m³`,
+                    'PM 2.5': `${data.pm2_5} μg/m³`,
+                    'PM 4': `${data.pm4} μg/m³`,
+                    'PM 10': `${data.pm10} μg/m³`,
+                    'NOx Index': data.nox,
+                    'VOC Index': data.voc,
+                    'Last Updated': new Date(data.event_time).toLocaleString()
+                }).map(([key, value]) => `<tr><td>${key}</td><td>${value}</td></tr>`).join('');
+
+                return `<div class="table-responsive"><table class="table table-vcenter">${rows}</table></div>`;
+            }
+
+            loadSensors();
         </script>
     </div>
 </body>
