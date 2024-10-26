@@ -10,3 +10,6 @@
 - Reporting of time since last reboot (the sensor gets re-initialised and has some settle in time for a few things, so its useful to know. Also identifies bad units if they reboot a lot)
 - Reporting of the sensing elements serial number (for bad batch tracking)
 - **Added a build script for bulk compiling sensor firmware when managing a fleet!**
+
+# 0.1.3 (Update depreciated JSON function)
+- What he said. Makes build output cleaner
