@@ -48,11 +48,11 @@
         }
 
 		.leaflet-tooltip.uninitialized-tooltip {
-			font-size: 1.0em; /* Adjust as needed */
+			font-size: 0.6em; /* Adjust as needed */
 		}
 
 		.leaflet-tooltip.inactive-tooltip {
-			font-size: 1.0em; /* Adjust as needed */
+			font-size: 0.6em; /* Adjust as needed */
 		}
 
         /* Adjust map height */
@@ -443,7 +443,7 @@
 							markerOptions.color = '#000000'; // Black color
 							markerOptions.fillColor = '#000000';
 							markerOptions.fillOpacity = 0.4;
-							markerOptions.radius = 10;
+							markerOptions.radius = 14;
 							tooltipClass += ' uninitialized-tooltip'; // Add class
 						} else if (isInactive) {
 							// Inactive node
@@ -451,7 +451,7 @@
 							markerOptions.color = '#808080'; // Gray color
 							markerOptions.fillColor = '#808080';
 							markerOptions.fillOpacity = 0.4;
-							markerOptions.radius = 10;
+							markerOptions.radius = 14;
 							tooltipClass += ' inactive-tooltip'; // Add class
 						} else {
 							// Active node
@@ -459,7 +459,7 @@
 							markerOptions.color = getPMColor(pm2_5Value);
 							markerOptions.fillColor = getPMColor(pm2_5Value);
 							markerOptions.fillOpacity = 0.6;
-							markerOptions.radius = 10; // Default radius
+							markerOptions.radius = 14; // Default radius
 						}
 
 						const marker = L.circleMarker([sensor.lat, sensor.long], markerOptions)
