@@ -340,35 +340,69 @@
             }).addTo(map);
 
             async function loadSensors() {
-                try {
-                    const response = await fetch('https://map.cheltenham.space/api/v1/sensors');
-                    const sensors = await response.json();
+				try {
+					const response = await fetch('https://map.cheltenham.space/api/v1/sensors');
+					const sensors = await response.json();
 
-                    for (const sensor of Object.values(sensors)) {
-                        const latestResponse = await fetch(`https://map.cheltenham.space/api/v1/sensor/${sensor.device_id}/latest`);
-                        const latestData = await latestResponse.json();
+					for (const sensor of Object.values(sensors)) {
+						let latestData = {};
+						try {
+							const latestResponse = await fetch(`https://map.cheltenham.space/api/v1/sensor/${sensor.device_id}/latest`);
+							if (latestResponse.ok) {
+								latestData = await latestResponse.json();
+							} else {
+								console.warn(`No latest data for sensor ${sensor.device_id}, status: ${latestResponse.status}`);
+								// You can choose to skip this sensor or set default values
+								// continue; // Uncomment this line if you want to skip the sensor
+								latestData = {
+									temperature: 'N/A',
+									relative_humidity: 'N/A',
+									pm1: 'N/A',
+									pm2_5: 'N/A',
+									pm4: 'N/A',
+									pm10: 'N/A',
+									nox: 'N/A',
+									voc: 'N/A',
+									time: 'N/A'
+								};
+							}
+						} catch (error) {
+							console.error(`Error fetching latest data for sensor ${sensor.device_id}:`, error);
+							latestData = {
+								temperature: 'N/A',
+								relative_humidity: 'N/A',
+								pm1: 'N/A',
+								pm2_5: 'N/A',
+								pm4: 'N/A',
+								pm10: 'N/A',
+								nox: 'N/A',
+								voc: 'N/A',
+								time: 'N/A'
+							};
+						}
 
-                        const marker = L.circleMarker([sensor.lat, sensor.long], {
-                            color: getPMColor(latestData.pm2_5),
-                            fillColor: getPMColor(latestData.pm2_5),
-                            fillOpacity: 0.6,
-                            radius: 10,
-                            device_id: sensor.device_id,
-                            name: sensor.name
-                        })
-                        .bindPopup(createPopupContent(sensor, latestData))
-                        .bindTooltip(latestData.pm2_5 ? latestData.pm2_5.toFixed(2) : '', {
-                            direction: 'center',
-                            className: 'text',
-                            permanent: true
-                        })
-                        .addTo(map)
-                        .on('click', handleMapClick);
-                    }
-                } catch (error) {
-                    console.error('Error loading sensors:', error);
-                }
-            }
+						const marker = L.circleMarker([sensor.lat, sensor.long], {
+							color: getPMColor(latestData.pm2_5),
+							fillColor: getPMColor(latestData.pm2_5),
+							fillOpacity: 0.6,
+							radius: 10,
+							device_id: sensor.device_id,
+							name: sensor.name
+						})
+						.bindPopup(createPopupContent(sensor, latestData))
+						.bindTooltip(latestData.pm2_5 ? latestData.pm2_5.toFixed(2) : 'N/A', {
+							direction: 'center',
+							className: 'text',
+							permanent: true
+						})
+						.addTo(map)
+						.on('click', handleMapClick);
+					}
+				} catch (error) {
+					console.error('Error loading sensors:', error);
+				}
+			}
+
 
             function createPopupContent(sensor, data) {
                 const rows = Object.entries({
