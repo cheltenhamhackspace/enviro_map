@@ -13,3 +13,6 @@
 
 # 0.1.3 (Update depreciated JSON function)
 - What he said. Makes build output cleaner
+
+# 0.1.4 (Report missing sensor)
+- Report when a sensor cant communicate with the sensing element
