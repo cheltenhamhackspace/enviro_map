@@ -31,7 +31,7 @@ SensirionI2CSen5x sen5x;
 #endif
 
 #ifndef FWVERSION
-    #define FWVERSION "0.1.4"  // Firmware version
+    #define FWVERSION "0.1.5"  // Firmware version
 #endif
 
 #ifndef BASEURL
@@ -76,8 +76,28 @@ void printMemoryStats() {
     Serial.printf("Allocated chunks: %d\n", mi.uordblks);
 }
 
+// Function to print a MAC address
+void printMacAddress(byte mac[]) {
+  for (int i = 0; i <= 5; i++) {
+    if (mac[i] < 16) {
+      Serial.print("0");
+    }
+    Serial.print(mac[i], HEX);
+    if (i < 5) {
+      Serial.print(":");
+    }
+  }
+  Serial.println();
+}
+
 // Function to connect to the WiFi network
 void setupWiFi() {
+    // Get and print MAC address
+    byte mac[6];
+    WiFi.macAddress(mac);
+    Serial.print("MAC: ");
+    printMacAddress(mac);
+
     Serial.print("Connecting to ");
     Serial.println(ssid);
 

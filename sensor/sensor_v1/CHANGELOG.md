@@ -16,3 +16,6 @@
 
 # 0.1.4 (Report missing sensor)
 - Report when a sensor cant communicate with the sensing element
+
+# 0.1.5 (Print MAC address on startup)
+- Make the sensor report the MAC address in the console when starting up
