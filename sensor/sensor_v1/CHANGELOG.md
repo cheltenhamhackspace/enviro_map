@@ -19,3 +19,8 @@
 
 # 0.1.5 (Print MAC address on startup)
 - Make the sensor report the MAC address in the console when starting up
+
+# 0.1.6 (USB drive functionality)
+- The sensor now shows up as a USB drive for the first 30 seconds of being connected to a PC and presents a file with the sensors MAC address.
+- Added FatFS support to hold the above file.
+- Updated build script to include a 256k LittleFS partition.

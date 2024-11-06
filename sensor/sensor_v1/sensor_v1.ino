@@ -5,6 +5,8 @@
 #include <SensirionI2CSen5x.h>
 #include <Wire.h>
 #include <malloc.h>
+#include <FatFS.h>
+#include <FatFSUSB.h>
 
 // Define buffer size requirement for I2C communication
 #define MAXBUF_REQUIREMENT 48
@@ -31,7 +33,7 @@ SensirionI2CSen5x sen5x;
 #endif
 
 #ifndef FWVERSION
-    #define FWVERSION "0.1.5"  // Firmware version
+    #define FWVERSION "0.1.6"  // Firmware version
 #endif
 
 #ifndef BASEURL
@@ -66,6 +68,86 @@ int readingsTaken = 0;  // Counter for how many readings have been taken
 
 // Global variable to track sensor connection status
 bool sensor_connected = false;
+
+// Global vars for tracking usb state
+volatile bool driveConnected = false;
+unsigned long driveStartTime = 0;
+const unsigned long DRIVE_TIMEOUT = 30000; // 20 seconds in milliseconds
+bool driveHasBeenMounted = false;
+volatile bool driveHasBeenUnmounted = false;
+
+// Called when drive is released
+void unplug(uint32_t i) {
+    (void)i;
+    driveConnected = false;
+    FatFS.begin();
+}
+
+// Called when drive is plugged in
+void plug(uint32_t i) {
+    (void)i;
+    driveConnected = true;
+    FatFS.end();
+}
+
+bool mountable(uint32_t i) {
+    (void)i;
+    return true;
+}
+
+void writeMACAddressFile() {
+    byte mac[6];
+    WiFi.macAddress(mac);
+    
+    // Create MAC address string
+    char macStr[18];
+    snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X", 
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    
+    // Write to file
+    File f = FatFS.open("MAC_ADDRESS.txt", "w");
+    if (f) {
+        f.println("Pico W MAC Address:");
+        f.println(macStr);
+        f.println("This file was automatically generated at boot.");
+        f.close();
+        Serial.println("MAC address file written successfully");
+    } else {
+        Serial.println("Failed to create MAC address file");
+    }
+}
+
+void handleUSBDrive() {
+    if (!driveHasBeenMounted && !driveConnected && !driveHasBeenUnmounted) {
+        // Initialize drive on first run
+        if (FatFS.begin()) {
+            writeMACAddressFile();
+            
+            // Set up USB callbacks
+            FatFSUSB.onUnplug(unplug);
+            FatFSUSB.onPlug(plug);
+            FatFSUSB.driveReady(mountable);
+            
+            // Start USB drive mode
+            FatFSUSB.begin();
+            
+            driveStartTime = millis();
+            driveHasBeenMounted = true;
+            Serial.println("USB Drive mounted. Will auto-unmount in 30 seconds.");
+        } else {
+            Serial.println("Failed to initialize FatFS");
+        }
+    }
+    
+    // Check if it's time to unmount the drive
+    if (driveHasBeenMounted && !driveConnected && !driveHasBeenUnmounted && 
+        (millis() - driveStartTime >= DRIVE_TIMEOUT)) {
+        FatFSUSB.end();
+        Serial.println("USB Drive auto-unmounted");
+        driveStartTime = 0;
+        driveHasBeenUnmounted = true;  // Set flag to prevent further unmounting attempts
+    }
+}
 
 // Function to print memory stats for debugging purposes
 void printMemoryStats() {
@@ -326,6 +408,9 @@ void setup() {
     Serial.print("Node UUID: ");
     Serial.println(UUID);
 
+    // Initialize the USB drive functionality
+    handleUSBDrive();
+
     setupWiFi();  // Connect to WiFi
 
     Wire.begin();  // initialise I2C bus
@@ -386,6 +471,8 @@ void setup() {
 // Loop function runs repeatedly after the setup function
 void loop() {
     unsigned long currentMillis = millis();  // Get the current time
+
+    handleUSBDrive();  // Handle USB drive mounting/unmounting
 
     handleWiFiReconnection();  // Check and maintain WiFi connection
     readAndStoreMeasurements();  // Read and accumulate sensor data

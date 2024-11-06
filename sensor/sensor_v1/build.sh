@@ -56,7 +56,7 @@ do
     # Quote all variables that could contain spaces
     arduino-cli compile \
         --fqbn "$BOARD_NAME" "$SKETCH_PATH" -e \
-        --build-property "build.extra_flags=\"-DUUID=\"$UUID\"\" \"-DSTAPSK=\"$STAPSK\"\" \"-DSTASSID=\"$STASSID\"\""
+        --build-property "build.extra_flags=\"-DUUID=\"$UUID\"\" \"-DSTAPSK=\"$STAPSK\"\" \"-DSTASSID=\"$STASSID\"\"" --build-property "build.fs_start=270397440"
 
     # Check if the build was successful by verifying if the .uf2 file exists
     FIRMWARE_FILE="$BUILD_DIR/sensor_v1.ino.uf2"
