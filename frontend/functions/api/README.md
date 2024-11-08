@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS sensor_readings (
   pm4 real,
   pm10 real,
   voc real,
-  nox real
+  nox real,
+  uptime integer,
+  version text
 );
 CREATE INDEX idx_sensor_readings_device_id_event_time ON sensor_readings(device_id, event_time);
 

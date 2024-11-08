@@ -32,7 +32,7 @@ export async function onRequest(context) {
                 readingData[item] = null;
             };
         }
-        const keys = ["relative_humidity", "temperature", "pm1", "pm2_5", "pm4", "pm10", "voc", "nox"];
+        const keys = ["relative_humidity", "temperature", "pm1", "pm2_5", "pm4", "pm10", "voc", "nox", "version", "uptime", "sensor_connected"];
         keys.forEach(checkUndefinedSetNull);
     }
 
@@ -46,8 +46,8 @@ export async function onRequest(context) {
             standardiseReadingData(data);
             console.log(data);
             const { success } = await context.env.READINGS_TABLE.prepare(`
-                insert into sensor_readings ( device_id, event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).bind(context.params.sensorid, Date.now(), data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox).run()
+                insert into sensor_readings ( device_id, event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox, uptime, version) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(context.params.sensorid, Date.now(), data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox, data.uptime, data.version).run()
             return new Response("201 - Indexed", { status: 201 });
         }
 
