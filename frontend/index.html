@@ -228,25 +228,22 @@
                             pan: true,
                             reset: true,
                         },
-                        autoSelected: 'zoom'
-                    },
-                    export: {
-                        csv: {
-                            filename: 'sensor_data',
-                            columnDelimiter: ',',
-                            headerCategory: 'Time',
-                            headerValue: 'Value',
-                            dateFormatter: function(timestamp) {
-                                if (typeof timestamp === 'number') {
-                                    return new Date(timestamp).toISOString();
-                                }
-                                // If timestamp is already a date string, parse it first
-                                return new Date(Date.parse(timestamp)).toISOString();
-                            }
+                        export: {
+                            csv: {
+                                filename: 'sensor_data',
+                                columnDelimiter: ',',
+                                headerCategory: 'Time',
+                                headerValue: 'Value',
+                                dateFormatter: (timestamp) => {
+                                    const date = new Date(timestamp);
+                                    return date.toLocaleString();
+                                },
+                            },
+                            svg: { filename: 'sensor_chart' },
+                            png: { filename: 'sensor_chart' }
                         },
-                        svg: { filename: 'sensor_chart' },
-                        png: { filename: 'sensor_chart' }
-                    },
+                        autoSelected: 'zoom'
+                    }
                 },
                 series: [],
                 title: {
