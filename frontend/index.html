@@ -234,10 +234,10 @@
                                 columnDelimiter: ',',
                                 headerCategory: 'Time',
                                 headerValue: 'Value',
-                                dateFormatter: (timestamp) => {
+                                dateFormatter: function(timestamp) {
                                     const date = new Date(timestamp);
-                                    return date.toLocaleString();
-                                },
+                                    return date.toISOString(); // This will output in ISO 8601 format
+                                }
                             },
                             svg: { filename: 'sensor_chart' },
                             png: { filename: 'sensor_chart' }
