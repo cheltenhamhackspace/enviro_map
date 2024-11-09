@@ -228,25 +228,25 @@
                             pan: true,
                             reset: true,
                         },
-                        export: {
-                            csv: {
-                                filename: 'sensor_data',
-                                columnDelimiter: ',',
-                                headerCategory: 'Time',
-                                headerValue: 'Value',
-                                dateFormatter: function(timestamp) {
-                                    if (typeof timestamp === 'number') {
-                                        return new Date(timestamp).toISOString();
-                                    }
-                                    // If timestamp is already a date string, parse it first
-                                    return new Date(Date.parse(timestamp)).toISOString();
-                                }
-                            },
-                            svg: { filename: 'sensor_chart' },
-                            png: { filename: 'sensor_chart' }
-                        },
                         autoSelected: 'zoom'
-                    }
+                    },
+                    export: {
+                        csv: {
+                            filename: 'sensor_data',
+                            columnDelimiter: ',',
+                            headerCategory: 'Time',
+                            headerValue: 'Value',
+                            dateFormatter: function(timestamp) {
+                                if (typeof timestamp === 'number') {
+                                    return new Date(timestamp).toISOString();
+                                }
+                                // If timestamp is already a date string, parse it first
+                                return new Date(Date.parse(timestamp)).toISOString();
+                            }
+                        },
+                        svg: { filename: 'sensor_chart' },
+                        png: { filename: 'sensor_chart' }
+                    },
                 },
                 series: [],
                 title: {
