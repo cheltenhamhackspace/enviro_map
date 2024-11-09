@@ -395,11 +395,12 @@
 
                     // Convert data to CSV
                     const headers = ['Timestamp', 'Temperature', 'Relative Humidity', 'PM1', 'PM2.5', 'PM4', 'PM10', 'VOC Index', 'NOx Index'];
-                    let csvContent = headers.join(',') + '\\r\\n';  // Use \\r\\n for Windows compatibility
+                    let csvRows = [headers];  // Start with headers as first row
 
+                    // Add data rows
                     data.forEach(row => {
                         const timestamp = new Date(row.event_time).toISOString();
-                        const values = [
+                        csvRows.push([
                             timestamp,
                             row.temperature,
                             row.relative_humidity,
@@ -409,12 +410,14 @@
                             row.pm10,
                             row.voc,
                             row.nox
-                        ];
-                        csvContent += values.join(',') + '\\r\\n';  // Add \\r\\n after each row
+                        ]);
                     });
 
+                    // Join rows with actual newlines
+                    const csvContent = csvRows.map(row => row.join(',')).join('\\n');
+
                     // Create and trigger download
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
