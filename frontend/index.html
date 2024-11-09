@@ -235,8 +235,11 @@
                                 headerCategory: 'Time',
                                 headerValue: 'Value',
                                 dateFormatter: function(timestamp) {
-                                    const date = new Date(timestamp);
-                                    return date.toISOString(); // This will output in ISO 8601 format
+                                    if (typeof timestamp === 'number') {
+                                        return new Date(timestamp).toISOString();
+                                    }
+                                    // If timestamp is already a date string, parse it first
+                                    return new Date(Date.parse(timestamp)).toISOString();
                                 }
                             },
                             svg: { filename: 'sensor_chart' },
