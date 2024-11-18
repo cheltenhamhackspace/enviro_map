@@ -28,4 +28,4 @@
 # 0.1.7 (Increase POST timeout)
 - Increased the timeout when uploading data from 1 second, to 20 seconds
 - Added metric in POST data to send WiFi signal strength (for debugging connectivity issues)
-- Renames MAC_ADDRESS.txt file in the emulated USB drive to DEVICE_INFO.txt and added the firmware version as additional info inside the file.
+- Renamed MAC_ADDRESS.txt file in the emulated USB drive to DEVICE_INFO.txt and added the firmware version as additional info inside the file.
