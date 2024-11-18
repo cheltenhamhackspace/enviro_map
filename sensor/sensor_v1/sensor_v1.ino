@@ -33,7 +33,7 @@ SensirionI2CSen5x sen5x;
 #endif
 
 #ifndef FWVERSION
-    #define FWVERSION "0.1.6"  // Firmware version
+    #define FWVERSION "0.1.7"  // Firmware version
 #endif
 
 #ifndef BASEURL
@@ -95,7 +95,7 @@ bool mountable(uint32_t i) {
     return true;
 }
 
-void writeMACAddressFile() {
+void writeDeviceInfoFile() {
     byte mac[6];
     WiFi.macAddress(mac);
     
@@ -105,15 +105,20 @@ void writeMACAddressFile() {
              mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     
     // Write to file
-    File f = FatFS.open("MAC_ADDRESS.txt", "w");
+    File f = FatFS.open("DEVICE_INFO.txt", "w");
     if (f) {
-        f.println("Pico W MAC Address:");
+        f.println("Device Information:");
+        f.println("-----------------");
+        f.print("Pico W MAC Address: ");
         f.println(macStr);
+        f.print("Firmware Version: ");
+        f.println(FWVERSION);
+        f.println("-----------------");
         f.println("This file was automatically generated at boot.");
         f.close();
-        Serial.println("MAC address file written successfully");
+        Serial.println("Device info file written successfully");
     } else {
-        Serial.println("Failed to create MAC address file");
+        Serial.println("Failed to create device info file");
     }
 }
 
@@ -121,7 +126,7 @@ void handleUSBDrive() {
     if (!driveHasBeenMounted && !driveConnected && !driveHasBeenUnmounted) {
         // Initialize drive on first run
         if (FatFS.begin()) {
-            writeMACAddressFile();
+            writeDeviceInfoFile();  // Changed from writeMACAddressFile
             
             // Set up USB callbacks
             FatFSUSB.onUnplug(unplug);
@@ -326,6 +331,9 @@ void sendDataToServer() {
     https.setInsecure();  // Disable SSL certificate verification
     if (https.begin(url)) {  // Begin the HTTPS connection
         https.addHeader("Content-Type", "application/json");
+
+        // Set timeout
+        https.setTimeout(20000);         // 20 seconds
         
         // Prepare the JSON payload with sensor data
         JsonDocument doc;  // Specify the size of the document
@@ -341,6 +349,7 @@ void sendDataToServer() {
         doc["version"] = FWVERSION;
         doc["uptime"] = millis();
         doc["sensor_connected"] = sensor_connected;
+        doc["wifi_rssi"] = WiFi.RSSI();  // Add WiFi signal strength
 
         String payload;
         serializeJson(doc, payload);
@@ -396,6 +405,7 @@ void handleWiFiReconnection() {
             rp2040.reboot();
         } else {
             Serial.println("Reconnected to WiFi.");
+            Serial.printf("Signal strength (RSSI): %d dBm\n", WiFi.RSSI());
         }
     }
 }

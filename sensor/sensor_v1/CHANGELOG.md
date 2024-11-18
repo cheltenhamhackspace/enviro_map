@@ -24,3 +24,8 @@
 - The sensor now shows up as a USB drive for the first 30 seconds of being connected to a PC and presents a file with the sensors MAC address.
 - Added FatFS support to hold the above file.
 - Updated build script to include a 256k LittleFS partition.
+
+# 0.1.7 (Increase POST timeout)
+- Increased the timeout when uploading data from 1 second, to 20 seconds
+- Added metric in POST data to send WiFi signal strength (for debugging connectivity issues)
+- Renames MAC_ADDRESS.txt file in the emulated USB drive to DEVICE_INFO.txt and added the firmware version as additional info inside the file.
