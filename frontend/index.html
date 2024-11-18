@@ -506,7 +506,7 @@
 						// Determine if the sensor is inactive
 						const now = Date.now();
 						const dataTime = latestData.time ? new Date(latestData.time).getTime() : null;
-						const isInactive = dataTime ? (now - dataTime) > 24 * 3600 * 1000 : false; // 24 hours in milliseconds
+						const isInactive = dataTime ? (now - dataTime) > 2 * 3600 * 1000 : false; // 2 hours in milliseconds
 
 						const pm2_5Value = latestData.pm2_5;
 						let pm2_5Display = '';
