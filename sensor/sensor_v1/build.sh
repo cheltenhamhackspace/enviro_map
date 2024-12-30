@@ -1,6 +1,9 @@
 #!/bin/bash
 
-# Check if arduino-cli is installed, if not, slap yourself.
+# Set the batch size (number of simultaneous builds)
+BATCH_SIZE=8
+
+# Check if arduino-cli is installed
 if ! command -v arduino-cli &> /dev/null
 then
     echo "arduino-cli is not installed. Install it first, then rerun."
@@ -34,47 +37,92 @@ if [ ! -f "$INPUT_FILE" ]; then
 fi
 
 # Directory where the compiled files will be placed
-BUILD_DIR="./build/${BOARD_NAME//:/\.}"
 OUT_DIR="./build/out"
-
 mkdir -p $OUT_DIR
 
 # Clean up old builds
 rm -rf $OUT_DIR/*
 
-# Compile for each set of variables in the input file
-while IFS=',' read -r SENSORNAME STASSID STAPSK UUID
-do
-    echo "----------------------------------------------------------"
-    if [ -z "$SENSORNAME" ] || [ -z "$STASSID" ] || [ -z "$STAPSK" ] || [ -z "$UUID" ]; then
-        echo "Skipping incomplete line in $INPUT_FILE. Fix your formatting."
-        continue
-    fi
+# Function to compile a single configuration
+compile_config() {
+    local SENSORNAME="$1"
+    local STASSID="$2"
+    local STAPSK="$3"
+    local UUID="$4"
+    
+    # Create a unique build directory for this configuration
+    local BUILD_DIR="./build/${SENSORNAME// /_}"
+    mkdir -p "$BUILD_DIR"
 
-    echo "Compiling sketch with NAME: $SENSORNAME, SSID: $STASSID, PSK: $STAPSK, UUID: $UUID"
+    echo "Starting compilation for NAME: $SENSORNAME"
+    echo "Parameters: SSID: $STASSID, PSK: $STAPSK, UUID: $UUID"
 
     # Quote all variables that could contain spaces
     arduino-cli compile \
         --fqbn "$BOARD_NAME" "$SKETCH_PATH" -e \
-        --build-property "build.extra_flags=\"-DUUID=\"$UUID\"\" \"-DSTAPSK=\"$STAPSK\"\" \"-DSTASSID=\"$STASSID\"\"" --build-property "build.fs_start=270397440"
+        --build-path "$BUILD_DIR" \
+        --build-property "build.extra_flags=\"-DUUID=\"$UUID\"\" \"-DSTAPSK=\"$STAPSK\"\" \"-DSTASSID=\"$STASSID\"\"" \
+        --build-property "build.fs_start=270397440"
 
-    # Check if the build was successful by verifying if the .uf2 file exists
-    FIRMWARE_FILE="$BUILD_DIR/sensor_v1.ino.uf2"
+    # Check if the build was successful
+    local FIRMWARE_FILE="$BUILD_DIR/sensor_v1.ino.uf2"
     if [ ! -f "$FIRMWARE_FILE" ]; then
-        echo "Compilation failed for NAME: $SENSORNAME. Try fixing your code."
-        continue
+        echo "Compilation failed for NAME: $SENSORNAME"
+        return 1
     fi
 
-    # Create a sensible output filename, using the UUID or SSID in the filename
-    OUTPUT_FILE="${OUT_DIR}/${SENSORNAME// /_}_firmware.uf2"  # Replace spaces in the filename with underscores
+    # Create output filename
+    local OUTPUT_FILE="${OUT_DIR}/${SENSORNAME// /_}_firmware.uf2"
 
     # Move and rename the .uf2 file
     mv "$FIRMWARE_FILE" "$OUTPUT_FILE"
-    rm -rf $BUILD_DIR
+    rm -rf "$BUILD_DIR"
     echo "Firmware for $SENSORNAME saved as $OUTPUT_FILE"
+}
 
-    echo "Done compiling for $SENSORNAME"
+# Function to process a batch of builds
+process_batch() {
+    local -a PIDS=()
+    local COUNT=0
+    
+    while IFS=',' read -r SENSORNAME STASSID STAPSK UUID; do
+        if [ -z "$SENSORNAME" ] || [ -z "$STASSID" ] || [ -z "$STAPSK" ] || [ -z "$UUID" ]; then
+            echo "Skipping incomplete line in $INPUT_FILE"
+            continue
+        fi
 
-done < "$INPUT_FILE"
+        # Start compilation in background
+        compile_config "$SENSORNAME" "$STASSID" "$STAPSK" "$UUID" &
+        PIDS+=($!)
+        ((COUNT++))
+
+        # If we've reached the batch size, wait for all current builds to complete
+        if [ $COUNT -eq $BATCH_SIZE ]; then
+            echo "Waiting for current batch to complete..."
+            for PID in "${PIDS[@]}"; do
+                wait $PID
+            done
+            PIDS=()
+            COUNT=0
+            echo "Batch complete, starting next batch..."
+        fi
+    done
+
+    # Wait for any remaining builds
+    if [ ${#PIDS[@]} -gt 0 ]; then
+        echo "Waiting for final batch to complete..."
+        for PID in "${PIDS[@]}"; do
+            wait $PID
+        done
+    fi
+}
+
+# Count total number of valid configurations
+TOTAL_CONFIGS=$(grep -v '^[[:space:]]*$' "$INPUT_FILE" | wc -l)
+echo "Found $TOTAL_CONFIGS configurations to build"
+echo "Processing in batches of $BATCH_SIZE"
+
+# Process all configurations in batches
+process_batch < "$INPUT_FILE"
 
 echo "All builds completed"
