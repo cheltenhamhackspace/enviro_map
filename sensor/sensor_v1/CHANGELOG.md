@@ -29,3 +29,6 @@
 - Increased the timeout when uploading data from 1 second, to 20 seconds
 - Added metric in POST data to send WiFi signal strength (for debugging connectivity issues)
 - Renamed MAC_ADDRESS.txt file in the emulated USB drive to DEVICE_INFO.txt and added the firmware version as additional info inside the file.
+
+# 0.2.0 (User supplied wifi creds!)
+- Added to the USB drive functionality by enabling users to supply their own WiFi credentials themselves using a new `WIFI_CONFIG.txt` file and instructions contained within.

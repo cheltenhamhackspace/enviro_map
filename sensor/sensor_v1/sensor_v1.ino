@@ -27,7 +27,7 @@
     #define UUID "DEFAULT_UUID"
 #endif
 #ifndef FWVERSION
-    #define FWVERSION "0.1.7"
+    #define FWVERSION "0.2.0"
 #endif
 #ifndef BASEURL
     #define BASEURL "https://map.cheltenham.space/api/v1/sensor/"
