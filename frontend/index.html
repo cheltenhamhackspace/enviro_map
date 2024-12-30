@@ -594,6 +594,41 @@
                 attribution: '&copy; OpenStreetMap'
             }).addTo(map);
 
+            function createPopupContent(sensor, data, isInactive, isUninitialised) {
+                if (isUninitialised) {
+                    return `<div>
+                        <div class="inactive-banner">Uninitialised Sensor</div>
+                        <strong>${sensor.name || 'Unknown'}</strong>
+                        <br>No data available for this sensor.</br>
+                        <br>Probably because it's new to the system and hasn't sent any data yet.</br>
+                    </div>`;
+                }
+
+                const formatValue = (value, unit = '') => Number.isFinite(value) ? `${value.toFixed(2)} ${unit}` : 'N/A';
+                const rows = Object.entries({
+                    'Name': sensor.name || 'Unknown',
+                    'Temperature': formatValue(data.temperature, '°C'),
+                    'Relative Humidity': formatValue(data.relative_humidity, '%'),
+                    'PM 1': formatValue(data.pm1, 'μg/m³'),
+                    'PM 2.5': formatValue(data.pm2_5, 'μg/m³'),
+                    'PM 4': formatValue(data.pm4, 'μg/m³'),
+                    'PM 10': formatValue(data.pm10, 'μg/m³'),
+                    'NOx Index': Number.isFinite(data.nox) ? data.nox : 'N/A',
+                    'VOC Index': Number.isFinite(data.voc) ? data.voc : 'N/A',
+                    'Last Updated': data.time ? new Date(data.time).toLocaleString() : 'N/A'
+                }).map(([key, value]) => `<tr><td>${key}</td><td>${value}</td></tr>`).join('');
+
+                let banner = '';
+                if (isInactive) {
+                    banner = `<div class="inactive-banner">Inactive Sensor</div>`;
+                }
+
+                return `<div class="table-responsive">
+                    ${banner}
+                    <table class="table table-vcenter">${rows}</table>
+                </div>`;
+            }
+
             async function loadSensors() {
                 try {
                     const response = await fetch('https://map.cheltenham.space/api/v1/sensors');
