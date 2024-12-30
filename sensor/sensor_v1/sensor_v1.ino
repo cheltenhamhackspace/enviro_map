@@ -16,46 +16,43 @@
     #define USE_PRODUCT_INFO
 #endif
 
-// Sensor object for the Sensirion SEN5x sensor
-SensirionI2CSen5x sen5x;
-
-// WiFi credentials and other constant definitions
+// Default configurations
 #ifndef STASSID
-    #define STASSID "DEFAULT_SSID"  // WiFi SSID
+    #define STASSID "DEFAULT_SSID"
 #endif
-
 #ifndef STAPSK
-    #define STAPSK "DEFAULT_PASSWORD"  // WiFi Password
+    #define STAPSK "DEFAULT_PASSWORD"
 #endif
-
 #ifndef UUID
-    #define UUID "DEFAULT_UUID"  // Unique identifier for the sensor node
+    #define UUID "DEFAULT_UUID"
 #endif
-
 #ifndef FWVERSION
-    #define FWVERSION "0.1.7"  // Firmware version
+    #define FWVERSION "0.1.7"
 #endif
-
 #ifndef BASEURL
-    #define BASEURL "https://map.cheltenham.space/api/v1/sensor/"  // Base URL for data submission
+    #define BASEURL "https://map.cheltenham.space/api/v1/sensor/"
 #endif
 
-// WiFi credentials
+// Credentials structure
+struct WifiCredentials {
+    String ssid;
+    String password;
+};
+
+// Global variables
+SensirionI2CSen5x sen5x;
 const char* ssid = STASSID;
 const char* password = STAPSK;
-String url = String(BASEURL) + String(UUID);  // Construct the full URL for API endpoint
+String url = String(BASEURL) + String(UUID);
+WiFiMulti multi;
 
-WiFiMulti multi;  // WiFiMulti allows for multiple access point connections
-
-// Sensor serial number buffer and size
+// Sensor variables
 unsigned char serialNumber[32];
 uint8_t serialNumberSize = 32;
-
-// Timing variables for periodic measurements and data submission
 unsigned long previousMillis = 0;
-unsigned long interval = 300000;  // Interval for sending data (5 minutes)
+unsigned long interval = 300000;
 
-// Variables to accumulate sensor readings for averaging
+// Accumulator variables
 float totalMassConcentrationPm1p0 = 0;
 float totalMassConcentrationPm2p5 = 0;
 float totalMassConcentrationPm4p0 = 0;
@@ -64,26 +61,23 @@ float totalAmbientHumidity = 0;
 float totalAmbientTemperature = 0;
 float totalVocIndex = 0;
 float totalNoxIndex = 0;
-int readingsTaken = 0;  // Counter for how many readings have been taken
+int readingsTaken = 0;
 
-// Global variable to track sensor connection status
+// Status tracking variables
 bool sensor_connected = false;
-
-// Global vars for tracking usb state
 volatile bool driveConnected = false;
 unsigned long driveStartTime = 0;
-const unsigned long DRIVE_TIMEOUT = 30000; // 20 seconds in milliseconds
+const unsigned long DRIVE_TIMEOUT = 30000;
 bool driveHasBeenMounted = false;
 volatile bool driveHasBeenUnmounted = false;
 
-// Called when drive is released
+// USB Drive callback functions
 void unplug(uint32_t i) {
     (void)i;
     driveConnected = false;
     FatFS.begin();
 }
 
-// Called when drive is plugged in
 void plug(uint32_t i) {
     (void)i;
     driveConnected = true;
@@ -95,66 +89,7 @@ bool mountable(uint32_t i) {
     return true;
 }
 
-void writeDeviceInfoFile() {
-    byte mac[6];
-    WiFi.macAddress(mac);
-    
-    // Create MAC address string
-    char macStr[18];
-    snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X", 
-             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    
-    // Write to file
-    File f = FatFS.open("DEVICE_INFO.txt", "w");
-    if (f) {
-        f.println("Device Information:");
-        f.println("-----------------");
-        f.print("Pico W MAC Address: ");
-        f.println(macStr);
-        f.print("Firmware Version: ");
-        f.println(FWVERSION);
-        f.println("-----------------");
-        f.println("This file was automatically generated at boot.");
-        f.close();
-        Serial.println("Device info file written successfully");
-    } else {
-        Serial.println("Failed to create device info file");
-    }
-}
-
-void handleUSBDrive() {
-    if (!driveHasBeenMounted && !driveConnected && !driveHasBeenUnmounted) {
-        // Initialize drive on first run
-        if (FatFS.begin()) {
-            writeDeviceInfoFile();  // Changed from writeMACAddressFile
-            
-            // Set up USB callbacks
-            FatFSUSB.onUnplug(unplug);
-            FatFSUSB.onPlug(plug);
-            FatFSUSB.driveReady(mountable);
-            
-            // Start USB drive mode
-            FatFSUSB.begin();
-            
-            driveStartTime = millis();
-            driveHasBeenMounted = true;
-            Serial.println("USB Drive mounted. Will auto-unmount in 30 seconds.");
-        } else {
-            Serial.println("Failed to initialize FatFS");
-        }
-    }
-    
-    // Check if it's time to unmount the drive
-    if (driveHasBeenMounted && !driveConnected && !driveHasBeenUnmounted && 
-        (millis() - driveStartTime >= DRIVE_TIMEOUT)) {
-        FatFSUSB.end();
-        Serial.println("USB Drive auto-unmounted");
-        driveStartTime = 0;
-        driveHasBeenUnmounted = true;  // Set flag to prevent further unmounting attempts
-    }
-}
-
-// Function to print memory stats for debugging purposes
+// Print memory statistics
 void printMemoryStats() {
     struct mallinfo mi = mallinfo();
     Serial.printf("Total non-mmapped bytes (arena): %d\n", mi.arena);
@@ -163,69 +98,214 @@ void printMemoryStats() {
     Serial.printf("Allocated chunks: %d\n", mi.uordblks);
 }
 
-// Function to print a MAC address
+// Print MAC address
 void printMacAddress(byte mac[]) {
-  for (int i = 0; i <= 5; i++) {
-    if (mac[i] < 16) {
-      Serial.print("0");
+    for (int i = 0; i <= 5; i++) {
+        if (mac[i] < 16) {
+            Serial.print("0");
+        }
+        Serial.print(mac[i], HEX);
+        if (i < 5) {
+            Serial.print(":");
+        }
     }
-    Serial.print(mac[i], HEX);
-    if (i < 5) {
-      Serial.print(":");
-    }
-  }
-  Serial.println();
+    Serial.println();
 }
 
-// Function to connect to the WiFi network
+// WiFi credentials management functions
+WifiCredentials readWifiCredentials() {
+    WifiCredentials creds;
+    if (FatFS.exists("WIFI_CONFIG.txt")) {
+        File f = FatFS.open("WIFI_CONFIG.txt", "r");
+        if (f) {
+            String ssidLine = f.readStringUntil('\n');
+            String pskLine = f.readStringUntil('\n');
+            f.close();
+            
+            ssidLine.trim();
+            pskLine.trim();
+            
+            if (ssidLine.startsWith("SSID=")) {
+                creds.ssid = ssidLine.substring(5);
+            }
+            if (pskLine.startsWith("PSK=")) {
+                creds.password = pskLine.substring(4);
+            }
+        }
+    }
+    return creds;
+}
+
+void writeWifiConfigTemplate() {
+    if (!FatFS.exists("WIFI_CONFIG.txt")) {
+        File f = FatFS.open("WIFI_CONFIG.txt", "w");
+        if (f) {
+            f.println("SSID=your_wifi_name_here");
+            f.println("PSK=your_wifi_password_here");
+            f.println("");
+            f.println("Instructions:");
+            f.println("1. Replace 'your_wifi_name_here' with your WiFi network name");
+            f.println("2. Replace 'your_wifi_password_here' with your WiFi password");
+            f.println("3. Save this file and safely eject the drive");
+            f.println("4. The device will automatically restart and connect to WiFi");
+            f.close();
+            Serial.println("Created new WIFI_CONFIG.txt template");
+        }
+    }
+}
+
+void writeDeviceInfoFile() {
+    static bool previouslyConnected = false;
+    bool shouldWrite = !FatFS.exists("DEVICE_INFO.txt") || 
+                      (WiFi.status() == WL_CONNECTED && !previouslyConnected);
+    
+    if (shouldWrite) {
+        byte mac[6];
+        WiFi.macAddress(mac);
+        char macStr[18];
+        snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+                 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        
+        File f = FatFS.open("DEVICE_INFO.txt", "w");
+        if (f) {
+            f.println("Device Information:");
+            f.println("-----------------");
+            f.print("Pico W MAC Address: ");
+            f.println(macStr);
+            f.print("Firmware Version: ");
+            f.println(FWVERSION);
+            f.print("WiFi Status: ");
+            f.println(WiFi.status() == WL_CONNECTED ? 
+                     "Connected to: " + WiFi.SSID() : "Not Connected");
+            f.println("-----------------");
+            f.println("This file was automatically generated.");
+            f.close();
+            Serial.println("Device info file written successfully");
+        }
+    }
+    previouslyConnected = (WiFi.status() == WL_CONNECTED);
+}
+
+void handleUSBDrive() {
+    if (!driveHasBeenMounted && !driveConnected && !driveHasBeenUnmounted) {
+        if (FatFS.begin()) {
+            writeDeviceInfoFile();
+            writeWifiConfigTemplate();
+            
+            FatFSUSB.onUnplug(unplug);
+            FatFSUSB.onPlug(plug);
+            FatFSUSB.driveReady(mountable);
+            
+            FatFSUSB.begin();
+            driveStartTime = millis();
+            driveHasBeenMounted = true;
+            Serial.println("USB Drive mounted. Will auto-unmount in 30 seconds.");
+        }
+    }
+
+    if (driveHasBeenMounted && !driveConnected && !driveHasBeenUnmounted &&
+        (millis() - driveStartTime >= DRIVE_TIMEOUT)) {
+        
+        WifiCredentials newCreds = readWifiCredentials();
+        if (newCreds.ssid != String(ssid) || newCreds.password != String(password)) {
+            Serial.println("New WiFi credentials detected. Rebooting...");
+            FatFSUSB.end();
+            delay(1000);
+            rp2040.reboot();
+        }
+        
+        FatFSUSB.end();
+        Serial.println("USB Drive auto-unmounted");
+        driveStartTime = 0;
+        driveHasBeenUnmounted = true;
+    }
+}
+
 void setupWiFi() {
-    // Get and print MAC address
+    WifiCredentials creds = readWifiCredentials();
+    
+    // Check if we're using template/default credentials
+    if ((creds.ssid == "your_wifi_name_here" || creds.ssid == "DEFAULT_SSID") ||
+        (creds.password == "your_wifi_password_here" || creds.password == "DEFAULT_PASSWORD")) {
+        Serial.println("Using template/default WiFi credentials. Skipping connection.");
+        return;  // Skip connection attempt
+    }
+    
+    if (creds.ssid.length() > 0 && creds.password.length() > 0) {
+        ssid = creds.ssid.c_str();
+        password = creds.password.c_str();
+    }
+    
     byte mac[6];
     WiFi.macAddress(mac);
     Serial.print("MAC: ");
     printMacAddress(mac);
-
     Serial.print("Connecting to ");
     Serial.println(ssid);
-
-    multi.addAP(ssid, password);  // Add the WiFi network to the list of available networks
+    
+    multi.addAP(ssid, password);
+    
     int attempts = 0;
-    const int maxAttempts = 10;  // Maximum number of WiFi connection attempts
-
-    // Try connecting to WiFi within a maximum number of attempts
+    const int maxAttempts = 10;
+    
     while (multi.run() != WL_CONNECTED && attempts < maxAttempts) {
         attempts++;
         delay(1000);
         Serial.printf("Attempt %d/%d to connect to WiFi\n", attempts, maxAttempts);
     }
-
-    // If connection fails after max attempts, reboot the device
+    
     if (multi.run() != WL_CONNECTED) {
         Serial.println("Failed to connect after maximum attempts. Rebooting...");
         delay(10000);
-        rp2040.reboot();  // Reboot function for RP2040 boards
+        rp2040.reboot();
     }
-
+    
     Serial.println("WiFi connected");
     Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());  // Print the local IP address
+    Serial.println(WiFi.localIP());
 }
 
-// Function to attempt to reinitialise the sensor
+void handleWiFiReconnection() {
+    // Skip reconnection if using template/default credentials
+    WifiCredentials creds = readWifiCredentials();
+    if ((creds.ssid == "your_wifi_name_here" || creds.ssid == "DEFAULT_SSID") ||
+        (creds.password == "your_wifi_password_here" || creds.password == "DEFAULT_PASSWORD")) {
+        return;  // Skip reconnection attempt
+    }
+
+    if (multi.run() != WL_CONNECTED) {
+        Serial.println("WiFi lost. Attempting reconnection...");
+        int retries = 0;
+        const int maxRetries = 10;
+        
+        while (multi.run() != WL_CONNECTED && retries < maxRetries) {
+            retries++;
+            delay(1000);
+            Serial.printf("Reconnection attempt %d/%d\n", retries, maxRetries);
+        }
+        
+        if (multi.run() != WL_CONNECTED) {
+            Serial.println("Failed to reconnect. Rebooting...");
+            delay(1000);
+            rp2040.reboot();
+        } else {
+            Serial.println("Reconnected to WiFi.");
+            Serial.printf("Signal strength (RSSI): %d dBm\n", WiFi.RSSI());
+        }
+    }
+}
+
 void attemptSensorReinitialisation() {
     uint16_t error;
     char errorMessage[256];
-
     Serial.println("Attempting to reinitialise the sensor...");
-
-    // Try to reset the sensor
+    
     error = sen5x.deviceReset();
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
         Serial.printf("Sensor reset failed: %s\n", errorMessage);
     }
-
-    // Try to fetch the serial number
+    
     error = sen5x.getSerialNumber(serialNumber, serialNumberSize);
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
@@ -234,8 +314,7 @@ void attemptSensorReinitialisation() {
         Serial.print("Sensor Serial Number: ");
         Serial.println((char*)serialNumber);
     }
-
-    // Try to set temperature offset
+    
     float tempOffset = 0.0;
     error = sen5x.setTemperatureOffsetSimple(tempOffset);
     if (error) {
@@ -244,8 +323,7 @@ void attemptSensorReinitialisation() {
     } else {
         Serial.printf("Temperature Offset set to %.1f deg. Celsius\n", tempOffset);
     }
-
-    // Try to start measurement
+    
     error = sen5x.startMeasurement();
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
@@ -257,28 +335,23 @@ void attemptSensorReinitialisation() {
     }
 }
 
-// Function to read sensor measurements and accumulate them for averaging
 void readAndStoreMeasurements() {
     if (!sensor_connected) {
         attemptSensorReinitialisation();
         if (!sensor_connected) {
-            // Sensor is still not connected, cannot read measurements
             return;
         }
     }
-
+    
     uint16_t error;
     char errorMessage[256];
-
     float massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0, massConcentrationPm10p0;
     float ambientHumidity, ambientTemperature, vocIndex, noxIndex;
-
-    // Read sensor values
+    
     error = sen5x.readMeasuredValues(
         massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0,
         massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex, noxIndex);
-
-    // Check for errors in reading sensor values
+    
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
         Serial.printf("Failed to read sensor values: %s\n", errorMessage);
@@ -287,8 +360,7 @@ void readAndStoreMeasurements() {
     } else {
         sensor_connected = true;
     }
-
-    // Accumulate readings for averaging
+    
     totalMassConcentrationPm1p0 += massConcentrationPm1p0;
     totalMassConcentrationPm2p5 += massConcentrationPm2p5;
     totalMassConcentrationPm4p0 += massConcentrationPm4p0;
@@ -297,13 +369,10 @@ void readAndStoreMeasurements() {
     totalAmbientTemperature += ambientTemperature;
     totalVocIndex += vocIndex;
     totalNoxIndex += noxIndex;
-    readingsTaken++;  // Increment the count of readings taken
+    readingsTaken++;
 }
 
-// Function to send the averaged data to the server
 void sendDataToServer() {
-    // Ensure that at least one reading has been taken before sending data
-    // Even if no readings, we still send the sensor_connected status
     float avgMassConcentrationPm1p0 = 0;
     float avgMassConcentrationPm2p5 = 0;
     float avgMassConcentrationPm4p0 = 0;
@@ -312,9 +381,8 @@ void sendDataToServer() {
     float avgAmbientTemperature = 0;
     float avgVocIndex = 0;
     float avgNoxIndex = 0;
-
+    
     if (readingsTaken > 0) {
-        // Calculate average values of the accumulated data
         avgMassConcentrationPm1p0 = totalMassConcentrationPm1p0 / readingsTaken;
         avgMassConcentrationPm2p5 = totalMassConcentrationPm2p5 / readingsTaken;
         avgMassConcentrationPm4p0 = totalMassConcentrationPm4p0 / readingsTaken;
@@ -327,16 +395,13 @@ void sendDataToServer() {
 
     WiFiClient client;
     HTTPClient https;
-
-    https.setInsecure();  // Disable SSL certificate verification
-    if (https.begin(url)) {  // Begin the HTTPS connection
+    https.setInsecure();
+    
+    if (https.begin(url)) {
         https.addHeader("Content-Type", "application/json");
-
-        // Set timeout
-        https.setTimeout(20000);         // 20 seconds
+        https.setTimeout(20000);
         
-        // Prepare the JSON payload with sensor data
-        JsonDocument doc;  // Specify the size of the document
+        JsonDocument doc;
         doc["relative_humidity"] = avgAmbientHumidity;
         doc["temperature"] = avgAmbientTemperature;
         doc["pm1"] = avgMassConcentrationPm1p0;
@@ -349,15 +414,13 @@ void sendDataToServer() {
         doc["version"] = FWVERSION;
         doc["uptime"] = millis();
         doc["sensor_connected"] = sensor_connected;
-        doc["wifi_rssi"] = WiFi.RSSI();  // Add WiFi signal strength
-
+        doc["wifi_rssi"] = WiFi.RSSI();
+        
         String payload;
         serializeJson(doc, payload);
-
-        // Send the POST request to the server
+        
         int httpCode = https.POST(payload);
-
-        // Handle the server response
+        
         if (httpCode > 0) {
             Serial.printf("POST Response: %d\n", httpCode);
             String response = https.getString();
@@ -365,13 +428,11 @@ void sendDataToServer() {
         } else {
             Serial.printf("POST Failed: %s\n", https.errorToString(httpCode).c_str());
         }
-
-        https.end();  // End the HTTPS connection
+        https.end();
     } else {
         Serial.println("Failed to connect to the server.");
     }
-
-    // Reset the accumulated data after sending
+    
     totalMassConcentrationPm1p0 = 0;
     totalMassConcentrationPm2p5 = 0;
     totalMassConcentrationPm4p0 = 0;
@@ -383,63 +444,29 @@ void sendDataToServer() {
     readingsTaken = 0;
 }
 
-// Function to handle WiFi reconnection if the connection drops
-void handleWiFiReconnection() {
-    if (multi.run() != WL_CONNECTED) {
-        Serial.println("WiFi lost. Attempting reconnection...");
-
-        int retries = 0;
-        const int maxRetries = 10;  // Maximum number of reconnection attempts
-
-        // Attempt to reconnect to WiFi
-        while (multi.run() != WL_CONNECTED && retries < maxRetries) {
-            retries++;
-            delay(1000);
-            Serial.printf("Reconnection attempt %d/%d\n", retries, maxRetries);
-        }
-
-        // If reconnection fails, reboot the device
-        if (multi.run() != WL_CONNECTED) {
-            Serial.println("Failed to reconnect. Rebooting...");
-            delay(1000);
-            rp2040.reboot();
-        } else {
-            Serial.println("Reconnected to WiFi.");
-            Serial.printf("Signal strength (RSSI): %d dBm\n", WiFi.RSSI());
-        }
-    }
-}
-
-// Setup function runs once when the microcontroller starts
 void setup() {
-    Serial.begin(115200);  // Start serial communication
-
-    delay(3000);    // Sleep so the serial port can show up in time
+    Serial.begin(115200);
+    delay(3000);
     Serial.print("Node UUID: ");
     Serial.println(UUID);
-
-    // Initialize the USB drive functionality
+    
     handleUSBDrive();
-
-    setupWiFi();  // Connect to WiFi
-
-    Wire.begin();  // initialise I2C bus
-    sen5x.begin(Wire);  // Start communication with the sensor
-
-    bool sensorinitialisationSuccessful = true; // Assume success
-
+    setupWiFi();
+    
+    Wire.begin();
+    sen5x.begin(Wire);
+    
+    bool sensorinitialisationSuccessful = true;
     uint16_t error;
     char errorMessage[256];
-
-    // Reset the sensor
+    
     error = sen5x.deviceReset();
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
         Serial.printf("Sensor reset failed: %s\n", errorMessage);
         sensorinitialisationSuccessful = false;
     }
-
-    // Fetch the serial number
+    
     error = sen5x.getSerialNumber(serialNumber, serialNumberSize);
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
@@ -449,48 +476,35 @@ void setup() {
         Serial.print("Sensor Serial Number: ");
         Serial.println((char*)serialNumber);
     }
-
-    // Set temperature offset
+    
     float tempOffset = 0.0;
     error = sen5x.setTemperatureOffsetSimple(tempOffset);
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
         Serial.printf("Failed to set temperature offset: %s\n", errorMessage);
         sensorinitialisationSuccessful = false;
-    } else {
-        Serial.printf("Temperature Offset set to %.1f deg. Celsius\n", tempOffset);
     }
-
-    // Start measurement
+    
     error = sen5x.startMeasurement();
     if (error) {
         errorToString(error, errorMessage, sizeof(errorMessage));
         Serial.printf("Failed to start sensor measurement: %s\n", errorMessage);
         sensorinitialisationSuccessful = false;
     }
-
-    if (sensorinitialisationSuccessful) {
-        sensor_connected = true;
-    } else {
-        sensor_connected = false;
-    }
-
-    delay(10000);  // Wait for the sensor to stabilize before taking measurements
+    
+    sensor_connected = sensorinitialisationSuccessful;
+    delay(10000);
 }
 
-// Loop function runs repeatedly after the setup function
 void loop() {
-    unsigned long currentMillis = millis();  // Get the current time
-
-    handleUSBDrive();  // Handle USB drive mounting/unmounting
-
-    handleWiFiReconnection();  // Check and maintain WiFi connection
-    readAndStoreMeasurements();  // Read and accumulate sensor data
-
-    // Check if it's time to send data to the server based on the set interval
+    unsigned long currentMillis = millis();
+    handleUSBDrive();
+    handleWiFiReconnection();
+    readAndStoreMeasurements();
+    
     if ((currentMillis - previousMillis) >= interval) {
-        sendDataToServer();  // Send the data to the server
-        previousMillis = currentMillis;  // Reset the previousMillis to current time
-        printMemoryStats();  // Print memory stats for debugging
+        sendDataToServer();
+        previousMillis = currentMillis;
+        printMemoryStats();
     }
 }
