@@ -67,7 +67,7 @@ int readingsTaken = 0;
 bool sensor_connected = false;
 volatile bool driveConnected = false;
 unsigned long driveStartTime = 0;
-const unsigned long DRIVE_TIMEOUT = 30000;
+const unsigned long DRIVE_TIMEOUT = 60000;
 bool driveHasBeenMounted = false;
 volatile bool driveHasBeenUnmounted = false;
 
