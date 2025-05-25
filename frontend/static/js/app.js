@@ -525,9 +525,10 @@ const DataManager = {
                 className: 'sensor-popup-container'
             })
             .bindTooltip(displayText, {
-                direction: 'center',
+                direction: 'top',
                 className: 'sensor-tooltip',
-                permanent: true
+                permanent: false,
+                opacity: 0.9
             })
             .addTo(AppState.map)
             .on('click', (e) => DataManager.handleSensorClick(e));
@@ -596,21 +597,95 @@ const DataManager = {
         const total = Object.keys(sensors).length;
         const active = Object.values(sensors).filter(s => s.isActive).length;
         const inactive = total - active;
+        const uninitialised = Object.values(sensors).filter(s => !s.hasOwnProperty('isActive')).length;
 
         statusElement.innerHTML = `
-            <div class="d-flex justify-content-between mb-2">
+            <div class="d-flex justify-content-between mb-2 sensor-status-row" data-filter="active" style="cursor: pointer; padding: 4px; border-radius: 4px;" title="Click to show only active sensors">
                 <span><span class="status-indicator status-active"></span>Active</span>
                 <span class="fw-bold">${active}</span>
             </div>
-            <div class="d-flex justify-content-between mb-2">
+            <div class="d-flex justify-content-between mb-2 sensor-status-row" data-filter="inactive" style="cursor: pointer; padding: 4px; border-radius: 4px;" title="Click to show only inactive sensors">
                 <span><span class="status-indicator status-inactive"></span>Inactive</span>
                 <span class="fw-bold">${inactive}</span>
             </div>
-            <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between mb-2 sensor-status-row" data-filter="all" style="cursor: pointer; padding: 4px; border-radius: 4px;" title="Click to show all sensors">
                 <span>Total</span>
                 <span class="fw-bold">${total}</span>
             </div>
+            <div class="mt-3">
+                <button class="btn btn-sm btn-outline-primary w-100" onclick="DataManager.centerMapOnSensors()" title="Center map on all sensors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="M21 21l-4.35-4.35"></path>
+                    </svg>
+                    Center Map
+                </button>
+            </div>
         `;
+
+        // Add click event listeners to status rows
+        statusElement.querySelectorAll('.sensor-status-row').forEach(row => {
+            row.addEventListener('click', (e) => {
+                const filter = e.currentTarget.dataset.filter;
+                DataManager.filterSensorsByStatus(filter);
+                
+                // Visual feedback
+                statusElement.querySelectorAll('.sensor-status-row').forEach(r => {
+                    r.style.backgroundColor = '';
+                });
+                e.currentTarget.style.backgroundColor = 'rgba(32, 107, 196, 0.1)';
+            });
+
+            row.addEventListener('mouseenter', (e) => {
+                if (!e.currentTarget.style.backgroundColor) {
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+                }
+            });
+
+            row.addEventListener('mouseleave', (e) => {
+                if (e.currentTarget.style.backgroundColor === 'rgba(0, 0, 0, 0.05)') {
+                    e.currentTarget.style.backgroundColor = '';
+                }
+            });
+        });
+    },
+
+    filterSensorsByStatus(filter) {
+        Object.values(AppState.sensors).forEach(sensor => {
+            if (!sensor.marker) return;
+
+            let shouldShow = true;
+            if (filter === 'active') {
+                shouldShow = sensor.isActive === true;
+            } else if (filter === 'inactive') {
+                shouldShow = sensor.isActive === false;
+            }
+            // 'all' shows everything
+
+            if (shouldShow) {
+                sensor.marker.addTo(AppState.map);
+            } else {
+                AppState.map.removeLayer(sensor.marker);
+            }
+        });
+
+        const filterText = filter === 'all' ? 'all sensors' : `${filter} sensors`;
+        Utils.showNotification(`Showing ${filterText}`, 'info');
+    },
+
+    centerMapOnSensors() {
+        const visibleSensors = Object.values(AppState.sensors).filter(sensor => 
+            sensor.marker && AppState.map.hasLayer(sensor.marker)
+        );
+
+        if (visibleSensors.length === 0) {
+            Utils.showNotification('No sensors to center on', 'warning');
+            return;
+        }
+
+        const bounds = L.latLngBounds(visibleSensors.map(sensor => [sensor.lat, sensor.long]));
+        AppState.map.fitBounds(bounds, { padding: [20, 20] });
+        Utils.showNotification('Map centered on visible sensors', 'success');
     }
 };
 
