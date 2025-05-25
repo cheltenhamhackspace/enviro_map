@@ -1,0 +1,469 @@
+/**
+ * Cheltenham Hackspace Environmental Monitoring Dashboard
+ * Additional styles for enhanced UI/UX
+ */
+
+/* Performance optimizations */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f3f4;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c8cd;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8b3ba;
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Enhanced tooltips */
+.sensor-tooltip {
+    background: rgba(0, 0, 0, 0.8) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.sensor-tooltip::before {
+    border-top-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Enhanced popups */
+.sensor-popup-container .leaflet-popup-content-wrapper {
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sensor-popup-container .leaflet-popup-tip {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Chart enhancements */
+.chart-container {
+    position: relative;
+}
+
+.chart-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.1) 50%, transparent 51%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Button enhancements */
+.btn {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-check:checked + .btn {
+    background: linear-gradient(135deg, #206bc4, #4dabf7);
+    border-color: #206bc4;
+    color: white;
+}
+
+/* Card enhancements */
+.card {
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px 12px 0 0;
+}
+
+/* Status indicators */
+.status-indicator {
+    position: relative;
+}
+
+.status-indicator::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-active::after {
+    background: rgba(47, 179, 68, 0.3);
+}
+
+.status-inactive::after {
+    background: rgba(214, 57, 57, 0.3);
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.5);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+/* Notification enhancements */
+.alert {
+    border-radius: 12px;
+    border: none;
+    backdrop-filter: blur(10px);
+}
+
+.alert-success {
+    background: linear-gradient(135deg, rgba(47, 179, 68, 0.9), rgba(47, 179, 68, 0.8));
+    color: white;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, rgba(214, 57, 57, 0.9), rgba(214, 57, 57, 0.8));
+    color: white;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.9), rgba(255, 193, 7, 0.8));
+    color: #000;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, rgba(32, 107, 196, 0.9), rgba(32, 107, 196, 0.8));
+    color: white;
+}
+
+/* Form enhancements */
+.form-control {
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: #206bc4;
+    box-shadow: 0 0 0 0.2rem rgba(32, 107, 196, 0.25);
+    transform: translateY(-1px);
+}
+
+.form-select {
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+/* Navigation enhancements */
+.navbar-vertical {
+    background: linear-gradient(180deg, #1e293b, #334155);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-link {
+    border-radius: 8px;
+    margin: 2px 0;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(4px);
+}
+
+.nav-link.active {
+    background: linear-gradient(135deg, #206bc4, #4dabf7);
+    color: white !important;
+}
+
+/* Map enhancements */
+.leaflet-container {
+    border-radius: 8px;
+}
+
+.leaflet-control-zoom {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.leaflet-control-zoom a {
+    border-radius: 0;
+    transition: all 0.2s ease;
+}
+
+.leaflet-control-zoom a:hover {
+    background: #206bc4;
+    color: white;
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-group {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+        min-width: 80px;
+    }
+    
+    #map {
+        height: 300px;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+}
+
+@media (max-width: 576px) {
+    .container-xl {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .page-header {
+        padding: 1rem 0;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+}
+
+/* Dark mode support (for future implementation) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bs-body-bg: #1a1d23;
+        --bs-body-color: #e1e5e9;
+        --bs-card-bg: #232830;
+    }
+    
+    .card {
+        background: var(--bs-card-bg);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .form-control {
+        background: var(--bs-card-bg);
+        border-color: rgba(255, 255, 255, 0.15);
+        color: var(--bs-body-color);
+    }
+}
+
+/* Print styles */
+@media print {
+    .navbar-vertical,
+    .mobile-nav-toggle,
+    .btn,
+    .dropdown {
+        display: none !important;
+    }
+    
+    .page-wrapper {
+        margin-left: 0 !important;
+    }
+    
+    .card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+    
+    #map {
+        height: 400px;
+    }
+}
+
+/* Accessibility enhancements */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus indicators */
+*:focus {
+    outline: 2px solid #206bc4;
+    outline-offset: 2px;
+}
+
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    outline: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .btn {
+        border-width: 2px;
+    }
+    
+    .card {
+        border-width: 2px;
+    }
+    
+    .status-indicator {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .loading {
+        animation: none;
+    }
+    
+    .status-indicator::after {
+        animation: none;
+    }
+}
+
+/* Performance optimizations for large datasets */
+.chart-container canvas {
+    will-change: transform;
+}
+
+.leaflet-container {
+    will-change: transform;
+}
+
+/* Custom utilities */
+.text-gradient {
+    background: linear-gradient(135deg, #206bc4, #4dabf7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.shadow-soft {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-medium {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.shadow-strong {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* Animation utilities */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.slide-up {
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
