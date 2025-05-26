@@ -73,19 +73,70 @@ export async function onRequest(context) {
             timeTo = Date.now();
         }
         if (timeFrom > timeTo) {
-            return new Response("500 - Times in wrong order", { status: 500 });
+            return new Response("500 - Times in wrong order", { 
+                status: 500,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
+            });
         }
         else {
-            const dbQueryAllData = context.env.READINGS_TABLE.prepare('SELECT event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox FROM sensor_readings WHERE device_id = ?1 AND event_time >= ?2 AND event_time <= ?3');
-            const allData = await dbQueryAllData.bind(context.params.sensorid, timeFrom, timeTo).all();
+            try {
+                const dbQueryAllData = context.env.READINGS_TABLE.prepare('SELECT event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox FROM sensor_readings WHERE device_id = ?1 AND event_time >= ?2 AND event_time <= ?3 ORDER BY event_time ASC');
+                const allData = await dbQueryAllData.bind(context.params.sensorid, timeFrom, timeTo).all();
 
-            console.log(allData.meta);
-            if (allData.results.length > 0) {
-                return new Response(JSON.stringify(allData.results));
-            }
-            else {
-                return new Response("404 - No data", { status: 404 });
+                console.log(allData.meta);
+                if (allData.results.length > 0) {
+                    // Calculate cache duration based on data age
+                    const dataAge = Date.now() - Math.max(...allData.results.map(r => r.event_time));
+                    const cacheMaxAge = dataAge > 3600000 ? 1800 : 300; // 30 min for old data, 5 min for recent
+                    
+                    return new Response(JSON.stringify(allData.results), {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*',
+                            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                            'Access-Control-Allow-Headers': 'Content-Type',
+                            'Cache-Control': `public, max-age=${cacheMaxAge}`,
+                            'ETag': `"${context.params.sensorid}-${timeFrom}-${timeTo}-${allData.results.length}"`
+                        }
+                    });
+                }
+                else {
+                    return new Response(JSON.stringify({ error: "No data found" }), { 
+                        status: 404,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*',
+                            'Cache-Control': 'public, max-age=60' // Cache 404s for 1 minute
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Database error:', error);
+                return new Response(JSON.stringify({ 
+                    error: "Database error", 
+                    message: error.message 
+                }), { 
+                    status: 500,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    }
+                });
             }
         }
     }
+}
+
+// Handle OPTIONS requests for CORS preflight
+export async function onRequestOptions() {
+    return new Response(null, {
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        }
+    });
 }
