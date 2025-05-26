@@ -238,7 +238,7 @@
                                                 Map Options
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a class="dropdown-item" href="#" onclick="map.setView([51.8994, -2.0783], 7)">Reset View</a>
+                                                <a class="dropdown-item" href="#" onclick="AppState.map.setView([51.8994, -2.0783], 7)">Reset View</a>
                                                 <a class="dropdown-item" href="#" onclick="toggleHeatmap()">Toggle Heatmap</a>
                                             </div>
                                         </div>
@@ -261,16 +261,16 @@
                                         <div class="col-md-8">
                                             <label class="form-label">Particulate Matter Types</label>
                                             <div id="datasetToggle" class="btn-group flex-wrap" role="group" aria-label="Select particulate matter types">
-                                                <input type="checkbox" class="btn-check" id="pm1-toggle" checked>
+                                                <input type="checkbox" class="btn-check" id="pm1-toggle" checked onchange="toggleDataset('pm1')">
                                                 <label class="btn btn-outline-primary" for="pm1-toggle">PM 1.0</label>
                                                 
-                                                <input type="checkbox" class="btn-check" id="pm2_5-toggle" checked>
+                                                <input type="checkbox" class="btn-check" id="pm2_5-toggle" checked onchange="toggleDataset('pm2_5')">
                                                 <label class="btn btn-outline-primary" for="pm2_5-toggle">PM 2.5</label>
                                                 
-                                                <input type="checkbox" class="btn-check" id="pm4-toggle">
+                                                <input type="checkbox" class="btn-check" id="pm4-toggle" onchange="toggleDataset('pm4')">
                                                 <label class="btn btn-outline-primary" for="pm4-toggle">PM 4.0</label>
                                                 
-                                                <input type="checkbox" class="btn-check" id="pm10-toggle">
+                                                <input type="checkbox" class="btn-check" id="pm10-toggle" onchange="toggleDataset('pm10')">
                                                 <label class="btn btn-outline-primary" for="pm10-toggle">PM 10</label>
                                             </div>
                                         </div>
@@ -297,7 +297,7 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="d-grid gap-2">
-                                        <button class="btn btn-success" onclick="downloadSensorData()" id="downloadButton" disabled>
+                                        <button class="btn btn-success" onclick="downloadData()" id="downloadButton" disabled>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
                                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                                 <polyline points="7,10 12,15 17,10"></polyline>
@@ -356,7 +356,30 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
     
-    <!-- Application JavaScript -->
+    <!-- Application JavaScript - Load in dependency order -->
+    <script src="./static/js/config.js"></script>
+    <script src="./static/js/utils.js"></script>
+    <script src="./static/js/map-manager.js"></script>
+    <script src="./static/js/chart-manager.js"></script>
+    <script src="./static/js/data-manager.js"></script>
     <script src="./static/js/app.js"></script>
+
+    <!-- Mobile navigation helper -->
+    <script>
+        function toggleMobileNav() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+        
+        // Close mobile nav when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.mobile-nav-toggle');
+            
+            if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+    </script>
 </body>
 </html>
