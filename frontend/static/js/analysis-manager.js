@@ -1032,7 +1032,16 @@ const AnalysisManager = {
             let minValue = Infinity;
             let maxValue = -Infinity;
 
-            // Add sensor markers with data
+            // First pass: Calculate min/max values from ALL sensors to maintain consistent color scale
+            data.sensorData.forEach(sensor => {
+                const pm25Value = sensor.metrics.pm2_5;
+                if (pm25Value !== null && pm25Value !== undefined && !isNaN(pm25Value)) {
+                    minValue = Math.min(minValue, pm25Value);
+                    maxValue = Math.max(maxValue, pm25Value);
+                }
+            });
+
+            // Second pass: Add sensor markers with data using the consistent color scale
             data.sensorData.forEach(sensor => {
                 // Validate sensor coordinates
                 if (!sensor.lat || !sensor.long || 
@@ -1044,11 +1053,6 @@ const AnalysisManager = {
                 }
 
                 const pm25Value = sensor.metrics.pm2_5;
-                if (pm25Value !== null && pm25Value !== undefined && !isNaN(pm25Value)) {
-                    minValue = Math.min(minValue, pm25Value);
-                    maxValue = Math.max(maxValue, pm25Value);
-                }
-
                 const color = this.getValueColor(pm25Value, minValue, maxValue);
                 
                 const marker = L.circleMarker([sensor.lat, sensor.long], {
@@ -1336,7 +1340,8 @@ const AnalysisManager = {
         } else {
             // Red range (high values) - Fixed calculation
             const localNorm = (normalized - 0.66) / 0.34;
-            hue = Math.max(0, 60 - (localNorm * 60)); // Yellow to red (60 to 0), ensure it doesn't go negative
+            hue = 60 - (localNorm * 60); // Yellow to red (60 to 0)
+            hue = Math.max(0, hue); // Ensure hue doesn't go negative
             saturation = 85 + (localNorm * 15); // 85-100%
             lightness = 45 + (localNorm * 10); // 45-55%
         }
