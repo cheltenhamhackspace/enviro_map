@@ -392,6 +392,24 @@ const AnalysisManager = {
             yaxis: {
                 title: {
                     text: 'PM2.5 (μg/m³)'
+                },
+                labels: {
+                    formatter: function (val) {
+                        return val?.toFixed(2) || '0.00';
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function (val) {
+                    return val?.toFixed(2) || '0.00';
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return val?.toFixed(2) + ' μg/m³' || '0.00 μg/m³';
+                    }
                 }
             }
         };
@@ -452,10 +470,22 @@ const AnalysisManager = {
             yaxis: {
                 title: {
                     text: 'Values'
+                },
+                labels: {
+                    formatter: function (val) {
+                        return val?.toFixed(2) || '0.00';
+                    }
                 }
             },
             legend: {
                 position: 'top'
+            },
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return val?.toFixed(2) || '0.00';
+                    }
+                }
             }
         };
 
@@ -562,6 +592,18 @@ const AnalysisManager = {
             yaxis: {
                 title: {
                     text: 'Values'
+                },
+                labels: {
+                    formatter: function (val) {
+                        return val?.toFixed(2) || '0.00';
+                    }
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return val?.toFixed(2) || '0.00';
+                    }
                 }
             }
         };
@@ -594,6 +636,20 @@ const AnalysisManager = {
             },
             xaxis: {
                 categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+            },
+            yaxis: {
+                labels: {
+                    formatter: function (val) {
+                        return val?.toFixed(2) || '0.00';
+                    }
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return val?.toFixed(2) || '0.00';
+                    }
+                }
             }
         };
 
@@ -638,6 +694,20 @@ const AnalysisManager = {
             },
             xaxis: {
                 type: 'datetime'
+            },
+            yaxis: {
+                labels: {
+                    formatter: function (val) {
+                        return val?.toFixed(2) || '0.00';
+                    }
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return val?.toFixed(2) || '0.00';
+                    }
+                }
             }
         };
 
