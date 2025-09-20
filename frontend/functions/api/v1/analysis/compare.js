@@ -50,7 +50,7 @@ export async function onRequest(context) {
         }).join(',');
 
         // Build placeholders for sensor IDs
-        const sensorPlaceholders = sensorIds.map((_, index) => `?${index + 3}`).join(',');
+        const sensorPlaceholders = sensorIds.map(() => '?').join(',');
 
         // Get aggregated data for all sensors - single optimized query
         const comparisonQuery = `
@@ -60,14 +60,14 @@ export async function onRequest(context) {
                 ${metricColumns}
             FROM sensor_readings 
             WHERE device_id IN (${sensorPlaceholders})
-                AND event_time >= ?1 
-                AND event_time <= ?2
+                AND event_time >= ? 
+                AND event_time <= ?
             GROUP BY device_id, time_bucket
             ORDER BY time_bucket ASC
         `;
 
         const comparisonResult = await context.env.READINGS_TABLE.prepare(comparisonQuery)
-            .bind(timeFrom, timeTo, ...sensorIds)
+            .bind(...sensorIds, timeFrom, timeTo)
             .all();
 
         if (!comparisonResult.success) {

@@ -34,7 +34,7 @@ export async function onRequest(context) {
         }).join(',');
 
         // Build placeholders for sensor IDs
-        const sensorPlaceholders = sensorIds.map((_, index) => `?${index + 3}`).join(',');
+        const sensorPlaceholders = sensorIds.map(() => '?').join(',');
 
         // Get sensor locations and averaged data for the time period
         const spatialQuery = `
@@ -48,12 +48,12 @@ export async function onRequest(context) {
             FROM sensors s
             LEFT JOIN sensor_readings sr ON s.device_id = sr.device_id
             WHERE s.device_id IN (${sensorPlaceholders})
-                AND (sr.event_time IS NULL OR (sr.event_time >= ?1 AND sr.event_time <= ?2))
+                AND (sr.event_time IS NULL OR (sr.event_time >= ? AND sr.event_time <= ?))
             GROUP BY s.device_id, s.name, s.lat, s.long
         `;
 
         const spatialResult = await context.env.READINGS_TABLE.prepare(spatialQuery)
-            .bind(timeFrom, timeTo, ...sensorIds)
+            .bind(...sensorIds, timeFrom, timeTo)
             .all();
 
         if (!spatialResult.success) {

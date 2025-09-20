@@ -39,7 +39,7 @@ export async function onRequest(context) {
         }).join(',');
 
         // Build placeholders for sensor IDs
-        const sensorPlaceholders = sensorIds.map((_, index) => `?${index + 4}`).join(',');
+        const sensorPlaceholders = sensorIds.map(() => '?').join(',');
 
         // Create the main statistics query - optimized for minimal row reads
         const statsQuery = `
@@ -49,14 +49,14 @@ export async function onRequest(context) {
                 ${metricColumns}
             FROM sensor_readings 
             WHERE device_id IN (${sensorPlaceholders})
-                AND event_time >= ?1 
-                AND event_time <= ?2
+                AND event_time >= ? 
+                AND event_time <= ?
             GROUP BY device_id
         `;
 
         // Execute the statistics query
         const statsResult = await context.env.READINGS_TABLE.prepare(statsQuery)
-            .bind(timeFrom, timeTo, ...sensorIds)
+            .bind(...sensorIds, timeFrom, timeTo)
             .all();
 
         if (!statsResult.success) {
