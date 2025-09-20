@@ -1049,7 +1049,7 @@ const AnalysisManager = {
                     maxValue = Math.max(maxValue, pm25Value);
                 }
 
-                const color = this.getValueColor(pm25Value, 0, 50); // Assuming 0-50 range for PM2.5
+                const color = this.getValueColor(pm25Value, minValue, maxValue);
                 
                 const marker = L.circleMarker([sensor.lat, sensor.long], {
                     radius: 10,
@@ -1152,15 +1152,15 @@ const AnalysisManager = {
             div.innerHTML = `
                 <div class="mb-2"><strong>PM2.5 (μg/m³)</strong></div>
                 <div class="spatial-legend-item">
-                    <div class="spatial-legend-color" style="background-color: ${AnalysisManager.getValueColor(minValue, 0, 50)}"></div>
+                    <div class="spatial-legend-color" style="background-color: ${AnalysisManager.getValueColor(minValue, minValue, maxValue)}"></div>
                     <span>${minValue.toFixed(1)} (Low)</span>
                 </div>
                 <div class="spatial-legend-item">
-                    <div class="spatial-legend-color" style="background-color: ${AnalysisManager.getValueColor((minValue + maxValue) / 2, 0, 50)}"></div>
+                    <div class="spatial-legend-color" style="background-color: ${AnalysisManager.getValueColor((minValue + maxValue) / 2, minValue, maxValue)}"></div>
                     <span>${((minValue + maxValue) / 2).toFixed(1)} (Medium)</span>
                 </div>
                 <div class="spatial-legend-item">
-                    <div class="spatial-legend-color" style="background-color: ${AnalysisManager.getValueColor(maxValue, 0, 50)}"></div>
+                    <div class="spatial-legend-color" style="background-color: ${AnalysisManager.getValueColor(maxValue, minValue, maxValue)}"></div>
                     <span>${maxValue.toFixed(1)} (High)</span>
                 </div>
             `;
@@ -1312,10 +1312,36 @@ const AnalysisManager = {
     },
 
     getValueColor(value, min, max) {
-        if (value === null || value === undefined) return '#gray';
-        const normalized = (value - min) / (max - min);
-        const hue = (1 - normalized) * 120; // Green to red
-        return `hsl(${hue}, 70%, 50%)`;
+        if (value === null || value === undefined || isNaN(value)) return '#6c757d'; // Gray for no data
+        
+        // Ensure we have a valid range
+        if (max <= min) return '#28a745'; // Default green if no range
+        
+        const normalized = Math.max(0, Math.min(1, (value - min) / (max - min)));
+        
+        // Create a more visible color gradient from green (low) to red (high)
+        let hue, saturation, lightness;
+        
+        if (normalized <= 0.33) {
+            // Green range (low values)
+            hue = 120; // Pure green
+            saturation = 70 + (normalized * 30); // 70-100%
+            lightness = 45 + (normalized * 10); // 45-55%
+        } else if (normalized <= 0.66) {
+            // Yellow/Orange range (medium values)
+            const localNorm = (normalized - 0.33) / 0.33;
+            hue = 120 - (localNorm * 60); // Green to yellow (120 to 60)
+            saturation = 80 + (localNorm * 20); // 80-100%
+            lightness = 50 + (localNorm * 5); // 50-55%
+        } else {
+            // Red range (high values)
+            const localNorm = (normalized - 0.66) / 0.34;
+            hue = 60 - (localNorm * 60); // Yellow to red (60 to 0)
+            saturation = 85 + (localNorm * 15); // 85-100%
+            lightness = 45 + (localNorm * 10); // 45-55%
+        }
+        
+        return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%)`;
     }
 };
 
