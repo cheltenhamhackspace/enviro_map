@@ -14,7 +14,10 @@ const AnalysisState = {
     analysisResults: {},
     charts: {},
     isLoading: false,
-    sensors: []
+    sensors: [],
+    availableSensors: new Set(),
+    availabilityCache: new Map(),
+    availabilityCheckTimeout: null
 };
 
 const AnalysisManager = {
@@ -46,11 +49,78 @@ const AnalysisManager = {
             const sensors = await response.json();
             AnalysisState.sensors = Object.values(sensors);
             
+            // Check availability for current time range
+            await this.checkSensorAvailability();
+            
             this.renderSensorSelector();
         } catch (error) {
             console.error('Error loading sensors:', error);
             Utils.showNotification('Failed to load sensors', 'danger');
         }
+    },
+
+    // Check sensor data availability for current time range
+    async checkSensorAvailability() {
+        const timeRange = this.getTimeRange();
+        const cacheKey = `${timeRange.from}-${timeRange.to}`;
+        
+        // Check cache first
+        if (AnalysisState.availabilityCache.has(cacheKey)) {
+            const cachedData = AnalysisState.availabilityCache.get(cacheKey);
+            // Check if cache is still valid (5 minutes for recent data, 30 minutes for historical)
+            const cacheAge = Date.now() - cachedData.timestamp;
+            const maxAge = (Date.now() - timeRange.to) > 3600000 ? 1800000 : 300000;
+            
+            if (cacheAge < maxAge) {
+                AnalysisState.availableSensors = new Set(cachedData.sensors);
+                return;
+            }
+        }
+
+        try {
+            const params = new URLSearchParams({
+                from: timeRange.from.toString(),
+                to: timeRange.to.toString()
+            });
+
+            const response = await fetch(`${API_BASE}/sensors/availability?${params}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const data = await response.json();
+            AnalysisState.availableSensors = new Set(data.availableSensors);
+            
+            // Cache the results
+            AnalysisState.availabilityCache.set(cacheKey, {
+                sensors: data.availableSensors,
+                timestamp: Date.now()
+            });
+            
+            // Limit cache size to prevent memory issues
+            if (AnalysisState.availabilityCache.size > 20) {
+                const firstKey = AnalysisState.availabilityCache.keys().next().value;
+                AnalysisState.availabilityCache.delete(firstKey);
+            }
+            
+            console.log(`Found ${data.availableSensors.length} sensors with data in selected time range (${data.rowsRead || 0} rows read)`);
+            
+        } catch (error) {
+            console.error('Error checking sensor availability:', error);
+            // On error, assume all sensors are available to avoid blocking the UI
+            AnalysisState.availableSensors = new Set(AnalysisState.sensors.map(s => s.device_id));
+        }
+    },
+
+    // Debounced availability check for time range changes
+    debouncedAvailabilityCheck() {
+        if (AnalysisState.availabilityCheckTimeout) {
+            clearTimeout(AnalysisState.availabilityCheckTimeout);
+        }
+        
+        AnalysisState.availabilityCheckTimeout = setTimeout(async () => {
+            await this.checkSensorAvailability();
+            this.renderSensorSelector();
+            this.updateUI();
+        }, 500); // 500ms debounce
     },
 
     // Render sensor selection interface
@@ -63,17 +133,47 @@ const AnalysisManager = {
             return;
         }
 
-        const sensorHTML = AnalysisState.sensors.map(sensor => `
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="${sensor.device_id}" 
-                       id="sensor-${sensor.device_id}" onchange="AnalysisManager.toggleSensor('${sensor.device_id}')">
-                <label class="form-check-label" for="sensor-${sensor.device_id}">
-                    ${sensor.name || sensor.device_id}
-                </label>
-            </div>
-        `).join('');
+        const availableCount = AnalysisState.sensors.filter(s => AnalysisState.availableSensors.has(s.device_id)).length;
+        const totalCount = AnalysisState.sensors.length;
 
-        container.innerHTML = sensorHTML;
+        let headerHTML = '';
+        if (totalCount > 0) {
+            headerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small class="text-muted">
+                        ${availableCount} of ${totalCount} sensors have data in selected time range
+                    </small>
+                    ${availableCount < totalCount ? 
+                        '<small class="text-warning"><i class="fas fa-exclamation-triangle"></i> Some sensors unavailable</small>' : 
+                        '<small class="text-success"><i class="fas fa-check-circle"></i> All sensors available</small>'
+                    }
+                </div>
+            `;
+        }
+
+        const sensorHTML = AnalysisState.sensors.map(sensor => {
+            const isAvailable = AnalysisState.availableSensors.has(sensor.device_id);
+            const isSelected = AnalysisState.selectedSensors.includes(sensor.device_id);
+            
+            return `
+                <div class="form-check ${!isAvailable ? 'opacity-50' : ''}">
+                    <input class="form-check-input" type="checkbox" value="${sensor.device_id}" 
+                           id="sensor-${sensor.device_id}" 
+                           ${isSelected ? 'checked' : ''}
+                           ${!isAvailable ? 'disabled' : ''}
+                           onchange="AnalysisManager.toggleSensor('${sensor.device_id}')">
+                    <label class="form-check-label d-flex justify-content-between align-items-center" for="sensor-${sensor.device_id}">
+                        <span>${sensor.name || sensor.device_id}</span>
+                        ${!isAvailable ? 
+                            '<small class="text-muted ms-2"><i class="fas fa-ban"></i> No data</small>' : 
+                            '<small class="text-success ms-2"><i class="fas fa-check"></i></small>'
+                        }
+                    </label>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = headerHTML + sensorHTML;
     },
 
     // Toggle sensor selection
@@ -88,14 +188,19 @@ const AnalysisManager = {
         this.updateUI();
     },
 
-    // Select all sensors
+    // Select all available sensors
     selectAllSensors() {
-        AnalysisState.selectedSensors = AnalysisState.sensors.map(s => s.device_id);
+        // Only select sensors that have data available
+        AnalysisState.selectedSensors = AnalysisState.sensors
+            .filter(s => AnalysisState.availableSensors.has(s.device_id))
+            .map(s => s.device_id);
         
         // Update checkboxes
         AnalysisState.sensors.forEach(sensor => {
             const checkbox = document.getElementById(`sensor-${sensor.device_id}`);
-            if (checkbox) checkbox.checked = true;
+            if (checkbox && !checkbox.disabled) {
+                checkbox.checked = AnalysisState.availableSensors.has(sensor.device_id);
+            }
         });
         
         this.updateUI();
@@ -125,6 +230,8 @@ const AnalysisManager = {
             AnalysisState.customTimeRange = { from: null, to: null };
         }
         
+        // Trigger availability check for new time range
+        this.debouncedAvailabilityCheck();
         this.updateUI();
     },
 
@@ -139,6 +246,9 @@ const AnalysisManager = {
                 to: new Date(endDate).getTime()
             };
             AnalysisState.timeRange = null;
+            
+            // Trigger availability check for new time range
+            this.debouncedAvailabilityCheck();
         }
         
         this.updateUI();
@@ -616,39 +726,157 @@ const AnalysisManager = {
         AnalysisState.charts.trend.render();
     },
 
-    // Create seasonal chart (placeholder)
+    // Create seasonal chart with actual data
     createSeasonalChart(data) {
         const container = document.getElementById('seasonal-chart');
         if (!container) return;
 
-        // Simple placeholder chart
+        const series = [];
+        let hasSeasonalData = false;
+
+        // Process seasonal patterns from each sensor and metric
+        Object.keys(data.analysis).forEach(sensorId => {
+            const sensorName = data.sensors.find(s => s.id === sensorId)?.name || sensorId;
+            
+            data.metrics.forEach(metric => {
+                const sensorData = data.analysis[sensorId][metric];
+                if (sensorData && sensorData.seasonalPattern) {
+                    hasSeasonalData = true;
+                    const pattern = sensorData.seasonalPattern;
+                    
+                    // Create categories based on cycle length
+                    let categories = [];
+                    if (pattern.cycleLengthLabel === 'weekly') {
+                        categories = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    } else if (pattern.cycleLengthLabel === 'daily') {
+                        categories = Array.from({length: 24}, (_, i) => `${i}:00`);
+                    } else if (pattern.cycleLengthLabel === 'monthly') {
+                        categories = Array.from({length: 30}, (_, i) => `Day ${i + 1}`);
+                    } else {
+                        categories = Array.from({length: pattern.cycleLength}, (_, i) => `Period ${i + 1}`);
+                    }
+
+                    // Ensure we have the right number of data points
+                    const dataPoints = pattern.averages.slice(0, categories.length);
+                    while (dataPoints.length < categories.length) {
+                        dataPoints.push(null);
+                    }
+
+                    series.push({
+                        name: `${sensorName} - ${this.getMetricLabel(metric)} (${pattern.cycleLengthLabel})`,
+                        data: dataPoints,
+                        type: 'line'
+                    });
+                }
+            });
+        });
+
+        // If no seasonal data found, show a message
+        if (!hasSeasonalData) {
+            container.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center h-100">
+                    <div class="text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h5 class="text-muted">No Seasonal Patterns Detected</h5>
+                        <p class="text-muted mb-0">
+                            Seasonal patterns require more data or stronger cyclical variations.<br>
+                            Try extending the time range or selecting different sensors.
+                        </p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Get the first series to determine categories
+        const firstSeries = series[0];
+        let categories = [];
+        
+        // Determine categories based on the first seasonal pattern found
+        Object.keys(data.analysis).forEach(sensorId => {
+            data.metrics.forEach(metric => {
+                const sensorData = data.analysis[sensorId][metric];
+                if (sensorData && sensorData.seasonalPattern && categories.length === 0) {
+                    const pattern = sensorData.seasonalPattern;
+                    if (pattern.cycleLengthLabel === 'weekly') {
+                        categories = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    } else if (pattern.cycleLengthLabel === 'daily') {
+                        categories = Array.from({length: 24}, (_, i) => `${i}:00`);
+                    } else if (pattern.cycleLengthLabel === 'monthly') {
+                        categories = Array.from({length: 30}, (_, i) => `Day ${i + 1}`);
+                    } else {
+                        categories = Array.from({length: pattern.cycleLength}, (_, i) => `Period ${i + 1}`);
+                    }
+                }
+            });
+        });
+
         const options = {
-            series: [{
-                name: 'Seasonal Pattern',
-                data: [10, 15, 12, 18, 20, 16, 14]
-            }],
+            series: series,
             chart: {
                 type: 'line',
-                height: 350
+                height: 350,
+                zoom: {
+                    enabled: true
+                }
             },
             title: {
                 text: 'Seasonal Patterns'
             },
             xaxis: {
-                categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                categories: categories,
+                title: {
+                    text: 'Time Period'
+                }
             },
             yaxis: {
+                title: {
+                    text: 'Average Values'
+                },
                 labels: {
                     formatter: function (val) {
                         return val?.toFixed(2) || '0.00';
                     }
                 }
             },
+            legend: {
+                position: 'top',
+                horizontalAlign: 'left'
+            },
+            stroke: {
+                width: 2,
+                curve: 'smooth'
+            },
+            markers: {
+                size: 4
+            },
             tooltip: {
                 y: {
-                    formatter: function (val) {
-                        return val?.toFixed(2) || '0.00';
+                    formatter: function (val, opts) {
+                        if (val === null || val === undefined) return 'No data';
+                        
+                        // Get the metric from series name
+                        const seriesName = opts.w.config.series[opts.seriesIndex].name;
+                        let unit = '';
+                        if (seriesName.includes('PM')) unit = ' μg/m³';
+                        else if (seriesName.includes('Temperature')) unit = ' °C';
+                        else if (seriesName.includes('Humidity')) unit = ' %';
+                        
+                        return val.toFixed(2) + unit;
                     }
+                }
+            },
+            noData: {
+                text: 'No seasonal patterns detected',
+                align: 'center',
+                verticalAlign: 'middle',
+                style: {
+                    color: '#6c757d',
+                    fontSize: '16px'
                 }
             }
         };
