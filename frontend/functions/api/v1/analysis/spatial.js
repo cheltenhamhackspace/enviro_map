@@ -36,25 +36,86 @@ export async function onRequest(context) {
         // Build placeholders for sensor IDs
         const sensorPlaceholders = sensorIds.map(() => '?').join(',');
 
-        // Get sensor locations and averaged data for the time period
-        const spatialQuery = `
-            SELECT 
-                s.device_id,
-                s.name,
-                s.lat,
-                s.long,
-                ${metricColumns},
-                COUNT(*) as reading_count
-            FROM sensors s
-            LEFT JOIN sensor_readings sr ON s.device_id = sr.device_id
-            WHERE s.device_id IN (${sensorPlaceholders})
-                AND (sr.event_time IS NULL OR (sr.event_time >= ? AND sr.event_time <= ?))
-            GROUP BY s.device_id, s.name, s.lat, s.long
+        // Optimized approach: Get sensor metadata first, then readings separately
+        // This avoids reading all sensor_readings rows for sensors without data
+        
+        // Step 1: Get sensor metadata (minimal rows read)
+        const sensorQuery = `
+            SELECT device_id, name, lat, long
+            FROM sensors 
+            WHERE device_id IN (${sensorPlaceholders})
+                AND lat IS NOT NULL 
+                AND long IS NOT NULL
         `;
 
-        const spatialResult = await context.env.READINGS_TABLE.prepare(spatialQuery)
-            .bind(...sensorIds, timeFrom, timeTo)
+        const sensorResult = await context.env.READINGS_TABLE.prepare(sensorQuery)
+            .bind(...sensorIds)
             .all();
+
+        if (!sensorResult.success || sensorResult.results.length === 0) {
+            return new Response(JSON.stringify({
+                error: 'No sensors with valid location data found'
+            }), {
+                status: 400,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
+            });
+        }
+
+        const validSensorIds = sensorResult.results.map(s => s.device_id);
+        const validSensorPlaceholders = validSensorIds.map(() => '?').join(',');
+
+        // Step 2: Get aggregated readings only for sensors with location data
+        const readingsQuery = `
+            SELECT 
+                device_id,
+                ${metricColumns},
+                COUNT(*) as reading_count
+            FROM sensor_readings 
+            WHERE device_id IN (${validSensorPlaceholders})
+                AND event_time >= ? 
+                AND event_time <= ?
+            GROUP BY device_id
+        `;
+
+        const readingsResult = await context.env.READINGS_TABLE.prepare(readingsQuery)
+            .bind(...validSensorIds, timeFrom, timeTo)
+            .all();
+
+        // Step 3: Combine sensor metadata with readings data
+        const readingsMap = new Map();
+        if (readingsResult.success) {
+            readingsResult.results.forEach(row => {
+                readingsMap.set(row.device_id, {
+                    reading_count: row.reading_count,
+                    metrics: metrics.reduce((acc, metric) => {
+                        acc[metric] = row[`avg_${metric}`];
+                        return acc;
+                    }, {})
+                });
+            });
+        }
+
+        // Combine sensor metadata with readings
+        const spatialResult = {
+            success: true,
+            results: sensorResult.results.map(sensor => {
+                const readings = readingsMap.get(sensor.device_id);
+                return {
+                    device_id: sensor.device_id,
+                    name: sensor.name,
+                    lat: sensor.lat,
+                    long: sensor.long,
+                    reading_count: readings?.reading_count || 0,
+                    ...metrics.reduce((acc, metric) => {
+                        acc[`avg_${metric}`] = readings?.metrics[metric] || null;
+                        return acc;
+                    }, {})
+                };
+            })
+        };
 
         if (!spatialResult.success) {
             throw new Error('Database query failed');
