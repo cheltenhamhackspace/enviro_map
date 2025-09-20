@@ -1334,9 +1334,9 @@ const AnalysisManager = {
             saturation = 80 + (localNorm * 20); // 80-100%
             lightness = 50 + (localNorm * 5); // 50-55%
         } else {
-            // Red range (high values)
+            // Red range (high values) - Fixed calculation
             const localNorm = (normalized - 0.66) / 0.34;
-            hue = 60 - (localNorm * 60); // Yellow to red (60 to 0)
+            hue = Math.max(0, 60 - (localNorm * 60)); // Yellow to red (60 to 0), ensure it doesn't go negative
             saturation = 85 + (localNorm * 15); // 85-100%
             lightness = 45 + (localNorm * 10); // 45-55%
         }
