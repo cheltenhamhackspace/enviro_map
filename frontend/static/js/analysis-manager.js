@@ -956,52 +956,218 @@ const AnalysisManager = {
     // Create spatial map
     createSpatialMap(data) {
         const container = document.getElementById('spatial-map');
-        if (!container) return;
+        if (!container) {
+            console.error('Spatial map container not found');
+            return;
+        }
+
+        // Remove loading class if present
+        container.classList.remove('loading');
 
         // Initialize Leaflet map
         if (AnalysisState.charts.spatialMap) {
             AnalysisState.charts.spatialMap.remove();
         }
 
-        const map = L.map(container).setView([
-            (data.bounds.minLat + data.bounds.maxLat) / 2,
-            (data.bounds.minLong + data.bounds.maxLong) / 2
-        ], 10);
+        // Check if we have valid sensor data
+        if (!data.sensorData || data.sensorData.length === 0) {
+            container.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center h-100">
+                    <div class="text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <h5 class="text-muted">No Spatial Data Available</h5>
+                        <p class="text-muted mb-0">
+                            No sensors with location data found for the selected time range.<br>
+                            Try selecting different sensors or extending the time range.
+                        </p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        // Calculate center point with fallback
+        let centerLat = 51.9; // Cheltenham approximate
+        let centerLng = -2.1;
+        let zoom = 10;
 
-        // Add sensor markers with data
-        data.sensorData.forEach(sensor => {
-            const pm25Value = sensor.metrics.pm2_5;
-            const color = this.getValueColor(pm25Value, 0, 50); // Assuming 0-50 range for PM2.5
+        if (data.bounds && data.bounds.minLat && data.bounds.maxLat) {
+            centerLat = (data.bounds.minLat + data.bounds.maxLat) / 2;
+            centerLng = (data.bounds.minLong + data.bounds.maxLong) / 2;
             
-            const marker = L.circleMarker([sensor.lat, sensor.long], {
-                radius: 8,
-                fillColor: color,
-                color: '#000',
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).addTo(map);
+            // Calculate appropriate zoom level based on bounds
+            const latDiff = data.bounds.maxLat - data.bounds.minLat;
+            const lngDiff = data.bounds.maxLong - data.bounds.minLong;
+            const maxDiff = Math.max(latDiff, lngDiff);
+            
+            if (maxDiff < 0.01) zoom = 15;
+            else if (maxDiff < 0.05) zoom = 13;
+            else if (maxDiff < 0.1) zoom = 12;
+            else if (maxDiff < 0.5) zoom = 10;
+            else zoom = 8;
+        }
 
-            marker.bindPopup(`
-                <strong>${sensor.name || sensor.device_id}</strong><br>
-                PM2.5: ${pm25Value?.toFixed(1) || 'N/A'} μg/m³<br>
-                Temperature: ${sensor.metrics.temperature?.toFixed(1) || 'N/A'} °C<br>
-                Humidity: ${sensor.metrics.humidity?.toFixed(1) || 'N/A'} %
-            `);
-        });
+        try {
+            const map = L.map(container, {
+                center: [centerLat, centerLng],
+                zoom: zoom,
+                zoomControl: true,
+                attributionControl: true
+            });
 
-        // Fit map to bounds
-        const bounds = L.latLngBounds([
-            [data.bounds.minLat, data.bounds.minLong],
-            [data.bounds.maxLat, data.bounds.maxLong]
-        ]);
-        map.fitBounds(bounds);
+            // Add tile layer with error handling
+            const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 18,
+                errorTileUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNmM3NTdkIj5NYXAgVGlsZSBVbmF2YWlsYWJsZTwvdGV4dD48L3N2Zz4='
+            });
 
-        AnalysisState.charts.spatialMap = map;
+            tileLayer.addTo(map);
+
+            // Track markers for legend
+            const markerData = [];
+            let minValue = Infinity;
+            let maxValue = -Infinity;
+
+            // Add sensor markers with data
+            data.sensorData.forEach(sensor => {
+                // Validate sensor coordinates
+                if (!sensor.lat || !sensor.long || 
+                    isNaN(sensor.lat) || isNaN(sensor.long) ||
+                    sensor.lat < -90 || sensor.lat > 90 ||
+                    sensor.long < -180 || sensor.long > 180) {
+                    console.warn(`Invalid coordinates for sensor ${sensor.device_id}:`, sensor.lat, sensor.long);
+                    return;
+                }
+
+                const pm25Value = sensor.metrics.pm2_5;
+                if (pm25Value !== null && pm25Value !== undefined && !isNaN(pm25Value)) {
+                    minValue = Math.min(minValue, pm25Value);
+                    maxValue = Math.max(maxValue, pm25Value);
+                }
+
+                const color = this.getValueColor(pm25Value, 0, 50); // Assuming 0-50 range for PM2.5
+                
+                const marker = L.circleMarker([sensor.lat, sensor.long], {
+                    radius: 10,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                // Enhanced popup with better formatting
+                const popupContent = `
+                    <div class="sensor-popup">
+                        <h6 class="mb-2">${sensor.name || sensor.device_id}</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <small class="text-muted">PM2.5</small><br>
+                                <strong>${pm25Value?.toFixed(1) || 'N/A'}</strong> μg/m³
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Temperature</small><br>
+                                <strong>${sensor.metrics.temperature?.toFixed(1) || 'N/A'}</strong> °C
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Humidity</small><br>
+                                <strong>${sensor.metrics.humidity?.toFixed(1) || 'N/A'}</strong> %
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Location</small><br>
+                                <small>${sensor.lat.toFixed(4)}, ${sensor.long.toFixed(4)}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent, {
+                    className: 'sensor-popup-container',
+                    maxWidth: 250
+                });
+
+                markerData.push({ value: pm25Value, color: color });
+            });
+
+            // Fit map to bounds if we have valid bounds
+            if (data.bounds && data.bounds.minLat && data.bounds.maxLat && 
+                data.bounds.minLong && data.bounds.maxLong) {
+                try {
+                    const bounds = L.latLngBounds([
+                        [data.bounds.minLat, data.bounds.minLong],
+                        [data.bounds.maxLat, data.bounds.maxLong]
+                    ]);
+                    
+                    // Add some padding to the bounds
+                    const paddedBounds = bounds.pad(0.1);
+                    map.fitBounds(paddedBounds);
+                } catch (boundsError) {
+                    console.warn('Error fitting map to bounds:', boundsError);
+                }
+            }
+
+            // Add legend if we have valid data
+            if (minValue !== Infinity && maxValue !== -Infinity) {
+                this.addSpatialLegend(map, minValue, maxValue);
+            }
+
+            AnalysisState.charts.spatialMap = map;
+
+            // Force map resize after a short delay to ensure proper rendering
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+
+        } catch (error) {
+            console.error('Error creating spatial map:', error);
+            container.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center h-100">
+                    <div class="text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-danger mb-3">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h5 class="text-danger">Map Loading Error</h5>
+                        <p class="text-muted mb-0">
+                            Unable to load the spatial map.<br>
+                            Please check your internet connection and try again.
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+    },
+
+    // Add legend to spatial map
+    addSpatialLegend(map, minValue, maxValue) {
+        const legend = L.control({ position: 'bottomright' });
+        
+        legend.onAdd = function() {
+            const div = L.DomUtil.create('div', 'spatial-legend');
+            div.innerHTML = `
+                <div class="mb-2"><strong>PM2.5 (μg/m³)</strong></div>
+                <div class="spatial-legend-item">
+                    <div class="spatial-legend-color" style="background-color: ${AnalysisManager.getValueColor(minValue, 0, 50)}"></div>
+                    <span>${minValue.toFixed(1)} (Low)</span>
+                </div>
+                <div class="spatial-legend-item">
+                    <div class="spatial-legend-color" style="background-color: ${AnalysisManager.getValueColor((minValue + maxValue) / 2, 0, 50)}"></div>
+                    <span>${((minValue + maxValue) / 2).toFixed(1)} (Medium)</span>
+                </div>
+                <div class="spatial-legend-item">
+                    <div class="spatial-legend-color" style="background-color: ${AnalysisManager.getValueColor(maxValue, 0, 50)}"></div>
+                    <span>${maxValue.toFixed(1)} (High)</span>
+                </div>
+            `;
+            return div;
+        };
+        
+        legend.addTo(map);
     },
 
     // Render regional statistics

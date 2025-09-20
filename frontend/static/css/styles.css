@@ -519,3 +519,125 @@ html {
         opacity: 1;
     }
 }
+
+/* Spatial Analysis Map Fixes */
+#spatial-map {
+    width: 100%;
+    height: 500px;
+    border-radius: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Ensure Leaflet map renders properly */
+.leaflet-container {
+    height: 100%;
+    width: 100%;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+/* Fix for Leaflet controls */
+.leaflet-control-container {
+    font-family: inherit;
+}
+
+.leaflet-control-zoom a {
+    color: #206bc4;
+    text-decoration: none;
+}
+
+.leaflet-control-zoom a:hover {
+    color: white;
+    background-color: #206bc4;
+}
+
+/* Regional stats styling */
+#regional-stats {
+    min-height: 200px;
+}
+
+#regional-stats .metric-summary {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+#regional-stats .metric-summary h6 {
+    color: #206bc4;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+#regional-stats .metric-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+#regional-stats .metric-unit {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-left: 0.25rem;
+}
+
+/* Analysis container improvements */
+.analysis-container {
+    position: relative;
+    min-height: 350px;
+}
+
+/* Spatial analysis specific improvements */
+.spatial-legend {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    font-size: 0.875rem;
+}
+
+.spatial-legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.spatial-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+/* Loading state for spatial map */
+#spatial-map.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+}
+
+#spatial-map.loading::before {
+    content: 'Loading map...';
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+/* Ensure proper tab content display */
+.tab-pane {
+    min-height: 400px;
+}
+
+.tab-pane.fade:not(.show) {
+    display: none;
+}
+
+.tab-pane.fade.show {
+    display: block;
+}
