@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Cheltenham Hackspace Environmental Monitoring - Advanced Data Analysis">
+    <title>Data Analysis - Cheltenham Hackspace Environmental Monitoring</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css" as="style">
+    
+    <!-- Critical CSS -->
+    <style>
+        /* Critical above-the-fold styles */
+        .page { min-height: 100vh; }
+        .navbar-vertical { width: 280px; }
+        .page-wrapper { margin-left: 280px; }
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #206bc4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .navbar-vertical { 
+                position: fixed;
+                top: 0;
+                left: -280px;
+                height: 100vh;
+                z-index: 1050;
+                transition: left 0.3s ease;
+            }
+            .navbar-vertical.show { left: 0; }
+            .page-wrapper { margin-left: 0; }
+            .mobile-nav-toggle {
+                position: fixed;
+                top: 1rem;
+                left: 1rem;
+                z-index: 1051;
+                background: #206bc4;
+                color: white;
+                border: none;
+                padding: 0.5rem;
+                border-radius: 0.375rem;
+            }
+        }
+        
+        /* Analysis specific styles */
+        .analysis-container {
+            height: 400px;
+            width: 100%;
+        }
+        
+        .analysis-controls {
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .sensor-selector {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+        }
+        
+        .analysis-type-tabs .nav-link {
+            border-radius: 0.375rem;
+            margin-right: 0.25rem;
+        }
+        
+        .analysis-type-tabs .nav-link.active {
+            background-color: #206bc4;
+            border-color: #206bc4;
+        }
+        
+        .stats-table {
+            font-size: 0.875rem;
+        }
+        
+        .correlation-matrix {
+            font-size: 0.75rem;
+        }
+        
+        .correlation-cell {
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .correlation-high { background-color: #d4edda; }
+        .correlation-medium { background-color: #fff3cd; }
+        .correlation-low { background-color: #f8d7da; }
+        
+        .analysis-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #206bc4;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+    </style>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.2/dist/nouislider.min.css" integrity="sha256-nckVXP1jMdH1YpiBrAvGOSgkP6TB2DsXzkkhtSAL4K4=" crossorigin="anonymous">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./static/css/styles.css">
+</head>
+<body>
+    <!-- Mobile navigation toggle -->
+    <button class="mobile-nav-toggle d-md-none" onclick="toggleMobileNav()" aria-label="Toggle navigation">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+
+    <div class="page">
+        <!-- Sidebar Navigation -->
+        <aside class="navbar navbar-vertical navbar-expand-sm navbar-dark" id="sidebar">
+            <div class="container-fluid">
+                <h1 class="navbar-brand navbar-brand-autodark">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9,22 9,12 15,12 15,22"></polyline>
+                    </svg>
+                    <span class="d-none d-lg-inline">
+                        Cheltenham Hackspace<br>
+                        <small class="text-muted">Environmental Monitor</small>
+                    </span>
+                </h1>
+                
+                <nav class="navbar-nav pt-lg-3">
+                    <div class="nav-item">
+                        <a class="nav-link" href="./">
+                            <span class="nav-link-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                    <polyline points="9,22 9,12 15,12 15,22"></polyline>
+                                </svg>
+                            </span>
+                            <span class="nav-link-title">Dashboard</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link active" href="./analysis.html" aria-current="page">
+                            <span class="nav-link-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 20V10"></path>
+                                    <path d="M12 20V4"></path>
+                                    <path d="M6 20v-6"></path>
+                                </svg>
+                            </span>
+                            <span class="nav-link-title">Data Analysis</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link" href="./login.html">
+                            <span class="nav-link-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                                    <polyline points="10,17 15,12 10,7"></polyline>
+                                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                                </svg>
+                            </span>
+                            <span class="nav-link-title">Login</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link" href="https://www.cheltenhamhackspace.org/" target="_blank" rel="noopener">
+                            <span class="nav-link-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15,3 21,3 21,9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                            </span>
+                            <span class="nav-link-title">Cheltenham Hackspace</span>
+                        </a>
+                    </div>
+                </nav>
+                
+                <!-- Analysis Status Summary -->
+                <div class="mt-auto p-3">
+                    <div class="card card-sm">
+                        <div class="card-body">
+                            <h4 class="card-title">Analysis Status</h4>
+                            <div id="analysis-status" class="small">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Selected Sensors</span>
+                                    <span id="selected-count" class="fw-bold">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Time Range</span>
+                                    <span id="time-range-display" class="fw-bold">24h</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Analysis Type</span>
+                                    <span id="analysis-type-display" class="fw-bold">Statistical</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="page-wrapper">
+            <!-- Page Header -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <h2 class="page-title">Advanced Data Analysis</h2>
+                            <div class="text-muted">Comprehensive environmental data analysis and insights</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="btn-list">
+                                <button class="btn btn-outline-primary" onclick="AnalysisManager.exportResults()" id="export-btn" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7,10 12,15 17,10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Export Results
+                                </button>
+                                <button class="btn btn-primary" onclick="AnalysisManager.runAnalysis()" id="analyze-btn" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                        <path d="M18 20V10"></path>
+                                        <path d="M12 20V4"></path>
+                                        <path d="M6 20v-6"></path>
+                                    </svg>
+                                    Run Analysis
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Body -->
+            <div class="page-body">
+                <div class="container-xl">
+                    <!-- Analysis Controls -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Analysis Configuration</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <!-- Sensor Selection -->
+                                        <div class="col-md-4">
+                                            <label class="form-label">Select Sensors</label>
+                                            <div class="sensor-selector" id="sensor-selector">
+                                                <div class="loading-spinner">
+                                                    <div class="spinner"></div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="AnalysisManager.selectAllSensors()">Select All</button>
+                                                <button class="btn btn-sm btn-outline-secondary ms-1" onclick="AnalysisManager.clearSensorSelection()">Clear All</button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Time Range -->
+                                        <div class="col-md-4">
+                                            <label class="form-label">Time Range</label>
+                                            <select class="form-select mb-2" id="time-range-select" onchange="AnalysisManager.setTimeRange(this.value)">
+                                                <option value="86400000">24 Hours</option>
+                                                <option value="172800000">48 Hours</option>
+                                                <option value="604800000" selected>7 Days</option>
+                                                <option value="1209600000">14 Days</option>
+                                                <option value="2592000000">30 Days</option>
+                                                <option value="5184000000">60 Days</option>
+                                                <option value="custom">Custom Range</option>
+                                            </select>
+                                            <div id="custom-date-range" class="d-none">
+                                                <input type="datetime-local" class="form-control mb-1" id="start-date" onchange="AnalysisManager.updateCustomRange()">
+                                                <input type="datetime-local" class="form-control" id="end-date" onchange="AnalysisManager.updateCustomRange()">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Analysis Parameters -->
+                                        <div class="col-md-4">
+                                            <label class="form-label">Parameters</label>
+                                            <div class="mb-2">
+                                                <label class="form-label form-label-sm">Aggregation Level</label>
+                                                <select class="form-select form-select-sm" id="aggregation-level">
+                                                    <option value="raw">Raw Data</option>
+                                                    <option value="hourly" selected>Hourly</option>
+                                                    <option value="daily">Daily</option>
+                                                    <option value="weekly">Weekly</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="form-label form-label-sm">Metrics</label>
+                                                <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+                                                    <label class="form-selectgroup-item flex-fill">
+                                                        <input type="checkbox" class="form-selectgroup-input" value="pm2_5" checked>
+                                                        <div class="form-selectgroup-label">PM2.5</div>
+                                                    </label>
+                                                    <label class="form-selectgroup-item flex-fill">
+                                                        <input type="checkbox" class="form-selectgroup-input" value="temperature" checked>
+                                                        <div class="form-selectgroup-label">Temperature</div>
+                                                    </label>
+                                                    <label class="form-selectgroup-item flex-fill">
+                                                        <input type="checkbox" class="form-selectgroup-input" value="humidity" checked>
+                                                        <div class="form-selectgroup-label">Humidity</div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Type Tabs -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <ul class="nav nav-tabs analysis-type-tabs" id="analysis-tabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="statistical-tab" data-bs-toggle="tab" data-bs-target="#statistical" type="button" role="tab">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                            <path d="M18 20V10"></path>
+                                            <path d="M12 20V4"></path>
+                                            <path d="M6 20v-6"></path>
+                                        </svg>
+                                        Statistical Analysis
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="comparative-tab" data-bs-toggle="tab" data-bs-target="#comparative" type="button" role="tab">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                            <path d="M8 6h13"></path>
+                                            <path d="M8 12h13"></path>
+                                            <path d="M8 18h13"></path>
+                                            <path d="M3 6h.01"></path>
+                                            <path d="M3 12h.01"></path>
+                                            <path d="M3 18h.01"></path>
+                                        </svg>
+                                        Comparative Analysis
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="trend-tab" data-bs-toggle="tab" data-bs-target="#trend" type="button" role="tab">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                            <path d="M3 3v18h18"></path>
+                                            <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+                                        </svg>
+                                        Trend Analysis
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="spatial-tab" data-bs-toggle="tab" data-bs-target="#spatial" type="button" role="tab">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                            <circle cx="12" cy="10" r="3"></circle>
+                                        </svg>
+                                        Spatial Analysis
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Results -->
+                    <div class="tab-content" id="analysis-content">
+                        <!-- Statistical Analysis Tab -->
+                        <div class="tab-pane fade show active" id="statistical" role="tabpanel">
+                            <div class="row row-deck row-cards">
+                                <!-- Summary Cards -->
+                                <div class="col-12">
+                                    <div class="analysis-summary">
+                                        <h3 class="mb-3">Statistical Summary</h3>
+                                        <div class="row" id="summary-metrics">
+                                            <div class="col-md-3">
+                                                <div class="metric-card">
+                                                    <div class="metric-value" id="total-readings">-</div>
+                                                    <div class="metric-label">Total Readings</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="metric-card">
+                                                    <div class="metric-value" id="avg-pm25">-</div>
+                                                    <div class="metric-label">Avg PM2.5 (μg/m³)</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="metric-card">
+                                                    <div class="metric-value" id="avg-temp">-</div>
+                                                    <div class="metric-label">Avg Temperature (°C)</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="metric-card">
+                                                    <div class="metric-value" id="avg-humidity">-</div>
+                                                    <div class="metric-label">Avg Humidity (%)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Statistics Table -->
+                                <div class="col-md-8">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Detailed Statistics</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table stats-table" id="statistics-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Metric</th>
+                                                            <th>Mean</th>
+                                                            <th>Median</th>
+                                                            <th>Std Dev</th>
+                                                            <th>Min</th>
+                                                            <th>Max</th>
+                                                            <th>25th %ile</th>
+                                                            <th>75th %ile</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td colspan="8" class="text-center text-muted">Run analysis to see results</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Distribution Chart -->
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Data Distribution</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="distribution-chart" class="analysis-container"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comparative Analysis Tab -->
+                        <div class="tab-pane fade" id="comparative" role="tabpanel">
+                            <div class="row row-deck row-cards">
+                                <div class="col-md-8">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Sensor Comparison</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="comparison-chart" class="analysis-container"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Correlation Matrix</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="correlation-matrix" class="table-responsive">
+                                                <p class="text-muted text-center">Run comparative analysis to see correlations</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Trend Analysis Tab -->
+                        <div class="tab-pane fade" id="trend" role="tabpanel">
+                            <div class="row row-deck row-cards">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Long-term Trends</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="trend-chart" class="analysis-container"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Seasonal Patterns</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="seasonal-chart" class="analysis-container"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Moving Averages</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="moving-average-chart" class="analysis-container"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Spatial Analysis Tab -->
+                        <div class="tab-pane fade" id="spatial" role="tabpanel">
+                            <div class="row row-deck row-cards">
+                                <div class="col-md-8">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Geographic Distribution</h3>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <div id="spatial-map" style="height: 500px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Regional Statistics</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="regional-stats">
+                                                <p class="text-muted text-center">Run spatial analysis to see regional data</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts loaded at end for better performance -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js" integrity="sha512-KhIBJeCI4oTEeqOmRi2gDJ7m+JARImhUYgXWiOTIp9qqySpFUAJs09erGKem4E5IPuxxSTjavuurvBitBmwE0w==" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
+    
+    <!-- Application JavaScript - Load in dependency order -->
+    <script src="./static/js/config.js"></script>
+    <script src="./static/js/utils.js"></script>
+    <script src="./static/js/analysis-manager.js"></script>
+
+    <!-- Mobile navigation helper -->
+    <script>
+        function toggleMobileNav() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+        
+        // Close mobile nav when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.mobile-nav-toggle');
+            
+            if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

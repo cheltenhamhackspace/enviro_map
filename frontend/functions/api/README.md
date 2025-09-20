@@ -20,6 +20,8 @@ CREATE INDEX idx_sensor_readings_device_id_event_time ON sensor_readings(device_
 
 ### Possible alternative indexes, NOT IN USE
 CREATE INDEX idx_sensor_readings_event_time_device_id ON sensor_readings(event_time, device_id);
+CREATE INDEX IF NOT EXISTS idx_sensor_readings_event_time_device_id ON sensor_readings(event_time, device_id);
+CREATE INDEX IF NOT EXISTS idx_sensors_lat_long ON sensors(lat, long);
 CREATE INDEX idx_sensor_readings_event_time ON sensor_readings(event_time);
 CREATE INDEX idx_sensor_readings_device_id ON sensor_readings(device_id);
 
