@@ -67,7 +67,7 @@ export async function onRequest(context) {
         const jwt = await generateJWT(email, userId, context.env.JWT_PRIVATE_KEY);
 
         // Send registration/login email
-        const emailSent = await sendRegistrationEmail(email, jwt, isNewUser);
+        const emailSent = await sendRegistrationEmail(email, jwt, isNewUser, context.env.MAILCHANNELS_API_KEY);
 
         if (!emailSent) {
             return createErrorResponse('Failed to send verification email', 500);
@@ -240,8 +240,14 @@ async function generateJWT(email, userId, privateKeyPem) {
 /**
  * Sends registration email via MailChannels
  */
-async function sendRegistrationEmail(email, jwt, isNewUser) {
+async function sendRegistrationEmail(email, jwt, isNewUser, mailchannelsApiKey) {
     try {
+        // Check if API key is configured
+        if (!mailchannelsApiKey) {
+            console.error('MAILCHANNELS_API_KEY not configured');
+            return false;
+        }
+
         const subject = isNewUser ?
             'Welcome to Environmental Dashboard - Verify Your Email' :
             'Your Environmental Dashboard Login Link';
@@ -314,11 +320,16 @@ async function sendRegistrationEmail(email, jwt, isNewUser) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-Api-Key': mailchannelsApiKey,
             },
             body: JSON.stringify(emailContent),
         });
 
         console.log('Email send status:', response.status);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Email send error response:', errorText);
+        }
         return response.ok;
     } catch (error) {
         console.error('Email send error:', error);

@@ -37,8 +37,8 @@ export async function onRequest(context) {
         const jwt = await generateJWT(email, context.env.JWT_PRIVATE_KEY);
 
         // Send login email
-        const emailSent = await sendLoginEmail(email, jwt);
-        
+        const emailSent = await sendLoginEmail(email, jwt, context.env.MAILCHANNELS_API_KEY);
+
         if (!emailSent) {
             return createErrorResponse('Failed to send login email', 500);
         }
@@ -142,8 +142,14 @@ async function generateJWT(email, privateKeyPem) {
 /**
  * Sends login email via MailChannels
  */
-async function sendLoginEmail(email, jwt) {
+async function sendLoginEmail(email, jwt, mailchannelsApiKey) {
     try {
+        // Check if API key is configured
+        if (!mailchannelsApiKey) {
+            console.error('MAILCHANNELS_API_KEY not configured');
+            return false;
+        }
+
         const emailContent = {
             personalizations: [{
                 to: [{ email: email, name: 'User' }],
@@ -197,13 +203,17 @@ async function sendLoginEmail(email, jwt) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-Api-Key': mailchannelsApiKey,
             },
             body: JSON.stringify(emailContent),
         });
 
-        const result = await response.json();
-        console.log('Email send result:', result);
-        
+        console.log('Email send status:', response.status);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Email send error response:', errorText);
+        }
+
         return response.ok;
     } catch (error) {
         console.error('Email send error:', error);
