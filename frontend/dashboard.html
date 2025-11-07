@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Manage your environmental sensors">
+    <title>My Dashboard - Cheltenham Hackspace Environmental Monitoring</title>
+
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css" as="style">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
+    <link rel="stylesheet" href="./static/css/styles.css">
+
+    <style>
+        .sensor-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+        .sensor-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .token-display {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            word-break: break-all;
+            border: 2px dashed #206bc4;
+        }
+        .copy-btn {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="navbar navbar-expand-md navbar-light d-print-none">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <h1 class="navbar-brand">
+                    <span>🌍 Environmental Dashboard</span>
+                </h1>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="userEmail">Loading...</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a href="./index.html" class="dropdown-item">View Public Map</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item" id="logoutBtn">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <h2 class="page-title">My Sensors</h2>
+                            <div class="text-muted mt-1">Manage your environmental monitoring sensors</div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerSensorModal">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Register New Sensor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="loadingIndicator" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3">Loading your sensors...</p>
+                    </div>
+
+                    <div id="noSensors" class="empty d-none">
+                        <div class="empty-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                            </svg>
+                        </div>
+                        <p class="empty-title">No sensors registered yet</p>
+                        <p class="empty-subtitle text-muted">Get started by registering your first environmental sensor</p>
+                        <div class="empty-action">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerSensorModal">
+                                Register Your First Sensor
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="sensorsGrid" class="row row-cards d-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Sensor Modal -->
+    <div class="modal fade" id="registerSensorModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Register New Sensor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerSensorForm">
+                        <div class="mb-3">
+                            <label class="form-label required">Sensor Name</label>
+                            <input type="text" class="form-control" id="sensorName" required placeholder="e.g., Home Garden Sensor">
+                            <div class="form-hint">Give your sensor a descriptive name</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required">Latitude</label>
+                                <input type="number" class="form-control" id="sensorLat" step="0.000001" min="-90" max="90" required placeholder="51.899">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required">Longitude</label>
+                                <input type="number" class="form-control" id="sensorLong" step="0.000001" min="-180" max="180" required placeholder="-2.078">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-check">
+                                <input type="checkbox" class="form-check-input" id="sensorPrivate">
+                                <span class="form-check-label">Make this sensor private</span>
+                                <span class="form-hint">Private sensors are only visible to you</span>
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitRegisterBtn">Register Sensor</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sensor Token Modal -->
+    <div class="modal fade" id="sensorTokenModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Sensor Registered Successfully!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <strong>IMPORTANT:</strong> Save this token securely. It will only be shown once and cannot be recovered.
+                    </div>
+
+                    <h6>Sensor Details:</h6>
+                    <table class="table">
+                        <tr>
+                            <th>Device ID:</th>
+                            <td><code id="newDeviceId"></code></td>
+                        </tr>
+                        <tr>
+                            <th>Name:</th>
+                            <td id="newSensorName"></td>
+                        </tr>
+                    </table>
+
+                    <h6 class="mt-3">Authentication Token:</h6>
+                    <div class="token-display">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>Token:</strong>
+                            <button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyToken()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                Copy
+                            </button>
+                        </div>
+                        <code id="newSensorToken" style="word-break: break-all;"></code>
+                    </div>
+
+                    <div class="mt-3">
+                        <h6>Configure Your Sensor:</h6>
+                        <p class="text-muted">Use these values when programming your sensor to send data:</p>
+                        <ul>
+                            <li><strong>API Endpoint:</strong> <code>POST https://map.cheltenham.space/api/v1/sensor/{device_id}</code></li>
+                            <li><strong>Authorization Header:</strong> <code>Bearer {token}</code></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
+    <script src="./static/js/dashboard.js"></script>
+</body>
+</html>

@@ -23,10 +23,23 @@ export async function onRequest(context) {
         // Extract user information from the token
         const { payload } = verificationResult.data;
         const userEmail = payload.email || payload.sub;
+        const userId = payload.user_id || payload.sub;
 
-        // Create session or redirect to dashboard with authentication
-        // For now, we'll show a success page and redirect to dashboard
-        return createSuccessPage(userEmail);
+        // Update last_login timestamp and mark email as verified
+        try {
+            await context.env.READINGS_TABLE.prepare(
+                "UPDATE users SET last_login = ?, email_verified = 1 WHERE id = ?"
+            ).bind(Date.now(), userId).run();
+        } catch (error) {
+            console.error('Failed to update user login time:', error);
+            // Continue anyway - login should still work
+        }
+
+        // Create session token with longer expiry for dashboard access
+        const sessionToken = await generateSessionToken(userEmail, userId, context.env.JWT_PRIVATE_KEY);
+
+        // Show success page and redirect to dashboard with session
+        return createSuccessPage(userEmail, sessionToken);
 
     } catch (error) {
         console.error('JWT verification error:', error);
@@ -69,9 +82,37 @@ async function verifyJWT(jwt, publicKeyPem) {
 }
 
 /**
+ * Generates a session token with longer expiry
+ */
+async function generateSessionToken(email, userId, privateKeyPem) {
+    try {
+        const alg = 'EdDSA';
+        const privateKey = await importPKCS8(privateKeyPem, alg);
+
+        const jwt = await new SignJWT({
+            sub: userId.toString(),
+            email: email,
+            user_id: userId,
+            email_verified: true,
+            iss: 'map.cheltenham.space',
+            aud: 'enviro-dashboard'
+        })
+        .setProtectedHeader({ alg, typ: 'JWT' })
+        .setIssuedAt()
+        .setExpirationTime('7d') // 7 days for session
+        .sign(privateKey);
+
+        return jwt;
+    } catch (error) {
+        console.error('Session token generation error:', error);
+        return null;
+    }
+}
+
+/**
  * Creates a success page for successful authentication
  */
-function createSuccessPage(email) {
+function createSuccessPage(email, sessionToken) {
     return new Response(`
         <!DOCTYPE html>
         <html lang="en">
@@ -156,23 +197,32 @@ function createSuccessPage(email) {
             </div>
             
             <script>
+                // Store session token in localStorage
+                const sessionToken = '${sessionToken || ''}';
+                if (sessionToken) {
+                    localStorage.setItem('enviro_session', sessionToken);
+                    localStorage.setItem('enviro_user_email', '${email}');
+                }
+
                 // Auto-redirect after 5 seconds
                 let countdown = 5;
                 const countdownElement = document.getElementById('countdown');
-                
+
                 const timer = setInterval(() => {
                     countdown--;
                     countdownElement.textContent = countdown;
-                    
+
                     if (countdown <= 0) {
                         clearInterval(timer);
-                        window.location.href = '/';
+                        window.location.href = '/dashboard.html';
                     }
                 }, 1000);
-                
+
                 // Allow immediate redirect on click
-                document.querySelector('.btn').addEventListener('click', () => {
+                document.querySelector('.btn').addEventListener('click', (e) => {
+                    e.preventDefault();
                     clearInterval(timer);
+                    window.location.href = '/dashboard.html';
                 });
             </script>
         </body>

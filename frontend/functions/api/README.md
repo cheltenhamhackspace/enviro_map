@@ -25,19 +25,34 @@ CREATE INDEX IF NOT EXISTS idx_sensors_lat_long ON sensors(lat, long);
 CREATE INDEX idx_sensor_readings_event_time ON sensor_readings(event_time);
 CREATE INDEX idx_sensor_readings_device_id ON sensor_readings(device_id);
 
+## Users
+CREATE TABLE IF NOT EXISTS users (
+  id integer PRIMARY KEY AUTOINCREMENT,
+  email text UNIQUE NOT NULL,
+  created_at integer NOT NULL,
+  last_login integer,
+  email_verified integer DEFAULT 0
+);
+CREATE INDEX idx_users_email ON users(email);
+
 ## Sensors
 CREATE TABLE IF NOT EXISTS sensors (
   id integer PRIMARY KEY AUTOINCREMENT,
-  device_id text NOT NULL,
+  device_id text UNIQUE NOT NULL,
   name text NOT NULL,
   created_at integer NOT NULL,
   owner text NOT NULL,
   lat real NOT NULL,
   long real NOT NULL,
-  token text NOT NULL,
+  token text UNIQUE NOT NULL,
   private integer NOT NULL,
-  active integer NOT NULL
+  active integer NOT NULL,
+  user_id integer,
+  FOREIGN KEY (user_id) REFERENCES users(id)
 );
+CREATE INDEX idx_sensors_device_id ON sensors(device_id);
+CREATE INDEX idx_sensors_token ON sensors(token);
+CREATE INDEX idx_sensors_user_id ON sensors(user_id);
 
 ## Get total number of sensors
 SELECT COUNT(device_id) AS sensors FROM sensors WHERE active = 1 AND private = 0
