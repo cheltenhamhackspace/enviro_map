@@ -3,7 +3,6 @@
  * Allows authenticated users to register new sensors
  */
 import { jwtVerify, importSPKI } from 'jose';
-import { randomBytes } from 'crypto';
 
 export async function onRequest(context) {
     if (context.request.method !== 'POST') {
@@ -143,7 +142,9 @@ async function verifyJWT(jwt, publicKeyPem) {
  * Format: enviro-XXXXXXXX (8 random hex characters)
  */
 function generateDeviceId() {
-    const randomHex = randomBytes(4).toString('hex');
+    const array = new Uint8Array(4);
+    crypto.getRandomValues(array);
+    const randomHex = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
     return `enviro-${randomHex}`;
 }
 
@@ -152,7 +153,9 @@ function generateDeviceId() {
  * 32 bytes = 64 hex characters
  */
 function generateSecureToken() {
-    return randomBytes(32).toString('hex');
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
