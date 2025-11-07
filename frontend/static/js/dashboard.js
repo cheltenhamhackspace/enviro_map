@@ -49,11 +49,16 @@ async function loadSensors() {
     const sensorsGrid = document.getElementById('sensorsGrid');
 
     try {
-        const response = await fetch(`${API_BASE}/sensors/my-sensors`, {
+        // Add cache-busting parameter to ensure fresh data
+        const cacheBuster = `?_t=${Date.now()}`;
+        const response = await fetch(`${API_BASE}/sensors/my-sensors${cacheBuster}`, {
             headers: {
                 'Authorization': `Bearer ${sessionToken}`,
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            },
+            cache: 'no-store'
         });
 
         if (response.status === 401) {
@@ -309,8 +314,19 @@ async function deleteSensor() {
         // Show success message
         showAlert(`Sensor deleted successfully. ${data.readings_deleted || 0} readings were removed.`, 'success');
 
-        // Reload sensors
-        document.getElementById('sensorsGrid').innerHTML = '';
+        // Clear the sensors grid and hide it
+        const sensorsGrid = document.getElementById('sensorsGrid');
+        sensorsGrid.innerHTML = '';
+        sensorsGrid.classList.add('d-none');
+
+        // Show loading indicator
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        loadingIndicator.classList.remove('d-none');
+
+        // Small delay to ensure server has processed the deletion
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Reload sensors with fresh data
         await loadSensors();
 
     } catch (error) {
