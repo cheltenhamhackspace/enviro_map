@@ -3,16 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Login to Cheltenham Hackspace Environmental Monitoring Dashboard">
-    <title>Login - Cheltenham Hackspace Environmental Monitoring</title>
-    
-    <!-- Preload critical resources -->
+    <meta name="description" content="Register for Cheltenham Hackspace Environmental Monitoring Dashboard">
+    <title>Register - Cheltenham Hackspace Environmental Monitoring</title>
+
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css" as="style">
-    
-    <!-- External CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
-    
-    <!-- Custom styles -->
+
     <style>
         .login-page {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -21,7 +17,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .login-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -29,7 +25,7 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .brand-logo {
             background: linear-gradient(135deg, #206bc4, #4dabf7);
             -webkit-background-clip: text;
@@ -37,23 +33,23 @@
             background-clip: text;
             font-weight: 700;
         }
-        
+
         .form-control:focus {
             border-color: #206bc4;
             box-shadow: 0 0 0 0.2rem rgba(32, 107, 196, 0.25);
         }
-        
+
         .btn-primary {
             background: linear-gradient(135deg, #206bc4, #4dabf7);
             border: none;
             transition: all 0.3s ease;
         }
-        
-        .btn-primary:hover {
+
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(32, 107, 196, 0.3);
         }
-        
+
         .feature-icon {
             width: 48px;
             height: 48px;
@@ -65,13 +61,7 @@
             color: white;
             margin-bottom: 1rem;
         }
-        
-        .alert-info {
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-            border: 1px solid #2196f3;
-            color: #1565c0;
-        }
-        
+
         .back-link {
             position: absolute;
             top: 2rem;
@@ -84,17 +74,17 @@
             font-weight: 500;
             transition: all 0.3s ease;
         }
-        
+
         .back-link:hover {
             color: rgba(255, 255, 255, 0.8);
             transform: translateX(-4px);
         }
-        
+
         @media (max-width: 768px) {
             .login-page {
                 padding: 1rem;
             }
-            
+
             .back-link {
                 position: relative;
                 top: 0;
@@ -107,7 +97,6 @@
 </head>
 <body>
     <div class="login-page">
-        <!-- Back to Dashboard Link -->
         <a href="./" class="back-link d-none d-md-flex">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19 12H5"></path>
@@ -115,11 +104,10 @@
             </svg>
             Back to Dashboard
         </a>
-        
+
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-6 col-lg-5">
-                    <!-- Mobile back link -->
                     <a href="./" class="back-link d-md-none">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M19 12H5"></path>
@@ -127,65 +115,63 @@
                         </svg>
                         Back to Dashboard
                     </a>
-                    
+
                     <div class="card login-card">
                         <div class="card-body p-4">
-                            <!-- Header -->
                             <div class="text-center mb-4">
                                 <div class="feature-icon mx-auto">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                                        <polyline points="10,17 15,12 10,7"></polyline>
-                                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <line x1="19" y1="8" x2="19" y2="14"></line>
+                                        <line x1="22" y1="11" x2="16" y2="11"></line>
                                     </svg>
                                 </div>
-                                <h1 class="brand-logo h2 mb-2">Welcome Back</h1>
-                                <p class="text-muted">Sign in to access the Environmental Monitoring Dashboard</p>
+                                <h1 class="brand-logo h2 mb-2">Create Account</h1>
+                                <p class="text-muted">Register to manage your environmental sensors</p>
                             </div>
-                            
-                            <!-- Login Form -->
-                            <form id="loginForm" action="/api/v1/login" method="POST">
+
+                            <form id="registerForm" action="/api/v1/register" method="POST">
                                 <div class="mb-3">
                                     <label for="email" class="form-label">Email Address</label>
                                     <input type="email" class="form-control" id="email" name="email" placeholder="your@email.com" required>
-                                    <div class="form-text">We'll send you a login link</div>
+                                    <div class="form-text">We'll send you a verification link</div>
                                 </div>
 
-                                <!-- Cloudflare Turnstile -->
                                 <div class="mb-3 d-flex justify-content-center">
                                     <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA"></div>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary w-100 mb-3" id="submitBtn">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
-                                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                                        <polyline points="10,17 15,12 10,7"></polyline>
-                                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <line x1="19" y1="8" x2="19" y2="14"></line>
+                                        <line x1="22" y1="11" x2="16" y2="11"></line>
                                     </svg>
-                                    Send Login Link
+                                    Create Account
                                 </button>
 
                                 <div class="text-center">
-                                    <p class="text-muted mb-2">Don't have an account?</p>
-                                    <a href="./register.html" class="btn btn-outline-primary">
-                                        Create Account
+                                    <p class="text-muted mb-2">Already have an account?</p>
+                                    <a href="./login.html" class="btn btn-outline-primary">
+                                        Sign In Instead
                                     </a>
                                 </div>
                             </form>
                         </div>
                     </div>
-                    
-                    <!-- Features Preview -->
+
                     <div class="row mt-4 text-center">
                         <div class="col-4">
                             <div class="feature-icon mx-auto" style="width: 40px; height: 40px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                    <circle cx="12" cy="10" r="3"></circle>
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                                 </svg>
                             </div>
-                            <h6 class="text-white mb-1">Real-time Data</h6>
-                            <small class="text-white-50">Live sensor monitoring</small>
+                            <h6 class="text-white mb-1">Register Sensors</h6>
+                            <small class="text-white-50">Add your own sensors</small>
                         </div>
                         <div class="col-4">
                             <div class="feature-icon mx-auto" style="width: 40px; height: 40px;">
@@ -193,58 +179,41 @@
                                     <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
                                 </svg>
                             </div>
-                            <h6 class="text-white mb-1">Analytics</h6>
-                            <small class="text-white-50">Detailed charts & trends</small>
+                            <h6 class="text-white mb-1">Monitor Data</h6>
+                            <small class="text-white-50">Track air quality</small>
                         </div>
                         <div class="col-4">
                             <div class="feature-icon mx-auto" style="width: 40px; height: 40px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7,10 12,15 17,10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                                 </svg>
                             </div>
-                            <h6 class="text-white mb-1">Export Data</h6>
-                            <small class="text-white-50">Download CSV reports</small>
+                            <h6 class="text-white mb-1">Privacy Control</h6>
+                            <small class="text-white-50">Public or private</small>
                         </div>
                     </div>
-                    
-                    <!-- Footer -->
+
                     <div class="text-center mt-4">
                         <p class="text-white-50 small mb-2">
-                            Powered by 
+                            Powered by
                             <a href="https://www.cheltenhamhackspace.org/" target="_blank" rel="noopener" class="text-white">
                                 Cheltenham Hackspace
                             </a>
                         </p>
-                        <div class="d-flex justify-content-center gap-3">
-                            <a href="https://www.cheltenhamhackspace.org/" target="_blank" rel="noopener" class="text-white-50 small">
-                                About Us
-                            </a>
-                            <span class="text-white-50">•</span>
-                            <a href="mailto:contact@cheltenhamhackspace.org" class="text-white-50 small">
-                                Contact
-                            </a>
-                            <span class="text-white-50">•</span>
-                            <a href="https://github.com/cheltenham-hackspace" target="_blank" rel="noopener" class="text-white-50 small">
-                                GitHub
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Scripts -->
+
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
         });
     </script>
 </body>

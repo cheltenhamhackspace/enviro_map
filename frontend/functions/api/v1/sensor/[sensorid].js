@@ -37,9 +37,55 @@ export async function onRequest(context) {
     }
 
     if (context.request.method === "POST") {
+        // Check for token-based authentication (new sensors)
+        const authHeader = context.request.headers.get('Authorization');
+        const deviceId = context.params.sensorid;
+
+        // If Authorization header is present, verify token
+        if (authHeader) {
+            if (!authHeader.startsWith('Bearer ')) {
+                return new Response(JSON.stringify({ error: "Invalid authorization format" }), {
+                    status: 401,
+                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                });
+            }
+
+            const providedToken = authHeader.substring(7);
+
+            // Verify token matches device_id in database
+            const sensor = await context.env.READINGS_TABLE.prepare(
+                "SELECT token, active FROM sensors WHERE device_id = ?"
+            ).bind(deviceId).first();
+
+            if (!sensor) {
+                return new Response(JSON.stringify({ error: "Sensor not found" }), {
+                    status: 404,
+                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                });
+            }
+
+            if (!sensor.active) {
+                return new Response(JSON.stringify({ error: "Sensor is not active" }), {
+                    status: 403,
+                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                });
+            }
+
+            if (sensor.token !== providedToken) {
+                return new Response(JSON.stringify({ error: "Invalid sensor token" }), {
+                    status: 403,
+                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                });
+            }
+
+            // Token is valid, proceed with data insertion
+        }
+        // If no Authorization header, allow for backwards compatibility with existing sensors
+        // (they won't have tokens set in the database yet, or will be legacy sensors)
+
         let reqBody = await readRequestBody(context.request);
         let data = JSON.parse(reqBody);
-        console.log(context.params.sensorid);
+        console.log(deviceId);
         console.log(data);
 
         if (data.pm1) {
@@ -47,7 +93,7 @@ export async function onRequest(context) {
             console.log(data);
             const { success } = await context.env.READINGS_TABLE.prepare(`
                 insert into sensor_readings ( device_id, event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox, uptime, version) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).bind(context.params.sensorid, Date.now(), data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox, data.uptime, data.version).run()
+            `).bind(deviceId, Date.now(), data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox, data.uptime, data.version).run()
             return new Response("201 - Indexed", { status: 201 });
         }
 
@@ -136,7 +182,7 @@ export async function onRequestOptions() {
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         }
     });
 }
