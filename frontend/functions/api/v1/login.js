@@ -22,10 +22,15 @@ export async function onRequest(context) {
         }
 
         // Verify Turnstile token
-        const verifiedHuman = await verifyTurnstile(turnstileResponse, remoteip, context.env.TURNSTILE_KEY);
-        
-        if (!verifiedHuman) {
-            return createErrorResponse('Turnstile verification failed', 403);
+        // Skip verification if TURNSTILE_KEY is not set (development mode)
+        if (context.env.TURNSTILE_KEY) {
+            const verifiedHuman = await verifyTurnstile(turnstileResponse, remoteip, context.env.TURNSTILE_KEY);
+
+            if (!verifiedHuman) {
+                return createErrorResponse('Turnstile verification failed', 403);
+            }
+        } else {
+            console.log('TURNSTILE_KEY not set - skipping verification (development mode)');
         }
 
         // Generate JWT token
