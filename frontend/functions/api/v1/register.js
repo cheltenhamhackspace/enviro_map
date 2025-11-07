@@ -292,7 +292,7 @@ async function sendRegistrationEmail(email, jwt, isNewUser, mailchannelsApiKey) 
             }],
             from: {
                 email: 'noreply@map.cheltenham.space',
-                name: 'Cheltenham Hackspace Environmental Monitor',
+                name: 'Cheltenham Hackspace',
             },
             subject: subject,
             content: [{
@@ -307,7 +307,7 @@ async function sendRegistrationEmail(email, jwt, isNewUser, mailchannelsApiKey) 
                             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
                             .header { background: linear-gradient(135deg, #206bc4, #4dabf7); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
                             .content { background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px; }
-                            .btn { display: inline-block; background: #206bc4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+                            .btn { display: inline-block; background: #0d3a66; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
                             .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
                             .feature-list { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; }
                         </style>
