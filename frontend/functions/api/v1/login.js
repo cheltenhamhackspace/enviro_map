@@ -51,18 +51,114 @@ export async function onRequest(context) {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Login Email Sent</title>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
                 <style>
-                    body { font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 2rem auto; padding: 2rem; }
-                    .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 1rem; border-radius: 0.5rem; }
-                    .btn { display: inline-block; background: #206bc4; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 0.5rem; margin-top: 1rem; }
+                    body {
+                        font-family: system-ui, -apple-system, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        min-height: 100vh;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 2rem;
+                    }
+                    .container {
+                        background: rgba(255, 255, 255, 0.95);
+                        backdrop-filter: blur(10px);
+                        border-radius: 1rem;
+                        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+                        padding: 2rem;
+                        max-width: 600px;
+                        width: 100%;
+                    }
+                    .success-icon {
+                        width: 64px;
+                        height: 64px;
+                        background: linear-gradient(135deg, #2fb344, #51cf66);
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0 auto 1.5rem;
+                        color: white;
+                        font-size: 2rem;
+                    }
+                    h1 {
+                        color: #2fb344;
+                        margin-bottom: 1rem;
+                        text-align: center;
+                    }
+                    p {
+                        text-align: center;
+                        color: #495057;
+                    }
+                    .email-box {
+                        background: #f8f9fa;
+                        padding: 0.75rem;
+                        border-radius: 0.5rem;
+                        margin: 1rem 0;
+                        font-family: monospace;
+                        word-break: break-all;
+                        text-align: center;
+                        border: 1px solid #dee2e6;
+                    }
+                    .btn {
+                        display: inline-block;
+                        background: linear-gradient(135deg, #206bc4, #4dabf7);
+                        color: white;
+                        padding: 0.75rem 1.5rem;
+                        text-decoration: none;
+                        border-radius: 0.5rem;
+                        margin-top: 1rem;
+                        transition: all 0.3s ease;
+                    }
+                    .btn:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 10px 20px rgba(32, 107, 196, 0.3);
+                        color: white;
+                    }
+                    .info-box {
+                        background: #e3f2fd;
+                        border: 1px solid #2196f3;
+                        border-radius: 0.5rem;
+                        padding: 1rem;
+                        margin: 1rem 0;
+                        color: #1565c0;
+                    }
+                    .info-box ol {
+                        margin: 0.5rem 0 0 0;
+                        padding-left: 1.2rem;
+                    }
+                    .expiry-notice {
+                        margin-top: 1.5rem;
+                        text-align: center;
+                        font-weight: 600;
+                        color: #495057;
+                    }
+                    .button-container {
+                        text-align: center;
+                        margin-top: 2rem;
+                    }
                 </style>
             </head>
             <body>
-                <div class="success">
-                    <h1>✅ Login Email Sent</h1>
-                    <p>A login link has been sent to <strong>${email}</strong>.</p>
-                    <p>Please check your email and click the link to sign in. If you don't see the email, please check your spam folder.</p>
-                    <a href="/" class="btn">Return to Dashboard</a>
+                <div class="container">
+                    <div class="success-icon">✓</div>
+                    <h1>✉️ Login Email Sent</h1>
+                    <p>Welcome back! A login link has been sent to:</p>
+                    <div class="email-box"><strong>${email}</strong></div>
+                    <div class="info-box">
+                        <strong>Next Steps:</strong>
+                        <ol>
+                            <li>Check your email inbox (and spam folder)</li>
+                            <li>Click the login link in the email</li>
+                            <li>You'll be redirected to your dashboard</li>
+                        </ol>
+                    </div>
+                    <p class="expiry-notice">This link will expire in 15 minutes for your security.</p>
+                    <div class="button-container">
+                        <a href="/" class="btn">Return to Dashboard</a>
+                    </div>
                 </div>
             </body>
             </html>

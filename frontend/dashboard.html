@@ -9,6 +9,7 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css" as="style">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
     <link rel="stylesheet" href="./static/css/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
     <style>
         .sensor-card {
@@ -33,6 +34,12 @@
         }
         .copy-btn {
             cursor: pointer;
+        }
+        #locationMap {
+            height: 400px;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e9ecef;
         }
     </style>
 </head>
@@ -136,6 +143,11 @@
                             <input type="text" class="form-control" id="sensorName" required placeholder="e.g., Home Garden Sensor">
                             <div class="form-hint">Give your sensor a descriptive name</div>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <div class="form-hint mb-2">Click on the map to set the sensor location</div>
+                            <div id="locationMap"></div>
+                        </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label required">Latitude</label>
@@ -224,7 +236,46 @@
         </div>
     </div>
 
+    <!-- Delete Sensor Confirmation Modal -->
+    <div class="modal fade" id="deleteSensorModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Delete Sensor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <strong>WARNING:</strong> This action cannot be undone!
+                    </div>
+                    <p>Are you sure you want to delete this sensor?</p>
+                    <div class="mb-3">
+                        <strong>Sensor Name:</strong> <span id="deleteSensorName"></span><br>
+                        <strong>Device ID:</strong> <code id="deleteSensorId"></code>
+                    </div>
+                    <p class="text-danger"><strong>All historical sensor readings will be permanently deleted.</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Delete Sensor & All Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="./static/js/dashboard.js"></script>
 </body>
 </html>

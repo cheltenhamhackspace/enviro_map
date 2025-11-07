@@ -3,6 +3,30 @@
  * Main application file - OPTIMIZED VERSION
  */
 
+// Check if user is logged in and update navigation
+(function checkAuthAndUpdateNav() {
+    const sessionToken = localStorage.getItem('enviro_session');
+    const userEmail = localStorage.getItem('enviro_user_email');
+    const loginLink = document.querySelector('a[href="./login.html"]');
+
+    if (loginLink) {
+        if (sessionToken && userEmail) {
+            // User is logged in - change link to "My Dashboard"
+            loginLink.href = './dashboard.html';
+            loginLink.querySelector('.nav-link-title').textContent = 'My Dashboard';
+
+            // Update icon to dashboard icon
+            const icon = loginLink.querySelector('.nav-link-icon svg');
+            if (icon) {
+                icon.innerHTML = `
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                `;
+            }
+        }
+    }
+})();
+
 // Event handlers
 function toggleDataset(dataset) {
     const checkbox = document.getElementById(`${dataset}-toggle`);
