@@ -2,7 +2,7 @@
  * JWT Verification API Endpoint
  * Verifies JWT tokens from login emails and redirects users to the dashboard
  */
-import { jwtVerify, importSPKI } from 'jose';
+import { jwtVerify, importSPKI, SignJWT, importPKCS8 } from 'jose';
 
 export async function onRequest(context) {
     try {
