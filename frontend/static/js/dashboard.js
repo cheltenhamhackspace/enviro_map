@@ -127,19 +127,18 @@ function renderSensors(sensors) {
                 </div>
                 <div class="card-footer">
                     <div class="row g-2">
-                        <div class="col-md-4">
+                        <div class="col-6">
                             <a href="./index.html" class="btn btn-sm btn-outline-primary w-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
                                 View on Map
                             </a>
                         </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-sm btn-outline-secondary w-100" onclick="toggleSensorActive('${escapeHtml(sensor.device_id)}', ${!sensor.active})">
-                                ${sensor.active ? 'Deactivate' : 'Activate'}
-                            </button>
-                        </div>
-                        <div class="col-md-4">
+                        <div class="col-6">
                             <button class="btn btn-sm btn-outline-danger w-100" onclick="showDeleteConfirmation('${escapeHtml(sensor.device_id)}', '${escapeHtml(sensor.name)}')">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
                                     <polyline points="3 6 5 6 21 6"></polyline>
                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                 </svg>
@@ -198,12 +197,16 @@ async function handleSensorRegistration() {
             throw new Error(data.message || 'Failed to register sensor');
         }
 
-        // Close registration modal
+        // Close registration modal and show token modal after transition
         const registerModal = bootstrap.Modal.getInstance(document.getElementById('registerSensorModal'));
-        registerModal.hide();
+        const registerModalElement = document.getElementById('registerSensorModal');
 
-        // Show token modal
-        showTokenModal(data.sensor);
+        // Wait for modal to fully hide before showing next modal
+        registerModalElement.addEventListener('hidden.bs.modal', function() {
+            showTokenModal(data.sensor);
+        }, { once: true });
+
+        registerModal.hide();
 
         // Reset form
         form.reset();
@@ -231,6 +234,14 @@ function showTokenModal(sensor) {
     document.getElementById('newSensorToken').textContent = sensor.token;
 
     const tokenModal = new bootstrap.Modal(document.getElementById('sensorTokenModal'));
+
+    // Ensure clean modal state before showing
+    const modalElement = document.getElementById('sensorTokenModal');
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        // Remove focus from any buttons when modal closes
+        document.activeElement?.blur();
+    }, { once: true });
+
     tokenModal.show();
 }
 
@@ -245,14 +256,6 @@ function copyToken() {
         console.error('Failed to copy:', err);
         showAlert('Failed to copy token. Please copy manually.', 'warning');
     });
-}
-
-/**
- * Toggle sensor active status
- */
-async function toggleSensorActive(deviceId, newActiveStatus) {
-    // This would require a new API endpoint - placeholder for now
-    showAlert('Feature coming soon: Toggle sensor active/inactive status', 'info');
 }
 
 /**
@@ -451,5 +454,4 @@ function cleanupLocationMap() {
 
 // Make functions available globally for onclick handlers
 window.copyToken = copyToken;
-window.toggleSensorActive = toggleSensorActive;
 window.showDeleteConfirmation = showDeleteConfirmation;
