@@ -216,9 +216,22 @@ async function handleSensorRegistration() {
         // Reset form
         form.reset();
 
-        // Reload sensors
-        document.getElementById('sensorsGrid').innerHTML = '';
+        // Clear the sensors grid and hide it
+        const sensorsGrid = document.getElementById('sensorsGrid');
+        sensorsGrid.innerHTML = '';
+        sensorsGrid.classList.add('d-none');
+
+        // Hide no sensors message
         document.getElementById('noSensors').classList.add('d-none');
+
+        // Show loading indicator
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        loadingIndicator.classList.remove('d-none');
+
+        // Small delay to ensure server has processed the registration
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Reload sensors with fresh data
         await loadSensors();
 
     } catch (error) {
