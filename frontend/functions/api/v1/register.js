@@ -113,7 +113,15 @@ export async function onRequest(context) {
                         color: white;
                         font-size: 2rem;
                     }
-                    h1 { color: #2fb344; margin-bottom: 1rem; }
+                    h1 {
+                        color: #2fb344;
+                        margin-bottom: 1rem;
+                        text-align: center;
+                    }
+                    p {
+                        text-align: center;
+                        color: #495057;
+                    }
                     .email-box {
                         background: #f8f9fa;
                         padding: 0.75rem;
@@ -121,6 +129,8 @@ export async function onRequest(context) {
                         margin: 1rem 0;
                         font-family: monospace;
                         word-break: break-all;
+                        text-align: center;
+                        border: 1px solid #dee2e6;
                     }
                     .btn {
                         display: inline-block;
@@ -130,6 +140,12 @@ export async function onRequest(context) {
                         text-decoration: none;
                         border-radius: 0.5rem;
                         margin-top: 1rem;
+                        transition: all 0.3s ease;
+                    }
+                    .btn:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 10px 20px rgba(32, 107, 196, 0.3);
+                        color: white;
                     }
                     .info-box {
                         background: #e3f2fd;
@@ -138,6 +154,20 @@ export async function onRequest(context) {
                         padding: 1rem;
                         margin: 1rem 0;
                         color: #1565c0;
+                    }
+                    .info-box ol {
+                        margin: 0.5rem 0 0 0;
+                        padding-left: 1.2rem;
+                    }
+                    .expiry-notice {
+                        margin-top: 1.5rem;
+                        text-align: center;
+                        font-weight: 600;
+                        color: #495057;
+                    }
+                    .button-container {
+                        text-align: center;
+                        margin-top: 2rem;
                     }
                 </style>
             </head>
@@ -149,15 +179,15 @@ export async function onRequest(context) {
                     <div class="email-box"><strong>${email}</strong></div>
                     <div class="info-box">
                         <strong>Next Steps:</strong>
-                        <ol style="margin: 0.5rem 0 0 0; padding-left: 1.2rem;">
+                        <ol>
                             <li>Check your email inbox (and spam folder)</li>
                             <li>Click the verification link in the email</li>
                             <li>You'll be redirected to your dashboard</li>
                             ${isNewUser ? '<li>Register your first sensor!</li>' : ''}
                         </ol>
                     </div>
-                    <p style="margin-top: 1.5rem;"><strong>This link will expire in 15 minutes</strong> for your security.</p>
-                    <div style="text-align: center; margin-top: 2rem;">
+                    <p class="expiry-notice">This link will expire in 15 minutes for your security.</p>
+                    <div class="button-container">
                         <a href="/" class="btn">Return to Dashboard</a>
                     </div>
                 </div>
