@@ -1,6 +1,6 @@
 # 🌿 enviro_map
 
-*Distributed air quality monitoring for Cheltenham Hackspace*
+*Distributed air quality monitoring by Cheltenham Hackspace*
 
 ![Deployed on Cloudflare Pages](https://img.shields.io/badge/Deployed%20on-Cloudflare%20Pages-F38020?logo=cloudflare&logoColor=white)
 ![Live](https://img.shields.io/badge/Live-map.cheltenham.space-brightgreen)
