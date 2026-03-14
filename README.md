@@ -25,20 +25,20 @@ Cloudflare Pages & D1
 
 ## TODO
 - Everything
-    - Security
+    - ~~Security~~
     - CI?
 - Frontend
     - ~~Get actual latest readings for nodes~~
-    - Get nodes within bounding box after settle time
+    - ~~Get nodes within bounding box after settle time~~
     - ~~Make graphed dataset selectable~~
     - Make averages visible
-    - Snazzy top banner (partially done)
-    - Heatmap view
-    - Full refactor
-        - Optimise number of API calls needed
+    - ~~Snazzy top banner~~
+    - ~~Heatmap view~~
+    - ~~Full refactor~~
+        - ~~Optimise number of API calls needed~~
 - Backend
     - Stable and ~~sensible API structure~~
-        - Device Registration
+        - ~~Device Registration~~
         - ~~Sensor Data~~
         - ~~Make graph timescales selectable~~
     - Full terraform refactor
