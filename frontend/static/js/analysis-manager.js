@@ -1234,7 +1234,7 @@ const AnalysisManager = {
         // Tab change events
         document.querySelectorAll('.analysis-type-tabs .nav-link').forEach(tab => {
             tab.addEventListener('click', (e) => {
-                const analysisType = e.target.id.replace('-tab', '');
+                const analysisType = e.currentTarget.id.replace('-tab', '');
                 AnalysisState.currentAnalysisType = analysisType;
                 this.updateUI();
             });

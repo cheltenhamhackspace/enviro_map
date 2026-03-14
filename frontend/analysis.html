@@ -6,6 +6,8 @@
     <meta name="description" content="Cheltenham Hackspace Environmental Monitoring - Advanced Data Analysis">
     <title>Data Analysis - Cheltenham Hackspace Environmental Monitoring</title>
     
+    <script>(function(){var mq=window.matchMedia('(prefers-color-scheme: dark)');function apply(e){document.documentElement.setAttribute('data-bs-theme',e.matches?'dark':'light');}apply(mq);mq.addEventListener('change',apply);})();</script>
+
     <!-- Preload critical resources -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css" as="style">
     
@@ -134,12 +136,35 @@
             color: #6c757d;
             margin-top: 0.25rem;
         }
+
+        @media (prefers-color-scheme: dark) {
+            .spinner {
+                border-color: #2a2f3a;
+                border-top-color: #206bc4;
+            }
+            .analysis-controls {
+                background: #2a2f3a;
+                color: #e1e5e9;
+            }
+            .sensor-selector {
+                background: #232830;
+                border-color: rgba(255, 255, 255, 0.15);
+                color: #e1e5e9;
+            }
+            .metric-card {
+                background: #2a2f3a;
+                color: #e1e5e9;
+            }
+            .correlation-high { background-color: rgba(47, 120, 68, 0.35); }
+            .correlation-medium { background-color: rgba(180, 140, 30, 0.35); }
+            .correlation-low { background-color: rgba(160, 50, 50, 0.35); }
+        }
     </style>
     
     <!-- External CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.2/dist/nouislider.min.css" integrity="sha256-nckVXP1jMdH1YpiBrAvGOSgkP6TB2DsXzkkhtSAL4K4=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="./static/css/styles.css">

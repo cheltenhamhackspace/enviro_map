@@ -101,7 +101,7 @@ html {
     border-radius: 8px;
 }
 
-.btn:hover {
+.btn:not(:disabled):hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -353,23 +353,97 @@ html {
     }
 }
 
-/* Dark mode support (for future implementation) */
+/* Dark mode support */
 @media (prefers-color-scheme: dark) {
     :root {
         --bs-body-bg: #1a1d23;
         --bs-body-color: #e1e5e9;
         --bs-card-bg: #232830;
     }
-    
+
     .card {
         background: var(--bs-card-bg);
         border-color: rgba(255, 255, 255, 0.1);
     }
-    
+
+    .card-header {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
     .form-control {
         background: var(--bs-card-bg);
         border-color: rgba(255, 255, 255, 0.15);
         color: var(--bs-body-color);
+    }
+
+    .form-select {
+        background-color: var(--bs-card-bg);
+        border-color: rgba(255, 255, 255, 0.15);
+        color: var(--bs-body-color);
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #1a1d23;
+    }
+
+    .leaflet-container {
+        background: #1a1d23;
+    }
+
+    .spatial-legend {
+        background: rgba(35, 40, 48, 0.95);
+        color: #e1e5e9;
+    }
+
+    #regional-stats .metric-summary {
+        background: #2a2f3a;
+    }
+
+    #regional-stats .metric-value {
+        color: #e1e5e9;
+    }
+
+    .navbar-vertical .card {
+        background: rgba(35, 40, 48, 0.95) !important;
+        color: #e1e5e9 !important;
+    }
+
+    .navbar-vertical .card-title {
+        color: #e1e5e9 !important;
+    }
+
+    .navbar-vertical .card-body {
+        color: #e1e5e9 !important;
+    }
+
+    #sensor-status {
+        color: #e1e5e9 !important;
+    }
+
+    #sensor-status .sensor-status-row {
+        color: #e1e5e9 !important;
+    }
+
+    #sensor-status .sensor-status-row:hover {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: #ffffff !important;
+    }
+
+    #sensor-status .fw-bold {
+        color: #f1f5f9 !important;
+    }
+
+    .correlation-high {
+        background: rgba(47, 120, 68, 0.35);
+    }
+
+    .correlation-medium {
+        background: rgba(180, 140, 30, 0.35);
+    }
+
+    .correlation-low {
+        background: rgba(160, 50, 50, 0.35);
     }
 }
 

@@ -66,7 +66,7 @@ const ChartManager = {
                     format: 'dd MMM yyyy HH:mm:ss'
                 },
                 y: {
-                    formatter: (value) => `${value.toFixed(2)} μg/m³`
+                    formatter: (value) => value != null ? `${value.toFixed(2)} μg/m³` : 'N/A'
                 }
             },
             legend: {

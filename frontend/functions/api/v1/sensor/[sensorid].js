@@ -6,6 +6,7 @@ export async function onRequest(context) {
      */
     async function readRequestBody(request) {
         const contentType = request.headers.get("content-type");
+        if (!contentType) return null;
         if (contentType.includes("application/json")) {
             return JSON.stringify(await request.json());
         } else if (contentType.includes("application/text")) {
@@ -84,6 +85,12 @@ export async function onRequest(context) {
         // (they won't have tokens set in the database yet, or will be legacy sensors)
 
         let reqBody = await readRequestBody(context.request);
+        if (reqBody === null) {
+            return new Response(JSON.stringify({ error: "Missing Content-Type header" }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+        }
         let data = JSON.parse(reqBody);
         console.log(deviceId);
         console.log(data);
@@ -118,6 +125,8 @@ export async function onRequest(context) {
         if (timeTo === null) {
             timeTo = Date.now();
         }
+        timeFrom = parseInt(timeFrom);
+        timeTo = parseInt(timeTo);
         if (timeFrom > timeTo) {
             return new Response("500 - Times in wrong order", { 
                 status: 500,

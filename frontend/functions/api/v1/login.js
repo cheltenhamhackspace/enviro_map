@@ -33,8 +33,17 @@ export async function onRequest(context) {
             console.log('TURNSTILE_KEY not set - skipping verification (development mode)');
         }
 
+        // Look up existing user
+        const user = await context.env.READINGS_TABLE.prepare(
+            "SELECT id FROM users WHERE email = ?"
+        ).bind(email).first();
+
+        if (!user) {
+            return createErrorResponse('No account found for this email. Please register first.', 404);
+        }
+
         // Generate JWT token
-        const jwt = await generateJWT(email, context.env.JWT_PRIVATE_KEY);
+        const jwt = await generateJWT(email, user.id, context.env.JWT_PRIVATE_KEY);
 
         // Send login email
         const emailSent = await sendLoginEmail(email, jwt, context.env.MAILCHANNELS_API_KEY);
@@ -211,14 +220,15 @@ function validateEmail(email) {
 /**
  * Generates JWT token for authentication
  */
-async function generateJWT(email, privateKeyPem) {
+async function generateJWT(email, userId, privateKeyPem) {
     try {
         const alg = 'EdDSA';
         const privateKey = await importPKCS8(privateKeyPem, alg);
 
         const jwt = await new SignJWT({
-            sub: email, // Use email as subject for now
+            sub: userId.toString(),
             email: email,
+            user_id: userId,
             email_verified: false,
             iss: 'map.cheltenham.space',
             aud: 'enviro-dashboard'

@@ -6,6 +6,8 @@
     <meta name="description" content="Login to Cheltenham Hackspace Environmental Monitoring Dashboard">
     <title>Login - Cheltenham Hackspace Environmental Monitoring</title>
     
+    <script>(function(){var mq=window.matchMedia('(prefers-color-scheme: dark)');function apply(e){document.documentElement.setAttribute('data-bs-theme',e.matches?'dark':'light');}apply(mq);mq.addEventListener('change',apply);})();</script>
+
     <!-- Preload critical resources -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css" as="style">
     
@@ -94,13 +96,29 @@
             .login-page {
                 padding: 1rem;
             }
-            
+
             .back-link {
                 position: relative;
                 top: 0;
                 left: 0;
                 margin-bottom: 2rem;
                 color: #206bc4;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .login-card {
+                background: rgba(35, 40, 48, 0.97);
+                border-color: rgba(255, 255, 255, 0.1);
+                color: #e1e5e9;
+            }
+            .login-card .text-muted {
+                color: #9ca3af !important;
+            }
+            .alert-info {
+                background: rgba(32, 107, 196, 0.25);
+                border-color: rgba(32, 107, 196, 0.5);
+                color: #93c5fd;
             }
         }
     </style>
@@ -241,10 +259,44 @@
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
+            const originalHTML = submitBtn.innerHTML;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+
+            let existingAlert = document.getElementById('form-alert');
+            if (existingAlert) existingAlert.remove();
+
+            try {
+                const response = await fetch('/api/v1/login', {
+                    method: 'POST',
+                    body: new FormData(this)
+                });
+                if (response.ok && response.headers.get('content-type')?.includes('text/html')) {
+                    document.open();
+                    document.write(await response.text());
+                    document.close();
+                } else {
+                    const data = await response.json();
+                    const alert = document.createElement('div');
+                    alert.id = 'form-alert';
+                    alert.className = 'alert alert-danger mt-3';
+                    alert.textContent = data.message || 'An error occurred. Please try again.';
+                    this.appendChild(alert);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHTML;
+                }
+            } catch (err) {
+                const alert = document.createElement('div');
+                alert.id = 'form-alert';
+                alert.className = 'alert alert-danger mt-3';
+                alert.textContent = 'Network error. Please try again.';
+                this.appendChild(alert);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHTML;
+            }
         });
     </script>
 </body>

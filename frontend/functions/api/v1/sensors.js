@@ -6,7 +6,7 @@ export async function onRequest(context) {
     try {
         // Query all sensors from the database
         const allSensors = await context.env.READINGS_TABLE.prepare(
-            "SELECT name, device_id, lat, long FROM sensors"
+            "SELECT name, device_id, lat, long FROM sensors WHERE private = 0 AND active = 1"
         ).all();
 
         // Return the sensor data as JSON

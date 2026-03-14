@@ -13,7 +13,16 @@ export async function onRequest(context) {
         const timeFrom = parseInt(url.searchParams.get('from')) || (Date.now() - 7 * 24 * 60 * 60 * 1000);
         const timeTo = parseInt(url.searchParams.get('to')) || Date.now();
         const aggregation = url.searchParams.get('aggregation') || 'hourly';
-        const metrics = url.searchParams.get('metrics')?.split(',') || ['pm2_5', 'temperature', 'relative_humidity'];
+        const VALID_METRICS = new Set(['pm1', 'pm2_5', 'pm4', 'pm10', 'voc', 'nox', 'temperature', 'humidity']);
+        const rawMetrics = url.searchParams.get('metrics')?.split(',') || ['pm2_5', 'temperature', 'relative_humidity'];
+        const metrics = rawMetrics.filter(m => VALID_METRICS.has(m));
+
+        if (metrics.length === 0) {
+            return new Response(JSON.stringify({ error: 'No valid metrics specified' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+        }
 
         if (sensorIds.length === 0) {
             return new Response(JSON.stringify({

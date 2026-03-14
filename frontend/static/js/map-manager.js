@@ -109,7 +109,7 @@ const MapManager = {
         const bounds = AppState.map.getBounds();
         let visibleCount = 0;
         let activeCount = 0;
-        
+
         Object.values(AppState.sensors).forEach(sensor => {
             if (bounds.contains([sensor.lat, sensor.long])) {
                 visibleCount++;
@@ -119,5 +119,33 @@ const MapManager = {
 
         // Update sidebar status if needed
         // This could be expanded to show more detailed statistics
+    },
+
+    toggleHeatmap: () => {
+        if (AppState.heatmapLayer) {
+            if (AppState.map.hasLayer(AppState.heatmapLayer)) {
+                AppState.map.removeLayer(AppState.heatmapLayer);
+            } else {
+                AppState.heatmapLayer.addTo(AppState.map);
+            }
+            return;
+        }
+
+        // Build heatmap points from current sensor data
+        const points = [];
+        Object.values(AppState.sensors).forEach(sensor => {
+            if (sensor.lat && sensor.long && sensor.isActive) {
+                const latestData = AppState.cache.latestData.get(`latest_${sensor.device_id}`);
+                const intensity = (latestData && Number.isFinite(latestData.pm2_5))
+                    ? latestData.pm2_5
+                    : 0;
+                points.push([sensor.lat, sensor.long, intensity]);
+            }
+        });
+
+        AppState.heatmapLayer = L.heatLayer(points, { radius: 35, blur: 20, maxZoom: 17 });
+        AppState.heatmapLayer.addTo(AppState.map);
     }
 };
+
+window.toggleHeatmap = MapManager.toggleHeatmap;

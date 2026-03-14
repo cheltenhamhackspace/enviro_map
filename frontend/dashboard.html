@@ -6,6 +6,8 @@
     <meta name="description" content="Manage your environmental sensors">
     <title>My Dashboard - Cheltenham Hackspace Environmental Monitoring</title>
 
+    <script>(function(){var mq=window.matchMedia('(prefers-color-scheme: dark)');function apply(e){document.documentElement.setAttribute('data-bs-theme',e.matches?'dark':'light');}apply(mq);mq.addEventListener('change',apply);})();</script>
+
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css" as="style">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
     <link rel="stylesheet" href="./static/css/styles.css">
@@ -41,6 +43,19 @@
             margin-bottom: 1rem;
             border: 1px solid #e9ecef;
         }
+
+        @media (prefers-color-scheme: dark) {
+            .sensor-card {
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+            .token-display {
+                background: #2a2f3a;
+                color: #e1e5e9;
+            }
+            #locationMap {
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+        }
     </style>
 </head>
 <body>
@@ -50,8 +65,15 @@
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <h1 class="navbar-brand">
-                    <span>🌍 Environmental Dashboard</span>
+                <h1 class="navbar-brand navbar-brand-autodark">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9,22 9,12 15,12 15,22"></polyline>
+                    </svg>
+                    <span class="d-none d-lg-inline">
+                        Cheltenham Hackspace<br>
+                        <small class="text-muted">Environmental Monitor</small>
+                    </span>
                 </h1>
                 <div class="navbar-nav flex-row order-md-last">
                     <div class="nav-item dropdown">
