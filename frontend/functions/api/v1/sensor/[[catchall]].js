@@ -2,10 +2,13 @@ export async function onRequest(context) {
 
     if (context.params.catchall.length === 2 && context.params.catchall[1] === "latest") {
         try {
+            // ORDER BY + LIMIT 1 is a guaranteed single seek on the
+            // (device_id, event_time) index; MAX() with bare columns can fall back
+            // to scanning the device's whole history
             const latestReading = await context.env.READINGS_TABLE.prepare(
-                "SELECT pm1, pm2_5, pm4, pm10, temperature, relative_humidity, nox, voc, MAX(event_time) AS time FROM sensor_readings WHERE device_id = ?"
+                "SELECT pm1, pm2_5, pm4, pm10, temperature, relative_humidity, nox, voc, event_time AS time FROM sensor_readings WHERE device_id = ? ORDER BY event_time DESC LIMIT 1"
             ).bind(context.params.catchall[0]).all();
-            console.log(latestReading);
+            console.log(JSON.stringify({ endpoint: 'sensor_latest', device_id: context.params.catchall[0], rows_read: latestReading.meta?.rows_read }));
 
             if (latestReading.results.length == 1 && latestReading.results[0]["time"] !== null) {
                 // Calculate cache duration based on data age
@@ -90,12 +93,17 @@ export async function onRequest(context) {
                 const csvContent = csvRows.join('\n');
                 const filename = `sensor_${context.params.catchall[0]}_${new Date(parseInt(timeFrom)).toISOString().split('T')[0]}_to_${new Date(parseInt(timeTo)).toISOString().split('T')[0]}.csv`;
 
+                // Cache by data age like the other endpoints: a range ending "now"
+                // must not be served stale for an hour
+                const dataAge = Date.now() - parseInt(timeTo);
+                const downloadCacheMaxAge = dataAge > 3600000 ? 3600 : 300;
+
                 return new Response(csvContent, {
                     headers: {
                         'Content-Type': 'text/csv',
                         'Content-Disposition': `attachment; filename="${filename}"`,
                         'Access-Control-Allow-Origin': '*',
-                        'Cache-Control': 'public, max-age=3600' // Cache downloads for 1 hour
+                        'Cache-Control': `public, max-age=${downloadCacheMaxAge}`
                     }
                 });
             } else {

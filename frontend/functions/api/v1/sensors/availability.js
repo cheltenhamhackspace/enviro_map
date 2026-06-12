@@ -48,18 +48,28 @@ export async function onRequest(context) {
             });
         }
 
-        // Optimized query to get only sensor IDs that have data in the time range
-        // This uses DISTINCT to minimize rows read and leverages the event_time index
+        // One index probe per known sensor instead of scanning every reading in the
+        // range: the correlated EXISTS stops at the first matching row via the
+        // (device_id, event_time) index, so rows read is ~2 per sensor regardless of
+        // how wide the time range is. Restricted to the public sensor list so private
+        // device activity is not disclosed.
         const availabilityQuery = context.env.READINGS_TABLE.prepare(`
-            SELECT DISTINCT device_id 
-            FROM sensor_readings 
-            WHERE event_time >= ? AND event_time <= ?
+            SELECT s.device_id
+            FROM sensors s
+            WHERE s.private = 0 AND s.active = 1
+              AND EXISTS (
+                SELECT 1 FROM sensor_readings r
+                WHERE r.device_id = s.device_id
+                  AND r.event_time >= ?1 AND r.event_time <= ?2
+              )
         `);
-        
+
         const result = await availabilityQuery.bind(fromTime, toTime).all();
-        
+
         // Extract just the device IDs from the results
         const availableSensors = result.results.map(row => row.device_id);
+
+        console.log(JSON.stringify({ endpoint: 'sensors_availability', rows_read: result.meta?.rows_read }));
         
         // Calculate cache duration based on data age
         const dataAge = Date.now() - toTime;

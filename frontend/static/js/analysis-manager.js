@@ -260,25 +260,19 @@ const AnalysisManager = {
         return Array.from(checkboxes).map(cb => cb.value);
     },
 
-    // Get time range for API calls
+    // Get time range for API calls, rounded to 15-minute boundaries so request
+    // URLs repeat and the responses can be served from HTTP cache
     getTimeRange() {
+        let from, to;
         if (AnalysisState.customTimeRange.from && AnalysisState.customTimeRange.to) {
-            return {
-                from: AnalysisState.customTimeRange.from,
-                to: AnalysisState.customTimeRange.to
-            };
-        } else if (AnalysisState.timeRange) {
-            return {
-                from: Date.now() - AnalysisState.timeRange,
-                to: Date.now()
-            };
+            from = AnalysisState.customTimeRange.from;
+            to = AnalysisState.customTimeRange.to;
         } else {
-            // Default to 7 days
-            return {
-                from: Date.now() - 604800000,
-                to: Date.now()
-            };
+            const span = AnalysisState.timeRange || 604800000; // default 7 days
+            to = Date.now();
+            from = to - span;
         }
+        return Utils.roundTimeRange(from, to, 900000);
     },
 
     // Run analysis based on current settings

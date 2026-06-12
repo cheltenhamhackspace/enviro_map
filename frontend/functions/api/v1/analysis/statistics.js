@@ -74,54 +74,48 @@ export async function onRequest(context) {
 
         let totalRowsRead = statsResult.meta?.rows_read || 0;
 
-        // Calculate percentiles and standard deviation (requires a separate query for efficiency)
+        // Percentiles and standard deviation need raw values. One un-ordered fetch
+        // per sensor covering all requested metrics at once (instead of one ordered
+        // scan per sensor per metric): rows read drops by the metric count, and the
+        // sort happens here rather than in SQLite. Column names are whitelisted via
+        // VALID_METRICS above.
         const percentileResults = {};
+        const columnList = [...new Set(metrics.map(m => m === 'humidity' ? 'relative_humidity' : m))].join(', ');
         for (const sensorId of sensorIds) {
+            const rawData = await context.env.READINGS_TABLE.prepare(`
+                SELECT ${columnList}
+                FROM sensor_readings
+                WHERE device_id = ?
+                    AND event_time >= ?
+                    AND event_time <= ?
+            `).bind(sensorId, timeFrom, timeTo).all();
+
+            totalRowsRead += rawData.meta?.rows_read || 0;
+
+            if (!rawData.success || rawData.results.length === 0) continue;
+
             for (const metric of metrics) {
                 const column = metric === 'humidity' ? 'relative_humidity' : metric;
-                
-                // Get ordered values for percentile calculation
-                const percentileQuery = `
-                    SELECT ${column} as value
-                    FROM sensor_readings 
-                    WHERE device_id = ? 
-                        AND event_time >= ? 
-                        AND event_time <= ?
-                        AND ${column} IS NOT NULL
-                    ORDER BY ${column}
-                `;
+                const values = rawData.results
+                    .map(r => r[column])
+                    .filter(v => v !== null && v !== undefined)
+                    .sort((a, b) => a - b);
+                const n = values.length;
+                if (n === 0) continue;
 
-                const percentileData = await context.env.READINGS_TABLE.prepare(percentileQuery)
-                    .bind(sensorId, timeFrom, timeTo)
-                    .all();
+                const mean = values.reduce((sum, val) => sum + val, 0) / n;
+                const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n;
 
-                totalRowsRead += percentileData.meta?.rows_read || 0;
-
-                if (percentileData.success && percentileData.results.length > 0) {
-                    const values = percentileData.results.map(r => r.value);
-                    const n = values.length;
-                    
-                    // Calculate percentiles
-                    const p25Index = Math.floor(n * 0.25);
-                    const p50Index = Math.floor(n * 0.5);
-                    const p75Index = Math.floor(n * 0.75);
-                    
-                    // Calculate standard deviation
-                    const mean = values.reduce((sum, val) => sum + val, 0) / n;
-                    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n;
-                    const stdDev = Math.sqrt(variance);
-
-                    if (!percentileResults[sensorId]) {
-                        percentileResults[sensorId] = {};
-                    }
-                    
-                    percentileResults[sensorId][metric] = {
-                        p25: values[p25Index],
-                        median: values[p50Index],
-                        p75: values[p75Index],
-                        stdDev: stdDev
-                    };
+                if (!percentileResults[sensorId]) {
+                    percentileResults[sensorId] = {};
                 }
+
+                percentileResults[sensorId][metric] = {
+                    p25: values[Math.floor(n * 0.25)],
+                    median: values[Math.floor(n * 0.5)],
+                    p75: values[Math.floor(n * 0.75)],
+                    stdDev: Math.sqrt(variance)
+                };
             }
         }
 

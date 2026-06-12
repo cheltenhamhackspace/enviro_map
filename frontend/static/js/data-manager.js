@@ -140,7 +140,8 @@ const DataManager = {
         }
 
         try {
-            const response = await fetch(`${API_BASE}/sensor/${AppState.deviceId}?from=${Date.now() - AppState.timespan}`);
+            const range = Utils.roundTimeRange(Date.now() - AppState.timespan, Date.now());
+            const response = await fetch(`${API_BASE}/sensor/${AppState.deviceId}?from=${range.from}&to=${range.to}`);
             
             if (response.status === 404) {
                 ChartManager.clearCharts();

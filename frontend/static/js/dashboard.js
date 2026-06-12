@@ -49,14 +49,10 @@ async function loadSensors() {
     const sensorsGrid = document.getElementById('sensorsGrid');
 
     try {
-        // Add cache-busting parameter to ensure fresh data
-        const cacheBuster = `?_t=${Date.now()}`;
-        const response = await fetch(`${API_BASE}/sensors/my-sensors${cacheBuster}`, {
+        // cache: 'no-store' bypasses the browser cache; no URL cache-buster needed
+        const response = await fetch(`${API_BASE}/sensors/my-sensors`, {
             headers: {
-                'Authorization': `Bearer ${sessionToken}`,
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache'
+                'Authorization': `Bearer ${sessionToken}`
             },
             cache: 'no-store'
         });

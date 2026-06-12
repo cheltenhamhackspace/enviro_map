@@ -78,7 +78,8 @@ function downloadData() {
         return;
     }
 
-    const url = `${API_BASE}/sensor/${AppState.deviceId}/download?from=${Date.now() - AppState.timespan}`;
+    const range = Utils.roundTimeRange(Date.now() - AppState.timespan, Date.now());
+    const url = `${API_BASE}/sensor/${AppState.deviceId}/download?from=${range.from}&to=${range.to}`;
     const link = document.createElement('a');
     link.href = url;
     link.download = `sensor_${AppState.deviceId}_data.csv`;

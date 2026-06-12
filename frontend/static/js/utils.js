@@ -15,6 +15,14 @@ const Utils = {
             .replace(/'/g, '&#39;');
     },
 
+    // Round a time range to bucket boundaries (default 5 min) so request URLs
+    // repeat between polls and HTTP caching (browser + edge) can engage.
+    // Raw Date.now() in a query string makes every URL unique and defeats caching.
+    roundTimeRange: (fromMs, toMs, bucketMs = 300000) => ({
+        from: Math.floor(fromMs / bucketMs) * bucketMs,
+        to: Math.ceil(toMs / bucketMs) * bucketMs
+    }),
+
     formatValue: (value, unit = '') => {
         if (!Number.isFinite(value)) return 'N/A';
         return `${value.toFixed(2)} ${unit}`.trim();
