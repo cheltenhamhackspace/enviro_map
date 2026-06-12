@@ -210,6 +210,9 @@ export async function onRequest(context) {
         const dataAge = Date.now() - timeTo;
         const cacheMaxAge = dataAge > 3600000 ? 1800 : 300;
 
+        const totalRowsRead = (comparisonResult.meta?.rows_read || 0) + (sensorNamesResult.meta?.rows_read || 0);
+        console.log(JSON.stringify({ endpoint: 'analysis_compare', sensors: sensorIds.length, metrics: metrics.length, rows_read: totalRowsRead }));
+
         return new Response(JSON.stringify({
             timeRange: { from: timeFrom, to: timeTo },
             aggregation: aggregation,
@@ -224,7 +227,8 @@ export async function onRequest(context) {
             meta: {
                 totalSensors: sensorIds.length,
                 totalDataPoints: sortedTimePoints.length,
-                queryTime: Date.now()
+                queryTime: Date.now(),
+                rowsRead: totalRowsRead
             }
         }), {
             headers: {

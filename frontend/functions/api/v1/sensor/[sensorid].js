@@ -95,7 +95,8 @@ export async function onRequest(context) {
         console.log(deviceId);
         console.log(data);
 
-        if (data.pm1) {
+        // Presence check, not truthiness: pm1 of 0 (clean air) is valid data
+        if (data.pm1 !== undefined) {
             standardiseReadingData(data);
             console.log(data);
             const { success } = await context.env.READINGS_TABLE.prepare(`
@@ -127,9 +128,9 @@ export async function onRequest(context) {
         }
         timeFrom = parseInt(timeFrom);
         timeTo = parseInt(timeTo);
-        if (timeFrom > timeTo) {
-            return new Response("500 - Times in wrong order", { 
-                status: 500,
+        if (isNaN(timeFrom) || isNaN(timeTo) || timeFrom > timeTo) {
+            return new Response(JSON.stringify({ error: "Invalid time range: from must be a timestamp <= to" }), {
+                status: 400,
                 headers: {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
@@ -141,7 +142,7 @@ export async function onRequest(context) {
                 const dbQueryAllData = context.env.READINGS_TABLE.prepare('SELECT event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox FROM sensor_readings WHERE device_id = ?1 AND event_time >= ?2 AND event_time <= ?3 ORDER BY event_time ASC');
                 const allData = await dbQueryAllData.bind(context.params.sensorid, timeFrom, timeTo).all();
 
-                console.log(allData.meta);
+                console.log(JSON.stringify({ endpoint: 'sensor_readings_get', device_id: context.params.sensorid, rows_read: allData.meta?.rows_read }));
                 if (allData.results.length > 0) {
                     // Calculate cache duration based on data age
                     const dataAge = Date.now() - Math.max(...allData.results.map(r => r.event_time));

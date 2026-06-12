@@ -16,14 +16,13 @@ CREATE TABLE IF NOT EXISTS sensor_readings (
   uptime integer,
   version text
 );
+### Indexes in production (verified against sqlite_master, 2026-06-13)
 CREATE INDEX idx_sensor_readings_device_id_event_time ON sensor_readings(device_id, event_time);
-
-### Possible alternative indexes, NOT IN USE
 CREATE INDEX idx_sensor_readings_event_time_device_id ON sensor_readings(event_time, device_id);
-CREATE INDEX IF NOT EXISTS idx_sensor_readings_event_time_device_id ON sensor_readings(event_time, device_id);
-CREATE INDEX IF NOT EXISTS idx_sensors_lat_long ON sensors(lat, long);
-CREATE INDEX idx_sensor_readings_event_time ON sensor_readings(event_time);
-CREATE INDEX idx_sensor_readings_device_id ON sensor_readings(device_id);
+
+Note: the (event_time, device_id) index exists to serve the availability range scan.
+Once that query is rewritten to per-sensor probes (rework plan WP2), it becomes
+unused and can be dropped to save one index-row write per reading.
 
 ## Users
 CREATE TABLE IF NOT EXISTS users (
@@ -53,6 +52,10 @@ CREATE TABLE IF NOT EXISTS sensors (
 CREATE INDEX idx_sensors_device_id ON sensors(device_id);
 CREATE INDEX idx_sensors_token ON sensors(token);
 CREATE INDEX idx_sensors_user_id ON sensors(user_id);
+
+Note: idx_sensors_device_id and idx_sensors_token duplicate the auto-indexes that the
+UNIQUE constraints already create (sqlite_autoindex_sensors_1/2), and idx_users_email
+duplicates sqlite_autoindex_users_1. Harmless on tables this small; safe to drop.
 
 ## Get total number of sensors
 SELECT COUNT(device_id) AS sensors FROM sensors WHERE active = 1 AND private = 0

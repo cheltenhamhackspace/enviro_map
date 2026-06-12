@@ -72,6 +72,8 @@ export async function onRequest(context) {
             throw new Error('Database query failed');
         }
 
+        let totalRowsRead = statsResult.meta?.rows_read || 0;
+
         // Calculate percentiles and standard deviation (requires a separate query for efficiency)
         const percentileResults = {};
         for (const sensorId of sensorIds) {
@@ -92,6 +94,8 @@ export async function onRequest(context) {
                 const percentileData = await context.env.READINGS_TABLE.prepare(percentileQuery)
                     .bind(sensorId, timeFrom, timeTo)
                     .all();
+
+                totalRowsRead += percentileData.meta?.rows_read || 0;
 
                 if (percentileData.success && percentileData.results.length > 0) {
                     const values = percentileData.results.map(r => r.value);
@@ -150,6 +154,8 @@ export async function onRequest(context) {
         const dataAge = Date.now() - timeTo;
         const cacheMaxAge = dataAge > 3600000 ? 1800 : 300; // 30 min for old data, 5 min for recent
 
+        console.log(JSON.stringify({ endpoint: 'analysis_statistics', sensors: sensorIds.length, metrics: metrics.length, rows_read: totalRowsRead }));
+
         return new Response(JSON.stringify({
             timeRange: { from: timeFrom, to: timeTo },
             aggregation: aggregation,
@@ -157,7 +163,8 @@ export async function onRequest(context) {
             results: combinedResults,
             meta: {
                 totalSensors: sensorIds.length,
-                queryTime: Date.now()
+                queryTime: Date.now(),
+                rowsRead: totalRowsRead
             }
         }), {
             headers: {

@@ -339,6 +339,9 @@ export async function onRequest(context) {
         const dataAge = Date.now() - timeTo;
         const cacheMaxAge = dataAge > 3600000 ? 1800 : 300;
 
+        const totalRowsRead = (sensorResult.meta?.rows_read || 0) + (readingsResult.meta?.rows_read || 0);
+        console.log(JSON.stringify({ endpoint: 'analysis_spatial', sensors: sensorIds.length, metrics: metrics.length, rows_read: totalRowsRead }));
+
         return new Response(JSON.stringify({
             timeRange: { from: timeFrom, to: timeTo },
             metrics: metrics,
@@ -351,7 +354,8 @@ export async function onRequest(context) {
             meta: {
                 totalSensors: validSensors.length,
                 gridSize: gridSize,
-                queryTime: Date.now()
+                queryTime: Date.now(),
+                rowsRead: totalRowsRead
             }
         }), {
             headers: {

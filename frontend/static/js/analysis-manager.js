@@ -163,7 +163,7 @@ const AnalysisManager = {
                            ${!isAvailable ? 'disabled' : ''}
                            onchange="AnalysisManager.toggleSensor('${sensor.device_id}')">
                     <label class="form-check-label d-flex justify-content-between align-items-center" for="sensor-${sensor.device_id}">
-                        <span>${sensor.name || sensor.device_id}</span>
+                        <span>${Utils.escapeHtml(sensor.name) || sensor.device_id}</span>
                         ${!isAvailable ? 
                             '<small class="text-muted ms-2"><i class="fas fa-ban"></i> No data</small>' : 
                             '<small class="text-success ms-2"><i class="fas fa-check"></i></small>'
@@ -555,7 +555,7 @@ const AnalysisManager = {
 
                 if (seriesData.length > 0) {
                     series.push({
-                        name: `${sensor.name || sensor.id} - ${this.getMetricLabel(metric)}`,
+                        name: `${Utils.escapeHtml(sensor.name) || sensor.id} - ${this.getMetricLabel(metric)}`,
                         data: seriesData
                     });
                 }
@@ -736,7 +736,7 @@ const AnalysisManager = {
 
         // Process seasonal patterns from each sensor and metric
         Object.keys(data.analysis).forEach(sensorId => {
-            const sensorName = data.sensors.find(s => s.id === sensorId)?.name || sensorId;
+            const sensorName = Utils.escapeHtml(data.sensors.find(s => s.id === sensorId)?.name) || sensorId;
             
             data.metrics.forEach(metric => {
                 const sensorData = data.analysis[sensorId][metric];
@@ -1067,7 +1067,7 @@ const AnalysisManager = {
                 // Enhanced popup with better formatting
                 const popupContent = `
                     <div class="sensor-popup">
-                        <h6 class="mb-2">${sensor.name || sensor.device_id}</h6>
+                        <h6 class="mb-2">${Utils.escapeHtml(sensor.name) || sensor.device_id}</h6>
                         <div class="row g-2">
                             <div class="col-6">
                                 <small class="text-muted">PM2.5</small><br>

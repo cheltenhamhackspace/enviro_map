@@ -3,6 +3,18 @@
  */
 
 const Utils = {
+    // Escape user-supplied text before interpolating into HTML strings.
+    // Sensor names are user input — every innerHTML sink must go through this.
+    escapeHtml: (text) => {
+        if (text === null || text === undefined) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
     formatValue: (value, unit = '') => {
         if (!Number.isFinite(value)) return 'N/A';
         return `${value.toFixed(2)} ${unit}`.trim();
@@ -41,14 +53,16 @@ const Utils = {
     },
 
     showNotification: (message, type = 'info') => {
-        // Simple notification system
+        // Simple notification system; message is inserted as text, never HTML
         const notification = document.createElement('div');
         notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
         notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        notification.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+        notification.appendChild(document.createTextNode(message));
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'btn-close';
+        closeBtn.setAttribute('data-bs-dismiss', 'alert');
+        notification.appendChild(closeBtn);
         document.body.appendChild(notification);
         
         setTimeout(() => {

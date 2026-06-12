@@ -22,14 +22,14 @@ const MapManager = {
             return `
                 <div class="sensor-popup">
                     <div class="status-banner uninitialised">Uninitialised Sensor</div>
-                    <strong>${sensor.name || 'Unknown'}</strong>
+                    <strong>${Utils.escapeHtml(sensor.name) || 'Unknown'}</strong>
                     <p class="mb-0 mt-2 text-muted">No data available for this sensor. It may be new to the system and hasn't sent any data yet.</p>
                 </div>
             `;
         }
 
         const dataRows = [
-            ['Name', sensor.name || 'Unknown'],
+            ['Name', Utils.escapeHtml(sensor.name) || 'Unknown'],
             ['Temperature', Utils.formatValue(data.temperature, '°C')],
             ['Relative Humidity', Utils.formatValue(data.relative_humidity, '%')],
             ['PM 1.0', Utils.formatValue(data.pm1, 'μg/m³')],
