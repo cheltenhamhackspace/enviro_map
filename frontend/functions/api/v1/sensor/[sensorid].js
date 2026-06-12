@@ -99,9 +99,34 @@ export async function onRequest(context) {
         if (data.pm1 !== undefined) {
             standardiseReadingData(data);
             console.log(data);
+            const eventTime = Date.now();
             const { success } = await context.env.READINGS_TABLE.prepare(`
                 insert into sensor_readings ( device_id, event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox, uptime, version) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).bind(deviceId, Date.now(), data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox, data.uptime, data.version).run()
+            `).bind(deviceId, eventTime, data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox, data.uptime, data.version).run()
+
+            // Maintain the sensor_latest read model. Must never fail the sensor's
+            // request: the raw insert above already succeeded, and a missed update
+            // self-heals on the device's next reading (<= 5 min later).
+            try {
+                await context.env.READINGS_TABLE.prepare(`
+                    INSERT INTO sensor_latest (device_id, event_time, relative_humidity, temperature, pm1, pm2_5, pm4, pm10, voc, nox)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(device_id) DO UPDATE SET
+                        event_time = excluded.event_time,
+                        relative_humidity = excluded.relative_humidity,
+                        temperature = excluded.temperature,
+                        pm1 = excluded.pm1,
+                        pm2_5 = excluded.pm2_5,
+                        pm4 = excluded.pm4,
+                        pm10 = excluded.pm10,
+                        voc = excluded.voc,
+                        nox = excluded.nox
+                    WHERE excluded.event_time >= sensor_latest.event_time
+                `).bind(deviceId, eventTime, data.relative_humidity, data.temperature, data.pm1, data.pm2_5, data.pm4, data.pm10, data.voc, data.nox).run();
+            } catch (latestError) {
+                console.error('sensor_latest upsert failed (non-fatal):', latestError);
+            }
+
             return new Response("201 - Indexed", { status: 201 });
         }
 

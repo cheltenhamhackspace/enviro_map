@@ -41,73 +41,34 @@ const DataManager = {
                 return;
             }
 
-            const response = await fetch(`${API_BASE}/sensors`);
+            // One request returns every public sensor together with its latest
+            // reading (replaces the old per-sensor /latest fan-out)
+            const response = await fetch(`${API_BASE}/sensors/latest`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
+
             const sensors = await response.json();
+
+            // Remove markers from any previous load before re-adding
+            Object.values(AppState.sensors || {}).forEach(sensor => {
+                if (sensor.marker) AppState.map.removeLayer(sensor.marker);
+            });
+
             AppState.sensors = sensors;
             AppState.cache.sensors = sensors;
             AppState.cache.lastFetch.set('sensors', Date.now());
-            
-            await DataManager.loadSensorMarkersOptimized(sensors);
+
+            sensors.forEach(sensor => {
+                // time is null when the device has never posted a reading
+                const isUninitialised = sensor.time === null || sensor.time === undefined;
+                const isInactive = !isUninitialised && (Date.now() - sensor.time) > 2 * 3600 * 1000;
+                MapManager.createSensorMarker(sensor, sensor, isInactive, isUninitialised);
+            });
+
             DataManager.updateSensorStatus(sensors);
-            
+
         } catch (error) {
             console.error('Error loading sensors:', error);
             Utils.showNotification('Failed to load sensor data', 'danger');
-        }
-    },
-
-    // Optimized version that batches requests and uses caching
-    async loadSensorMarkersOptimized(sensors) {
-        const sensorArray = Object.values(sensors);
-        const batchSize = 5; // Process 5 sensors at a time to avoid overwhelming the API
-        
-        for (let i = 0; i < sensorArray.length; i += batchSize) {
-            const batch = sensorArray.slice(i, i + batchSize);
-            
-            // Process batch in parallel
-            await Promise.all(batch.map(async (sensor) => {
-                let latestData = {};
-                let isUninitialised = false;
-                let isInactive = false;
-
-                try {
-                    // Check cache first
-                    const cacheKey = `latest_${sensor.device_id}`;
-                    if (DataManager.isCacheValid(cacheKey, 'latest')) {
-                        latestData = DataManager.getCacheData(cacheKey, 'latest');
-                    } else {
-                        const response = await fetch(`${API_BASE}/sensor/${sensor.device_id}/latest`);
-                        if (response.ok) {
-                            latestData = await response.json();
-                            DataManager.setCacheData(cacheKey, latestData, 'latest');
-                        } else if (response.status === 404) {
-                            isUninitialised = true;
-                            DataManager.setCacheData(cacheKey, {}, 'latest');
-                        } else {
-                            console.warn(`Error fetching data for sensor ${sensor.device_id}`);
-                        }
-                    }
-                    
-                    // Check if sensor is inactive (no data in last 2 hours)
-                    if (latestData.time) {
-                        const now = Date.now();
-                        const dataTime = new Date(latestData.time).getTime();
-                        isInactive = (now - dataTime) > 2 * 3600 * 1000;
-                    }
-                    
-                } catch (error) {
-                    console.error(`Error fetching data for sensor ${sensor.device_id}:`, error);
-                }
-
-                MapManager.createSensorMarker(sensor, latestData, isInactive, isUninitialised);
-            }));
-            
-            // Small delay between batches to be nice to the API
-            if (i + batchSize < sensorArray.length) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
         }
     },
 

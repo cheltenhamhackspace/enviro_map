@@ -131,14 +131,12 @@ const MapManager = {
             return;
         }
 
-        // Build heatmap points from current sensor data
+        // Build heatmap points from current sensor data (latest values are
+        // carried on the sensor objects from /sensors/latest)
         const points = [];
         Object.values(AppState.sensors).forEach(sensor => {
             if (sensor.lat && sensor.long && sensor.isActive) {
-                const latestData = AppState.cache.latestData.get(`latest_${sensor.device_id}`);
-                const intensity = (latestData && Number.isFinite(latestData.pm2_5))
-                    ? latestData.pm2_5
-                    : 0;
+                const intensity = Number.isFinite(sensor.pm2_5) ? sensor.pm2_5 : 0;
                 points.push([sensor.lat, sensor.long, intensity]);
             }
         });
