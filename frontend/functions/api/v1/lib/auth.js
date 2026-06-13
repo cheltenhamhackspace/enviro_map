@@ -118,17 +118,3 @@ export async function sha256Hex(text) {
     const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
     return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
 }
-
-/**
- * Standard JSON error response (shape matches the existing handlers;
- * unified envelope comes with the WP6 middleware).
- */
-export function jsonError(message, status = 400) {
-    return new Response(JSON.stringify({ error: true, message: message }), {
-        status: status,
-        headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-        }
-    });
-}

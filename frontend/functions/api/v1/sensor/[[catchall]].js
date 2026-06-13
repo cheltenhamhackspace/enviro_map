@@ -1,3 +1,4 @@
+import { apiError } from '../lib/responses.js';
 export async function onRequest(context) {
 
     if (context.params.catchall.length === 2 && context.params.catchall[1] === "latest") {
@@ -27,27 +28,11 @@ export async function onRequest(context) {
                 });
             }
             else {
-                return new Response(JSON.stringify({ error: "No data found" }), { 
-                    status: 404,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*',
-                        'Cache-Control': 'public, max-age=60' // Cache 404s for 1 minute
-                    }
-                });
+                return apiError('not_found', 'No data found', 404, { headers: { 'Cache-Control': 'public, max-age=60' } });
             }
         } catch (error) {
             console.error('Database error:', error);
-            return new Response(JSON.stringify({ 
-                error: "Database error", 
-                message: error.message 
-            }), { 
-                status: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                }
-            });
+            return apiError('internal_error', 'Database error', 500);
         }
     }
     else if (context.params.catchall.length === 2 && context.params.catchall[1] === "download") {
@@ -107,46 +92,15 @@ export async function onRequest(context) {
                     }
                 });
             } else {
-                return new Response(JSON.stringify({ error: "No data found for download" }), { 
-                    status: 404,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    }
-                });
+                return apiError('not_found', 'No data found for download', 404);
             }
         } catch (error) {
             console.error('Database error:', error);
-            return new Response(JSON.stringify({ 
-                error: "Database error", 
-                message: error.message 
-            }), { 
-                status: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                }
-            });
+            return apiError('internal_error', 'Database error', 500);
         }
     }
     else {
-        return new Response(JSON.stringify({ error: "Endpoint not found" }), { 
-            status: 404,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
-        });
+        return apiError('not_found', 'Endpoint not found', 404);
     }
 }
 
-// Handle OPTIONS requests for CORS preflight
-export async function onRequestOptions() {
-    return new Response(null, {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-        }
-    });
-}

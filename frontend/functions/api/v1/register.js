@@ -3,6 +3,7 @@
  * Handles user account creation with Turnstile verification and sends login email
  */
 import { signToken } from './lib/auth.js';
+import { apiError } from './lib/responses.js';
 
 export async function onRequest(context) {
     try {
@@ -14,11 +15,11 @@ export async function onRequest(context) {
 
         // Validate input
         if (!email || !turnstileResponse) {
-            return createErrorResponse('Missing required fields', 400);
+            return apiError('invalid_request', 'Missing required fields', 400, { cors: false });
         }
 
         if (!validateEmail(email)) {
-            return createErrorResponse('Invalid email format', 400);
+            return apiError('invalid_request', 'Invalid email format', 400, { cors: false });
         }
 
         // Verify Turnstile token
@@ -27,7 +28,7 @@ export async function onRequest(context) {
             const verifiedHuman = await verifyTurnstile(turnstileResponse, remoteip, context.env.TURNSTILE_KEY);
 
             if (!verifiedHuman) {
-                return createErrorResponse('Turnstile verification failed', 403);
+                return apiError('turnstile_failed', 'Turnstile verification failed', 403, { cors: false });
             }
         } else {
             console.log('TURNSTILE_KEY not set - skipping verification (development mode)');
@@ -51,7 +52,7 @@ export async function onRequest(context) {
             ).bind(email, Date.now()).run();
 
             if (!createResult.success) {
-                return createErrorResponse('Failed to create user account', 500);
+                return apiError('internal_error', 'Failed to create user account', 500, { cors: false });
             }
 
             // Get the newly created user ID
@@ -76,7 +77,7 @@ export async function onRequest(context) {
         const emailSent = await sendRegistrationEmail(email, jwt, isNewUser, context.env.MAILCHANNELS_API_KEY);
 
         if (!emailSent) {
-            return createErrorResponse('Failed to send verification email', 500);
+            return apiError('email_failed', 'Failed to send verification email', 500, { cors: false });
         }
 
         // Return JSON; the register page renders the success state client-side.
@@ -96,7 +97,7 @@ export async function onRequest(context) {
 
     } catch (error) {
         console.error('Registration error:', error);
-        return createErrorResponse('Internal server error: ' + error.message, 500);
+        return apiError('internal_error', 'Internal server error', 500, { cors: false });
     }
 }
 
@@ -233,31 +234,4 @@ async function sendRegistrationEmail(email, jwt, isNewUser, mailchannelsApiKey) 
     }
 }
 
-/**
- * Creates standardized error response
- */
-function createErrorResponse(message, status = 400) {
-    return new Response(JSON.stringify({
-        error: true,
-        message: message
-    }), {
-        status: status,
-        headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-        }
-    });
-}
 
-/**
- * Handle OPTIONS requests for CORS preflight
- */
-export async function onRequestOptions() {
-    return new Response(null, {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-        }
-    });
-}

@@ -297,28 +297,31 @@ async function deleteSensor() {
 
     const confirmBtn = document.getElementById('confirmDeleteBtn');
     const originalBtnContent = confirmBtn.innerHTML;
+    const purge = document.getElementById('purgeReadingsCheck')?.checked;
 
     // Disable button and show loading
     confirmBtn.disabled = true;
-    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
+    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Removing...';
 
     try {
-        const response = await fetch(`${API_BASE}/sensors/${sensorToDelete}`, {
+        const response = await fetch(`${API_BASE}/sensors/${sensorToDelete}${purge ? '?purge=true' : ''}`, {
             method: 'DELETE'
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.message || 'Failed to delete sensor');
+            throw new Error(data.error?.message || data.message || 'Failed to remove sensor');
         }
 
-        // Close modal
+        // Close modal and reset the purge checkbox for next time
         const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteSensorModal'));
         deleteModal.hide();
+        const purgeCheck = document.getElementById('purgeReadingsCheck');
+        if (purgeCheck) purgeCheck.checked = false;
 
         // Show success message
-        showAlert(`Sensor deleted successfully. ${data.readings_deleted || 0} readings were removed.`, 'success');
+        showAlert(data.message || 'Sensor removed.', 'success');
 
         // Clear the sensors grid and hide it
         const sensorsGrid = document.getElementById('sensorsGrid');

@@ -5,12 +5,10 @@
  * page. Reads ~2 rows per sensor from the sensor_latest read model, which is
  * maintained on ingest.
  */
+import { apiError } from '../lib/responses.js';
 export async function onRequest(context) {
     if (context.request.method !== 'GET') {
-        return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-            status: 405,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
+        return apiError('method_not_allowed', 'Method not allowed', 405);
     }
 
     try {
@@ -40,26 +38,7 @@ export async function onRequest(context) {
     } catch (error) {
         console.error('Error fetching latest sensor readings:', error);
 
-        return new Response(JSON.stringify({
-            error: 'Failed to fetch latest sensor readings',
-            message: error.message
-        }), {
-            status: 500,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
-        });
+        return apiError('internal_error', 'Failed to fetch latest sensor readings', 500);
     }
 }
 
-// Handle OPTIONS requests for CORS preflight
-export async function onRequestOptions() {
-    return new Response(null, {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-        }
-    });
-}

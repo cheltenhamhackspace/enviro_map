@@ -267,20 +267,19 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-danger">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                            <line x1="12" y1="9" x2="12" y2="13"></line>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                        <strong>WARNING:</strong> This action cannot be undone!
-                    </div>
-                    <p>Are you sure you want to delete this sensor?</p>
+                    <p>Are you sure you want to remove this sensor?</p>
                     <div class="mb-3">
                         <strong>Sensor Name:</strong> <span id="deleteSensorName"></span><br>
                         <strong>Device ID:</strong> <code id="deleteSensorId"></code>
                     </div>
-                    <p class="text-danger"><strong>All historical sensor readings will be permanently deleted.</strong></p>
+                    <p>The sensor will be <strong>deactivated</strong>: it disappears from the map
+                       and stops accepting authenticated uploads, but its historical readings are kept.</p>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" id="purgeReadingsCheck">
+                        <label class="form-check-label text-danger" for="purgeReadingsCheck">
+                            <strong>Also permanently delete all historical readings</strong> — this cannot be undone
+                        </label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -289,7 +288,7 @@
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
-                        Delete Sensor & All Data
+                        Remove Sensor
                     </button>
                 </div>
             </div>

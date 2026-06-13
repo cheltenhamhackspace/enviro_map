@@ -1,4 +1,5 @@
 import { sha256Hex } from '../lib/auth.js';
+import { apiError } from '../lib/responses.js';
 
 export async function onRequest(context) {
     /**
@@ -170,13 +171,7 @@ export async function onRequest(context) {
         timeFrom = parseInt(timeFrom);
         timeTo = parseInt(timeTo);
         if (isNaN(timeFrom) || isNaN(timeTo) || timeFrom > timeTo) {
-            return new Response(JSON.stringify({ error: "Invalid time range: from must be a timestamp <= to" }), {
-                status: 400,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                }
-            });
+            return apiError('invalid_range', 'Invalid time range: from must be a timestamp <= to', 400);
         }
         else {
             try {
@@ -201,39 +196,13 @@ export async function onRequest(context) {
                     });
                 }
                 else {
-                    return new Response(JSON.stringify({ error: "No data found" }), { 
-                        status: 404,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Access-Control-Allow-Origin': '*',
-                            'Cache-Control': 'public, max-age=60' // Cache 404s for 1 minute
-                        }
-                    });
+                    return apiError('not_found', 'No data found', 404, { headers: { 'Cache-Control': 'public, max-age=60' } });
                 }
             } catch (error) {
                 console.error('Database error:', error);
-                return new Response(JSON.stringify({ 
-                    error: "Database error", 
-                    message: error.message 
-                }), { 
-                    status: 500,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    }
-                });
+                return apiError('internal_error', 'Database error', 500);
             }
         }
     }
 }
 
-// Handle OPTIONS requests for CORS preflight
-export async function onRequestOptions() {
-    return new Response(null, {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        }
-    });
-}

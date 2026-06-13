@@ -12,7 +12,8 @@
  *      no longer renew themselves), consumes its jti (single use), and sets
  *      the session as an httpOnly cookie.
  */
-import { signToken, verifyToken, sessionCookieHeader, jsonError } from './lib/auth.js';
+import { signToken, verifyToken, sessionCookieHeader } from './lib/auth.js';
+import { apiError } from './lib/responses.js';
 
 const INTERSTITIAL_PAGE = `<!DOCTYPE html>
 <html lang="en">
@@ -133,22 +134,22 @@ export async function onRequestPost(context) {
         try {
             body = await context.request.json();
         } catch {
-            return jsonError('Expected JSON body', 400);
+            return apiError('invalid_request', 'Expected JSON body', 400, { cors: false });
         }
         const jwt = body?.jwt;
         if (!jwt || typeof jwt !== 'string') {
-            return jsonError('Missing authentication token', 400);
+            return apiError('invalid_request', 'Missing authentication token', 400, { cors: false });
         }
 
         // Only purpose=login tokens are accepted here
         const result = await verifyToken(jwt, context.env.JWT_PUBLIC_KEY, 'login');
         if (!result.success) {
-            return jsonError(result.error || 'Invalid or expired token', 401);
+            return apiError('invalid_token', result.error || 'Invalid or expired token', 401, { cors: false });
         }
 
         const { payload } = result;
         if (!payload.jti) {
-            return jsonError('Invalid token (missing jti). Please request a new login email.', 401);
+            return apiError('invalid_token', 'Invalid token (missing jti). Please request a new login email.', 401, { cors: false });
         }
 
         // Single use: consume the jti, reject replays
@@ -157,7 +158,7 @@ export async function onRequestPost(context) {
             'SELECT jti FROM auth_tokens_used WHERE jti = ?'
         ).bind(payload.jti).first();
         if (used) {
-            return jsonError('This sign-in link has already been used. Please request a new login email.', 403);
+            return apiError('token_used', 'This sign-in link has already been used. Please request a new login email.', 403, { cors: false });
         }
         await context.env.READINGS_TABLE.prepare(
             'INSERT INTO auth_tokens_used (jti, expires_at) VALUES (?, ?)'
@@ -202,6 +203,6 @@ export async function onRequestPost(context) {
 
     } catch (error) {
         console.error('JWT verification error:', error);
-        return jsonError('An unexpected error occurred during authentication.', 500);
+        return apiError('internal_error', 'An unexpected error occurred during authentication.', 500, { cors: false });
     }
 }

@@ -3,6 +3,7 @@
  * Returns a list of sensor IDs that have data in the specified time range
  * Optimized for minimal database reads using a single DISTINCT query
  */
+import { apiError } from '../lib/responses.js';
 export async function onRequest(context) {
     try {
         const urlParams = new URL(context.request.url).searchParams;
@@ -23,29 +24,11 @@ export async function onRequest(context) {
         const toTime = parseInt(timeTo);
         
         if (isNaN(fromTime) || isNaN(toTime)) {
-            return new Response(JSON.stringify({
-                error: 'Invalid time parameters',
-                message: 'from and to parameters must be valid timestamps'
-            }), {
-                status: 400,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                }
-            });
+            return apiError('invalid_request', 'from and to parameters must be valid timestamps', 400);
         }
 
         if (fromTime > toTime) {
-            return new Response(JSON.stringify({
-                error: 'Invalid time range',
-                message: 'from time must be before to time'
-            }), {
-                status: 400,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                }
-            });
+            return apiError('invalid_range', 'from time must be before to time', 400);
         }
 
         // One index probe per known sensor instead of scanning every reading in the
@@ -97,26 +80,7 @@ export async function onRequest(context) {
     } catch (error) {
         console.error('Error checking sensor availability:', error);
         
-        return new Response(JSON.stringify({
-            error: 'Failed to check sensor availability',
-            message: error.message
-        }), {
-            status: 500,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
-        });
+        return apiError('internal_error', 'Failed to check sensor availability', 500);
     }
 }
 
-// Handle OPTIONS requests for CORS preflight
-export async function onRequestOptions() {
-    return new Response(null, {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-        }
-    });
-}

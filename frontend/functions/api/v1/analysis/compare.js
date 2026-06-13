@@ -2,6 +2,7 @@
  * Comparative Analysis API Endpoint
  * Provides multi-sensor comparisons and correlations with optimized D1 queries
  */
+import { apiError } from '../lib/responses.js';
 export async function onRequest(context) {
     if (context.request.method !== 'GET') {
         return new Response('Method not allowed', { status: 405 });
@@ -18,22 +19,11 @@ export async function onRequest(context) {
         const aggregation = url.searchParams.get('aggregation') || 'hourly';
 
         if (metrics.length === 0) {
-            return new Response(JSON.stringify({ error: 'No valid metrics specified' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-            });
+            return apiError('invalid_request', 'No valid metrics specified', 400);
         }
 
         if (sensorIds.length < 2) {
-            return new Response(JSON.stringify({
-                error: 'At least 2 sensors required for comparison'
-            }), {
-                status: 400,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                }
-            });
+            return apiError('invalid_request', 'At least 2 sensors required for comparison', 400);
         }
 
         // Build time bucket based on aggregation level
@@ -243,26 +233,7 @@ export async function onRequest(context) {
     } catch (error) {
         console.error('Comparative analysis error:', error);
         
-        return new Response(JSON.stringify({
-            error: 'Failed to generate comparative analysis',
-            message: error.message
-        }), {
-            status: 500,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
-        });
+        return apiError('internal_error', 'Failed to generate comparative analysis', 500);
     }
 }
 
-// Handle OPTIONS requests for CORS preflight
-export async function onRequestOptions() {
-    return new Response(null, {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-        }
-    });
-}
