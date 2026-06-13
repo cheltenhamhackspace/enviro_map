@@ -1,9 +1,25 @@
 /**
- * Dashboard JavaScript
- * Manages user's sensor registration and viewing
+ * Account dashboard page entry point
+ * Manages the user's sensor registration and viewing
  */
+import '@tabler/core/dist/css/tabler.min.css';
+import * as bootstrap from '@tabler/core/dist/js/tabler.min.js';
+import L from '../../lib/leaflet-setup.js';
+import { API_BASE } from '../../lib/config.js';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-const API_BASE = '/api/v1';
+window.bootstrap = bootstrap;
+
+// Leaflet's default icon URL detection breaks under bundlers; point it at
+// the bundled assets explicitly (the location-picker marker needs it)
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: markerIcon2x,
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow
+});
+
 let userEmail = null;
 let locationMap = null;
 let locationMarker = null;

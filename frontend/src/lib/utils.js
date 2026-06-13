@@ -2,7 +2,8 @@
  * Utility functions for the Environmental Monitoring Dashboard
  */
 
-const Utils = {
+
+export const Utils = {
     // Escape user-supplied text before interpolating into HTML strings.
     // Sensor names are user input — every innerHTML sink must go through this.
     escapeHtml: (text) => {

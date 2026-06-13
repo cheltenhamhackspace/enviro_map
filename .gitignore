@@ -174,3 +174,4 @@ CLAUDE.md
 # Node / Cloudflare tooling
 node_modules/
 .wrangler/
+frontend/dist/

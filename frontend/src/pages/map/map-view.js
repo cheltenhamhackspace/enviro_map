@@ -1,8 +1,13 @@
 /**
  * Map functionality for the Environmental Monitoring Dashboard
  */
+import L from '../../lib/leaflet-setup.js';
+import 'leaflet.heat';
+import { AppState } from './state.js';
+import { Utils } from '../../lib/utils.js';
+import { DataManager } from './data.js';
 
-const MapManager = {
+export const MapManager = {
     init: () => {
         AppState.map = L.map('map').setView([51.8994, -2.0783], 7);
         
@@ -146,4 +151,3 @@ const MapManager = {
     }
 };
 
-window.toggleHeatmap = MapManager.toggleHeatmap;

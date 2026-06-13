@@ -1,35 +1,31 @@
 /**
- * Data management with caching and optimization for the Environmental Monitoring Dashboard
+ * Data management with caching and optimization for the Environmental
+ * Monitoring Dashboard
  */
+import { API_BASE } from '../../lib/config.js';
+import { AppState } from './state.js';
+import { Utils } from '../../lib/utils.js';
+import { MapManager } from './map-view.js';
+import { ChartManager } from './charts.js';
+import L from '../../lib/leaflet-setup.js';
 
-const DataManager = {
+export const DataManager = {
     // Check if cached data is still valid
-    isCacheValid(key, cacheType = 'default') {
+    isCacheValid(key) {
         const lastFetch = AppState.cache.lastFetch.get(key);
         if (!lastFetch) return false;
-        
-        const duration = cacheType === 'latest' ? 
-            AppState.cache.latestCacheDuration : 
-            AppState.cache.cacheDuration;
-            
-        return (Date.now() - lastFetch) < duration;
+        return (Date.now() - lastFetch) < AppState.cache.cacheDuration;
     },
 
     // Cache data with timestamp
-    setCacheData(key, data, cacheType = 'default') {
-        if (cacheType === 'latest') {
-            AppState.cache.latestData.set(key, data);
-        } else {
-            AppState.cache.sensorData.set(key, data);
-        }
+    setCacheData(key, data) {
+        AppState.cache.sensorData.set(key, data);
         AppState.cache.lastFetch.set(key, Date.now());
     },
 
     // Get cached data
-    getCacheData(key, cacheType = 'default') {
-        return cacheType === 'latest' ? 
-            AppState.cache.latestData.get(key) : 
-            AppState.cache.sensorData.get(key);
+    getCacheData(key) {
+        return AppState.cache.sensorData.get(key);
     },
 
     async fetchSensors() {
@@ -243,7 +239,6 @@ const DataManager = {
             if (now - timestamp > maxAge) {
                 AppState.cache.lastFetch.delete(key);
                 AppState.cache.sensorData.delete(key);
-                AppState.cache.latestData.delete(key);
             }
         }
     }

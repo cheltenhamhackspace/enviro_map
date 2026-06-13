@@ -9,8 +9,6 @@
     <script>(function(){var mq=window.matchMedia('(prefers-color-scheme: dark)');function apply(e){document.documentElement.setAttribute('data-bs-theme',e.matches?'dark':'light');}apply(mq);mq.addEventListener('change',apply);})();</script>
 
     <!-- Preload critical resources -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css" as="style">
-    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style">
     
     <!-- Critical CSS -->
     <style>
@@ -120,8 +118,6 @@
     </style>
     
     <!-- External CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="./static/css/styles.css">
@@ -370,19 +366,8 @@
         </div>
     </div>
 
-    <!-- Scripts loaded at end for better performance -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js" integrity="sha512-KhIBJeCI4oTEeqOmRi2gDJ7m+JARImhUYgXWiOTIp9qqySpFUAJs09erGKem4E5IPuxxSTjavuurvBitBmwE0w==" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts@5.15.0/dist/apexcharts.min.js" integrity="sha384-jD5KdAo63MMxOVq0n5MjSimZ4a2lNMri0WRz8ITI93tFOA6mFlpc/En3QRIZ6ugE" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
-    
-    <!-- Application JavaScript - Load in dependency order -->
-    <script src="./static/js/config.js"></script>
-    <script src="./static/js/utils.js"></script>
-    <script src="./static/js/map-manager.js"></script>
-    <script src="./static/js/chart-manager.js"></script>
-    <script src="./static/js/data-manager.js"></script>
-    <script src="./static/js/app.js"></script>
+    <!-- Application bundle (Vite): npm-pinned Leaflet, ApexCharts, Tabler -->
+    <script type="module" src="./src/pages/map/main.js"></script>
 
     <!-- Mobile navigation helper -->
     <script>

@@ -1,8 +1,11 @@
 /**
  * Chart management for the Environmental Monitoring Dashboard
  */
+import ApexCharts from 'apexcharts';
+import { AppState } from './state.js';
+import { DATASET_CONFIG } from '../../lib/config.js';
 
-const ChartManager = {
+export const ChartManager = {
     init: () => {
         ChartManager.initParticulateChart();
         ChartManager.initTempHumChart();

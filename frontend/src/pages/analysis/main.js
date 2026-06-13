@@ -1,7 +1,18 @@
 /**
  * Analysis Manager for Environmental Monitoring Dashboard
- * Handles all analysis functionality and visualization
+ * Handles all analysis functionality and visualization.
+ * (Single module for now; splitting state/api/renderers further is future
+ * polish per the rework plan.)
  */
+import '@tabler/core/dist/css/tabler.min.css';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import * as bootstrap from '@tabler/core/dist/js/tabler.min.js';
+import ApexCharts from 'apexcharts';
+import L from '../../lib/leaflet-setup.js';
+import { API_BASE } from '../../lib/config.js';
+import { Utils } from '../../lib/utils.js';
+
+window.bootstrap = bootstrap;
 
 // Analysis state management
 const AnalysisState = {
