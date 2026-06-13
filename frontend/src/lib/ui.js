@@ -12,9 +12,11 @@ import '@fontsource/chivo-mono/400.css';
 import '@fontsource/chivo-mono/600.css';
 import '../styles/theme.css';
 import '../../static/css/styles.css';
-import * as bootstrap from '@tabler/core/dist/js/tabler.min.js';
-
-window.bootstrap = bootstrap;
+// Tabler's bundle is an IIFE: importing it for its side effect sets
+// globalThis.bootstrap (with Modal/Dropdown/etc.) and globalThis.tabler.
+// Do NOT `import * as bootstrap` and reassign window.bootstrap — the namespace
+// is empty and would clobber the real global the bundle just installed.
+import '@tabler/core/dist/js/tabler.min.js';
 
 export { initNav } from './nav.js';
 export { notify } from './notify.js';
