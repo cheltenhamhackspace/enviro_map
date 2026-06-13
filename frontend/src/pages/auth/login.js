@@ -1,12 +1,12 @@
 /**
  * Login page entry point
  */
-import '@tabler/core/dist/css/tabler.min.css';
+import '../../lib/ui.js';
 
 // Renders the post-submit success state in place. All static markup;
 // the email address is inserted via textContent, never innerHTML.
 function showLoginSuccess(email) {
-    const cardBody = document.querySelector('.login-card .card-body');
+    const cardBody = document.querySelector('.auth-card .card-body');
     cardBody.innerHTML = `
         <div class="text-center">
             <div class="feature-icon mx-auto" style="background: linear-gradient(135deg, #2fb344, #51cf66);">

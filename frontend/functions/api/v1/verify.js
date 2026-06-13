@@ -22,26 +22,43 @@ const INTERSTITIAL_PAGE = `<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Environmental Dashboard</title>
     <style>
+        /* Self-contained mirror of the site's auth theme (src/styles/theme.css):
+           slate atmosphere, isobar contours, brand-blue accent. This page is
+           served by a Function, so it can't reference the hashed Vite bundle. */
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
             padding: 1rem;
+            background-color: #0f172a;
+            background-image:
+                radial-gradient(ellipse 70% 55% at 85% 110%, rgba(32, 107, 196, 0.35), transparent),
+                radial-gradient(ellipse 55% 45% at 10% -10%, rgba(77, 171, 247, 0.18), transparent),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%234dabf7' stroke-opacity='0.10'%3E%3Ccircle cx='120' cy='120' r='70'/%3E%3Ccircle cx='120' cy='120' r='130'/%3E%3Ccircle cx='120' cy='120' r='195'/%3E%3Ccircle cx='120' cy='120' r='265'/%3E%3Ccircle cx='120' cy='120' r='340'/%3E%3Ccircle cx='700' cy='720' r='80'/%3E%3Ccircle cx='700' cy='720' r='150'/%3E%3Ccircle cx='700' cy='720' r='225'/%3E%3Ccircle cx='700' cy='720' r='305'/%3E%3C/g%3E%3C/svg%3E");
+            background-size: cover, cover, 800px 800px;
         }
         .container {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.96);
             border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.55);
             padding: 2rem;
             text-align: center;
             max-width: 500px;
             width: 100%;
         }
-        h1 { color: #206bc4; margin-bottom: 1rem; }
+        h1 {
+            margin-bottom: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #206bc4, #4dabf7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
         .btn {
             display: inline-block;
             background: linear-gradient(135deg, #206bc4, #4dabf7);
@@ -65,6 +82,10 @@ const INTERSTITIAL_PAGE = `<!DOCTYPE html>
             display: none;
         }
         .muted { color: #6c757d; font-size: 0.9rem; }
+        @media (prefers-color-scheme: dark) {
+            .container { background: rgba(30, 41, 59, 0.97); color: #e1e5e9; border-color: rgba(255, 255, 255, 0.08); }
+            .muted { color: #9ca3af; }
+        }
     </style>
 </head>
 <body>

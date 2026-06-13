@@ -2,15 +2,14 @@
  * Account dashboard page entry point
  * Manages the user's sensor registration and viewing
  */
-import '@tabler/core/dist/css/tabler.min.css';
-import * as bootstrap from '@tabler/core/dist/js/tabler.min.js';
+import { initNav, notify } from '../../lib/ui.js';
 import L from '../../lib/leaflet-setup.js';
 import { API_BASE } from '../../lib/config.js';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-window.bootstrap = bootstrap;
+initNav('account');
 
 // Leaflet's default icon URL detection breaks under bundlers; point it at
 // the bundled assets explicitly (the location-picker marker needs it)
@@ -383,20 +382,9 @@ async function handleLogout() {
  * Show alert message
  */
 function showAlert(message, type = 'info') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 500px;';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(alertDiv);
-
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.remove();
-        }
-    }, 5000);
+    // Delegates to the unified toast component (also removes the old
+    // innerHTML-based message insertion)
+    notify(message, type);
 }
 
 /**

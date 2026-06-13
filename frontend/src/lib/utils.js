@@ -1,7 +1,7 @@
 /**
  * Utility functions for the Environmental Monitoring Dashboard
  */
-
+import { notify } from './notify.js';
 
 export const Utils = {
     // Escape user-supplied text before interpolating into HTML strings.
@@ -61,23 +61,6 @@ export const Utils = {
         };
     },
 
-    showNotification: (message, type = 'info') => {
-        // Simple notification system; message is inserted as text, never HTML
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        notification.appendChild(document.createTextNode(message));
-        const closeBtn = document.createElement('button');
-        closeBtn.type = 'button';
-        closeBtn.className = 'btn-close';
-        closeBtn.setAttribute('data-bs-dismiss', 'alert');
-        notification.appendChild(closeBtn);
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 5000);
-    }
+    // Delegates to the unified toast component (src/lib/notify.js)
+    showNotification: (message, type = 'info') => notify(message, type)
 };

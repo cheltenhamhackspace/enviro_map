@@ -2,8 +2,7 @@
  * Cheltenham Hackspace Environmental Monitoring Dashboard
  * Public map page entry point
  */
-import '@tabler/core/dist/css/tabler.min.css';
-import * as bootstrap from '@tabler/core/dist/js/tabler.min.js';
+import { initNav } from '../../lib/ui.js';
 import { API_BASE } from '../../lib/config.js';
 import { Utils } from '../../lib/utils.js';
 import { AppState } from './state.js';
@@ -11,29 +10,7 @@ import { MapManager } from './map-view.js';
 import { ChartManager } from './charts.js';
 import { DataManager } from './data.js';
 
-window.bootstrap = bootstrap;
-
-// Update navigation for logged-in users. localStorage only holds a display
-// hint here — real auth is the httpOnly session cookie, checked server-side.
-(function checkAuthAndUpdateNav() {
-    const userEmail = localStorage.getItem('enviro_user_email');
-    const loginLink = document.querySelector('a[href="./login.html"]');
-
-    if (loginLink && userEmail) {
-        // User is logged in - change link to "My Dashboard"
-        loginLink.href = './dashboard.html';
-        loginLink.querySelector('.nav-link-title').textContent = 'My Dashboard';
-
-        // Update icon to dashboard icon
-        const icon = loginLink.querySelector('.nav-link-icon svg');
-        if (icon) {
-            icon.innerHTML = `
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-            `;
-        }
-    }
-})();
+initNav('map');
 
 // Event handlers
 function toggleDataset(dataset) {

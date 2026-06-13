@@ -12,54 +12,7 @@
     
     <!-- Critical CSS -->
     <style>
-        /* Critical above-the-fold styles */
-        .page { min-height: 100vh; }
-        .navbar-vertical { width: 280px; }
-        .page-wrapper { margin-left: 280px; }
-        .loading-spinner {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #206bc4;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-            .navbar-vertical { 
-                position: fixed;
-                top: 0;
-                left: -280px;
-                height: 100vh;
-                z-index: 1050;
-                transition: left 0.3s ease;
-            }
-            .navbar-vertical.show { left: 0; }
-            .page-wrapper { margin-left: 0; }
-            .mobile-nav-toggle {
-                position: fixed;
-                top: 1rem;
-                left: 1rem;
-                z-index: 1051;
-                background: #206bc4;
-                color: white;
-                border: none;
-                padding: 0.5rem;
-                border-radius: 0.375rem;
-            }
-        }
-        
+
         /* Analysis specific styles */
         .analysis-container {
             height: 400px;
@@ -109,7 +62,7 @@
         .correlation-low { background-color: #f8d7da; }
         
         .analysis-summary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #206bc4, #4dabf7);
             color: white;
             border-radius: 0.5rem;
             padding: 1.5rem;
@@ -162,108 +115,11 @@
     
     <!-- External CSS -->
     
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="./static/css/styles.css">
 </head>
 <body>
-    <!-- Mobile navigation toggle -->
-    <button class="mobile-nav-toggle d-md-none" onclick="toggleMobileNav()" aria-label="Toggle navigation">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-    </button>
-
     <div class="page">
         <!-- Sidebar Navigation -->
-        <aside class="navbar navbar-vertical navbar-expand-sm navbar-dark" id="sidebar">
-            <div class="container-fluid">
-                <h1 class="navbar-brand navbar-brand-autodark">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9,22 9,12 15,12 15,22"></polyline>
-                    </svg>
-                    <span class="d-none d-lg-inline">
-                        Cheltenham Hackspace<br>
-                        <small class="text-muted">Environmental Monitor</small>
-                    </span>
-                </h1>
-                
-                <nav class="navbar-nav pt-lg-3">
-                    <div class="nav-item">
-                        <a class="nav-link" href="./">
-                            <span class="nav-link-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                    <polyline points="9,22 9,12 15,12 15,22"></polyline>
-                                </svg>
-                            </span>
-                            <span class="nav-link-title">Dashboard</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link active" href="./analysis.html" aria-current="page">
-                            <span class="nav-link-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M18 20V10"></path>
-                                    <path d="M12 20V4"></path>
-                                    <path d="M6 20v-6"></path>
-                                </svg>
-                            </span>
-                            <span class="nav-link-title">Data Analysis</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" href="./login.html">
-                            <span class="nav-link-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                                    <polyline points="10,17 15,12 10,7"></polyline>
-                                    <line x1="15" y1="12" x2="3" y2="12"></line>
-                                </svg>
-                            </span>
-                            <span class="nav-link-title">Login</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" href="https://www.cheltenhamhackspace.org/" target="_blank" rel="noopener">
-                            <span class="nav-link-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                    <polyline points="15,3 21,3 21,9"></polyline>
-                                    <line x1="10" y1="14" x2="21" y2="3"></line>
-                                </svg>
-                            </span>
-                            <span class="nav-link-title">Cheltenham Hackspace</span>
-                        </a>
-                    </div>
-                </nav>
-                
-                <!-- Analysis Status Summary -->
-                <div class="mt-auto p-3">
-                    <div class="card card-sm">
-                        <div class="card-body">
-                            <h4 class="card-title">Analysis Status</h4>
-                            <div id="analysis-status" class="small">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>Selected Sensors</span>
-                                    <span id="selected-count" class="fw-bold">0</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>Time Range</span>
-                                    <span id="time-range-display" class="fw-bold">24h</span>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Analysis Type</span>
-                                    <span id="analysis-type-display" class="fw-bold">Statistical</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </aside>
+        <aside class="navbar navbar-vertical navbar-expand-sm navbar-dark" id="sidebar"></aside>
 
         <!-- Main Content -->
         <div class="page-wrapper">
@@ -612,22 +468,5 @@
     <!-- Application bundle (Vite): npm-pinned Leaflet, ApexCharts, Tabler -->
     <script type="module" src="./src/pages/analysis/main.js"></script>
 
-    <!-- Mobile navigation helper -->
-    <script>
-        function toggleMobileNav() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('show');
-        }
-        
-        // Close mobile nav when clicking outside
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.mobile-nav-toggle');
-            
-            if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
-                sidebar.classList.remove('show');
-            }
-        });
-    </script>
 </body>
 </html>
