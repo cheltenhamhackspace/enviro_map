@@ -121,6 +121,31 @@
         <!-- Sidebar Navigation -->
         <aside class="navbar navbar-vertical navbar-expand-sm navbar-dark" id="sidebar"></aside>
 
+        <!-- Page-specific sidebar content, rendered into the nav by src/lib/nav.js -->
+        <template id="sidebar-extra">
+            <div class="p-3">
+                <div class="card card-sm">
+                    <div class="card-body">
+                        <h4 class="card-title">Analysis Status</h4>
+                        <div id="analysis-status" class="small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Selected Sensors</span>
+                                <span id="selected-count" class="fw-bold">0</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Time Range</span>
+                                <span id="time-range-display" class="fw-bold">24h</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Analysis Type</span>
+                                <span id="analysis-type-display" class="fw-bold">Statistical</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
         <!-- Main Content -->
         <div class="page-wrapper">
             <!-- Page Header -->
