@@ -14,8 +14,10 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# (anchored to repo root: an unanchored lib/ also ignored
+# frontend/functions/api/v1/lib/, which must be tracked)
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -168,3 +170,7 @@ backend/terraform.tfstate.backup
 .vscode/tasks.json
 sensor/sensor_v1/node_credentials.csv
 CLAUDE.md
+
+# Node / Cloudflare tooling
+node_modules/
+.wrangler/

@@ -3,14 +3,14 @@
  * Main application file - OPTIMIZED VERSION
  */
 
-// Check if user is logged in and update navigation
+// Update navigation for logged-in users. localStorage only holds a display
+// hint here — real auth is the httpOnly session cookie, checked server-side.
 (function checkAuthAndUpdateNav() {
-    const sessionToken = localStorage.getItem('enviro_session');
     const userEmail = localStorage.getItem('enviro_user_email');
     const loginLink = document.querySelector('a[href="./login.html"]');
 
     if (loginLink) {
-        if (sessionToken && userEmail) {
+        if (userEmail) {
             // User is logged in - change link to "My Dashboard"
             loginLink.href = './dashboard.html';
             loginLink.querySelector('.nav-link-title').textContent = 'My Dashboard';

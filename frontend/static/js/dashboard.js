@@ -4,19 +4,24 @@
  */
 
 const API_BASE = '/api/v1';
-let sessionToken = null;
 let userEmail = null;
 let locationMap = null;
 let locationMarker = null;
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check authentication
-    sessionToken = localStorage.getItem('enviro_session');
-    userEmail = localStorage.getItem('enviro_user_email');
-
-    if (!sessionToken || !userEmail) {
-        // Not logged in, redirect to login
+    // The session lives in an httpOnly cookie — ask the server who we are.
+    // localStorage only carries a display hint for the public pages.
+    try {
+        const meResponse = await fetch(`${API_BASE}/me`, { cache: 'no-store' });
+        if (!meResponse.ok) {
+            window.location.href = './login.html';
+            return;
+        }
+        const me = await meResponse.json();
+        userEmail = me.email;
+        localStorage.setItem('enviro_user_email', userEmail);
+    } catch (err) {
         window.location.href = './login.html';
         return;
     }
@@ -49,11 +54,8 @@ async function loadSensors() {
     const sensorsGrid = document.getElementById('sensorsGrid');
 
     try {
-        // cache: 'no-store' bypasses the browser cache; no URL cache-buster needed
+        // Auth comes from the session cookie; no-store bypasses the browser cache
         const response = await fetch(`${API_BASE}/sensors/my-sensors`, {
-            headers: {
-                'Authorization': `Bearer ${sessionToken}`
-            },
             cache: 'no-store'
         });
 
@@ -181,7 +183,6 @@ async function handleSensorRegistration() {
         const response = await fetch(`${API_BASE}/sensors/register`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${sessionToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -303,11 +304,7 @@ async function deleteSensor() {
 
     try {
         const response = await fetch(`${API_BASE}/sensors/${sensorToDelete}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${sessionToken}`,
-                'Content-Type': 'application/json'
-            }
+            method: 'DELETE'
         });
 
         const data = await response.json();
@@ -349,9 +346,15 @@ async function deleteSensor() {
 }
 
 /**
- * Handle logout
+ * Handle logout — clears the httpOnly cookie server-side
  */
-function handleLogout() {
+async function handleLogout() {
+    try {
+        await fetch(`${API_BASE}/logout`, { method: 'POST' });
+    } catch (err) {
+        // Cookie clear failed (e.g. offline) — still leave the page
+        console.error('Logout request failed:', err);
+    }
     localStorage.removeItem('enviro_session');
     localStorage.removeItem('enviro_user_email');
     window.location.href = './login.html';

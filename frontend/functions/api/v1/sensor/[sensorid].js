@@ -1,3 +1,5 @@
+import { sha256Hex } from '../lib/auth.js';
+
 export async function onRequest(context) {
     /**
      * readRequestBody reads in the incoming request body
@@ -72,11 +74,25 @@ export async function onRequest(context) {
                 });
             }
 
-            if (sensor.token !== providedToken) {
-                return new Response(JSON.stringify({ error: "Invalid sensor token" }), {
-                    status: 403,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-                });
+            // Tokens are stored hashed at rest for new sensors; legacy rows may
+            // still hold the plain token. Accept either, and upgrade legacy rows
+            // to the hash on first successful match.
+            const providedTokenHash = await sha256Hex(providedToken);
+            if (sensor.token !== providedTokenHash) {
+                if (sensor.token === providedToken) {
+                    try {
+                        await context.env.READINGS_TABLE.prepare(
+                            "UPDATE sensors SET token = ? WHERE device_id = ?"
+                        ).bind(providedTokenHash, deviceId).run();
+                    } catch (upgradeError) {
+                        console.error('token hash upgrade failed (non-fatal):', upgradeError);
+                    }
+                } else {
+                    return new Response(JSON.stringify({ error: "Invalid sensor token" }), {
+                        status: 403,
+                        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                    });
+                }
             }
 
             // Token is valid, proceed with data insertion

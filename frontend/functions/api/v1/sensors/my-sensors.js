@@ -2,7 +2,7 @@
  * My Sensors API Endpoint
  * Returns all sensors owned by the authenticated user
  */
-import { jwtVerify, importSPKI } from 'jose';
+import { requireSession } from '../lib/auth.js';
 
 export async function onRequest(context) {
     if (context.request.method !== 'GET') {
@@ -10,20 +10,13 @@ export async function onRequest(context) {
     }
 
     try {
-        // Verify authentication
-        const authHeader = context.request.headers.get('Authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return createErrorResponse('Missing or invalid authorization header', 401);
+        // Session comes from the httpOnly cookie
+        const session = await requireSession(context);
+        if (!session) {
+            return createErrorResponse('Not logged in', 401);
         }
 
-        const token = authHeader.substring(7);
-        const verificationResult = await verifyJWT(token, context.env.JWT_PUBLIC_KEY);
-
-        if (!verificationResult.success) {
-            return createErrorResponse('Invalid or expired token', 401);
-        }
-
-        const userId = verificationResult.data.payload.user_id;
+        const userId = session.userId;
 
         // Query user's sensors
         const sensors = await context.env.READINGS_TABLE.prepare(
@@ -50,32 +43,6 @@ export async function onRequest(context) {
     } catch (error) {
         console.error('Error fetching user sensors:', error);
         return createErrorResponse('Internal server error: ' + error.message, 500);
-    }
-}
-
-/**
- * Verifies JWT token using the public key
- */
-async function verifyJWT(jwt, publicKeyPem) {
-    try {
-        const alg = 'EdDSA';
-        const publicKey = await importSPKI(publicKeyPem, alg);
-
-        const verificationResult = await jwtVerify(jwt, publicKey, {
-            issuer: 'map.cheltenham.space',
-            audience: 'enviro-dashboard',
-        });
-
-        return {
-            success: true,
-            data: verificationResult
-        };
-    } catch (error) {
-        console.error('JWT verification failed:', error);
-        return {
-            success: false,
-            error: error.message
-        };
     }
 }
 

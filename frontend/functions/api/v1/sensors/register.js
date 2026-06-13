@@ -2,7 +2,7 @@
  * Sensor Registration API Endpoint
  * Allows authenticated users to register new sensors
  */
-import { jwtVerify, importSPKI } from 'jose';
+import { requireSession, sha256Hex } from '../lib/auth.js';
 
 export async function onRequest(context) {
     if (context.request.method !== 'POST') {
@@ -10,21 +10,14 @@ export async function onRequest(context) {
     }
 
     try {
-        // Verify authentication
-        const authHeader = context.request.headers.get('Authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return createErrorResponse('Missing or invalid authorization header', 401);
+        // Session comes from the httpOnly cookie
+        const session = await requireSession(context);
+        if (!session) {
+            return createErrorResponse('Not logged in', 401);
         }
 
-        const token = authHeader.substring(7);
-        const verificationResult = await verifyJWT(token, context.env.JWT_PUBLIC_KEY);
-
-        if (!verificationResult.success) {
-            return createErrorResponse('Invalid or expired token', 401);
-        }
-
-        const userId = verificationResult.data.payload.user_id;
-        const userEmail = verificationResult.data.payload.email;
+        const userId = session.userId;
+        const userEmail = session.email;
 
         // Parse request body
         const body = await context.request.json();
@@ -44,9 +37,11 @@ export async function onRequest(context) {
             return createErrorResponse('Invalid coordinates', 400);
         }
 
-        // Generate unique device_id and token
+        // Generate unique device_id and token. Only the SHA-256 of the token is
+        // stored; the plain token is returned to the user exactly once below.
         const deviceId = generateDeviceId();
         const sensorToken = generateSecureToken();
+        const sensorTokenHash = await sha256Hex(sensorToken);
 
         // Insert sensor into database
         try {
@@ -60,7 +55,7 @@ export async function onRequest(context) {
                 userEmail,
                 lat,
                 long,
-                sensorToken,
+                sensorTokenHash,
                 isPrivate ? 1 : 0,
                 userId
             ).run();
@@ -108,32 +103,6 @@ export async function onRequest(context) {
     } catch (error) {
         console.error('Sensor registration error:', error);
         return createErrorResponse('Internal server error: ' + error.message, 500);
-    }
-}
-
-/**
- * Verifies JWT token using the public key
- */
-async function verifyJWT(jwt, publicKeyPem) {
-    try {
-        const alg = 'EdDSA';
-        const publicKey = await importSPKI(publicKeyPem, alg);
-
-        const verificationResult = await jwtVerify(jwt, publicKey, {
-            issuer: 'map.cheltenham.space',
-            audience: 'enviro-dashboard',
-        });
-
-        return {
-            success: true,
-            data: verificationResult
-        };
-    } catch (error) {
-        console.error('JWT verification failed:', error);
-        return {
-            success: false,
-            error: error.message
-        };
     }
 }
 

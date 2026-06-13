@@ -1,343 +1,207 @@
 /**
- * JWT Verification API Endpoint
- * Verifies JWT tokens from login emails and redirects users to the dashboard
+ * Login link verification.
+ *
+ * GET  /api/v1/verify?jwt=...  — serves a fully static interstitial page with a
+ *      "Complete sign-in" button. Nothing is verified or consumed on GET, so
+ *      email security scanners that prefetch links cannot burn the token. The
+ *      page JS reads the jwt from the URL client-side; the server never
+ *      reflects request data into the HTML.
+ *
+ * POST /api/v1/verify  (JSON body {jwt})  — verifies the login token
+ *      (purpose=login enforced; session tokens are rejected, so sessions can
+ *      no longer renew themselves), consumes its jti (single use), and sets
+ *      the session as an httpOnly cookie.
  */
-import { jwtVerify, importSPKI, SignJWT, importPKCS8 } from 'jose';
+import { signToken, verifyToken, sessionCookieHeader, jsonError } from './lib/auth.js';
 
-export async function onRequest(context) {
-    try {
-        const url = new URL(context.request.url);
-        const jwt = url.searchParams.get('jwt');
+const INTERSTITIAL_PAGE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Environmental Dashboard</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 1rem;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 { color: #206bc4; margin-bottom: 1rem; }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #206bc4, #4dabf7);
+            color: white;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.75rem 2rem;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        .btn:disabled { opacity: 0.6; cursor: wait; }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            display: none;
+        }
+        .muted { color: #6c757d; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Environmental Dashboard</h1>
+        <p>Click the button below to complete your sign-in.</p>
+        <div class="error" id="error"></div>
+        <button class="btn" id="signin">Complete Sign-In</button>
+        <p class="muted">If you did not request this sign-in, close this page.</p>
+    </div>
+    <script>
+        const btn = document.getElementById('signin');
+        const errorBox = document.getElementById('error');
+        const jwt = new URLSearchParams(window.location.search).get('jwt');
+
+        function showError(message) {
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Try Again';
+        }
 
         if (!jwt) {
-            return createErrorPage('Missing authentication token', 'No JWT token was provided in the request.');
+            btn.style.display = 'none';
+            showError('No sign-in token found in this link. Please request a new login email.');
         }
 
-        // Verify the JWT token
-        const verificationResult = await verifyJWT(jwt, context.env.JWT_PUBLIC_KEY);
-        
-        if (!verificationResult.success) {
-            return createErrorPage('Invalid or expired token', verificationResult.error);
+        btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+            errorBox.style.display = 'none';
+            try {
+                const response = await fetch('/api/v1/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jwt: jwt })
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    // Display hint only — auth lives in the httpOnly cookie
+                    localStorage.setItem('enviro_user_email', data.email);
+                    localStorage.removeItem('enviro_session');
+                    window.location.href = '/dashboard.html';
+                } else {
+                    showError(data.message || 'Sign-in failed. Please request a new login email.');
+                }
+            } catch (err) {
+                showError('Network error. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>`;
+
+export async function onRequestGet() {
+    return new Response(INTERSTITIAL_PAGE, {
+        headers: {
+            'Content-Type': 'text/html;charset=UTF-8',
+            'Cache-Control': 'no-store'
+        }
+    });
+}
+
+export async function onRequestPost(context) {
+    try {
+        let body;
+        try {
+            body = await context.request.json();
+        } catch {
+            return jsonError('Expected JSON body', 400);
+        }
+        const jwt = body?.jwt;
+        if (!jwt || typeof jwt !== 'string') {
+            return jsonError('Missing authentication token', 400);
         }
 
-        // Extract user information from the token
-        const { payload } = verificationResult.data;
-        const userEmail = payload.email || payload.sub;
-        const userId = payload.user_id || payload.sub;
+        // Only purpose=login tokens are accepted here
+        const result = await verifyToken(jwt, context.env.JWT_PUBLIC_KEY, 'login');
+        if (!result.success) {
+            return jsonError(result.error || 'Invalid or expired token', 401);
+        }
 
-        // Update last_login timestamp and mark email as verified
+        const { payload } = result;
+        if (!payload.jti) {
+            return jsonError('Invalid token (missing jti). Please request a new login email.', 401);
+        }
+
+        // Single use: consume the jti, reject replays
+        const expiresAt = (payload.exp || 0) * 1000;
+        const used = await context.env.READINGS_TABLE.prepare(
+            'SELECT jti FROM auth_tokens_used WHERE jti = ?'
+        ).bind(payload.jti).first();
+        if (used) {
+            return jsonError('This sign-in link has already been used. Please request a new login email.', 403);
+        }
+        await context.env.READINGS_TABLE.prepare(
+            'INSERT INTO auth_tokens_used (jti, expires_at) VALUES (?, ?)'
+        ).bind(payload.jti, expiresAt).run();
+
+        // Opportunistic purge of expired entries keeps the table tiny
         try {
             await context.env.READINGS_TABLE.prepare(
-                "UPDATE users SET last_login = ?, email_verified = 1 WHERE id = ?"
-            ).bind(Date.now(), userId).run();
+                'DELETE FROM auth_tokens_used WHERE expires_at < ?'
+            ).bind(Date.now()).run();
+        } catch (purgeError) {
+            console.error('auth_tokens_used purge failed (non-fatal):', purgeError);
+        }
+
+        // Update last_login and mark email verified
+        try {
+            await context.env.READINGS_TABLE.prepare(
+                'UPDATE users SET last_login = ?, email_verified = 1 WHERE id = ?'
+            ).bind(Date.now(), payload.user_id).run();
         } catch (error) {
             console.error('Failed to update user login time:', error);
             // Continue anyway - login should still work
         }
 
-        // Create session token with longer expiry for dashboard access
-        const sessionToken = await generateSessionToken(userEmail, userId, context.env.JWT_PRIVATE_KEY);
+        const sessionJwt = await signToken({
+            email: payload.email,
+            userId: payload.user_id,
+            purpose: 'session',
+            expiry: '7d'
+        }, context.env.JWT_PRIVATE_KEY);
 
-        // Show success page and redirect to dashboard with session
-        return createSuccessPage(userEmail, sessionToken);
+        return new Response(JSON.stringify({
+            success: true,
+            email: payload.email
+        }), {
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-store',
+                'Set-Cookie': sessionCookieHeader(sessionJwt)
+            }
+        });
 
     } catch (error) {
         console.error('JWT verification error:', error);
-        return createErrorPage('Authentication failed', 'An unexpected error occurred during authentication.');
+        return jsonError('An unexpected error occurred during authentication.', 500);
     }
-}
-
-/**
- * Verifies JWT token using the public key
- */
-async function verifyJWT(jwt, publicKeyPem) {
-    try {
-        const alg = 'EdDSA';
-        const publicKey = await importSPKI(publicKeyPem, alg);
-
-        const verificationResult = await jwtVerify(jwt, publicKey, {
-            issuer: 'map.cheltenham.space',
-            audience: 'enviro-dashboard',
-        });
-
-        return {
-            success: true,
-            data: verificationResult
-        };
-    } catch (error) {
-        console.error('JWT verification failed:', error);
-        
-        let errorMessage = 'Invalid token';
-        if (error.code === 'ERR_JWT_EXPIRED') {
-            errorMessage = 'Token has expired. Please request a new login link.';
-        } else if (error.code === 'ERR_JWT_INVALID') {
-            errorMessage = 'Invalid token format.';
-        }
-
-        return {
-            success: false,
-            error: errorMessage
-        };
-    }
-}
-
-/**
- * Generates a session token with longer expiry
- */
-async function generateSessionToken(email, userId, privateKeyPem) {
-    try {
-        const alg = 'EdDSA';
-        const privateKey = await importPKCS8(privateKeyPem, alg);
-
-        const jwt = await new SignJWT({
-            sub: userId.toString(),
-            email: email,
-            user_id: userId,
-            email_verified: true,
-            iss: 'map.cheltenham.space',
-            aud: 'enviro-dashboard'
-        })
-        .setProtectedHeader({ alg, typ: 'JWT' })
-        .setIssuedAt()
-        .setExpirationTime('7d') // 7 days for session
-        .sign(privateKey);
-
-        return jwt;
-    } catch (error) {
-        console.error('Session token generation error:', error);
-        return null;
-    }
-}
-
-/**
- * Creates a success page for successful authentication
- */
-function createSuccessPage(email, sessionToken) {
-    return new Response(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Login Successful - Environmental Dashboard</title>
-            <style>
-                body {
-                    font-family: system-ui, -apple-system, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin: 0;
-                    padding: 1rem;
-                }
-                .container {
-                    background: rgba(255, 255, 255, 0.95);
-                    backdrop-filter: blur(10px);
-                    border-radius: 1rem;
-                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-                    padding: 2rem;
-                    text-align: center;
-                    max-width: 500px;
-                    width: 100%;
-                }
-                .success-icon {
-                    width: 64px;
-                    height: 64px;
-                    background: linear-gradient(135deg, #2fb344, #51cf66);
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin: 0 auto 1.5rem;
-                    color: white;
-                    font-size: 2rem;
-                }
-                h1 {
-                    color: #2fb344;
-                    margin-bottom: 1rem;
-                }
-                .email {
-                    background: #f8f9fa;
-                    padding: 0.75rem;
-                    border-radius: 0.5rem;
-                    margin: 1rem 0;
-                    font-family: monospace;
-                    color: #495057;
-                }
-                .btn {
-                    display: inline-block;
-                    background: linear-gradient(135deg, #206bc4, #4dabf7);
-                    color: white;
-                    padding: 0.75rem 2rem;
-                    text-decoration: none;
-                    border-radius: 0.5rem;
-                    margin-top: 1.5rem;
-                    transition: transform 0.2s ease;
-                }
-                .btn:hover {
-                    transform: translateY(-2px);
-                }
-                .countdown {
-                    margin-top: 1rem;
-                    color: #6c757d;
-                    font-size: 0.9rem;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="success-icon">✓</div>
-                <h1>Login Successful!</h1>
-                <p>Welcome to the Environmental Monitoring Dashboard.</p>
-                <div class="email">Authenticated as: ${email}</div>
-                <p>You will be redirected to the dashboard automatically.</p>
-                <a href="/" class="btn">Go to Dashboard</a>
-                <div class="countdown">Redirecting in <span id="countdown">5</span> seconds...</div>
-            </div>
-            
-            <script>
-                // Store session token in localStorage
-                const sessionToken = '${sessionToken || ''}';
-                if (sessionToken) {
-                    localStorage.setItem('enviro_session', sessionToken);
-                    localStorage.setItem('enviro_user_email', '${email}');
-                }
-
-                // Auto-redirect after 5 seconds
-                let countdown = 5;
-                const countdownElement = document.getElementById('countdown');
-
-                const timer = setInterval(() => {
-                    countdown--;
-                    countdownElement.textContent = countdown;
-
-                    if (countdown <= 0) {
-                        clearInterval(timer);
-                        window.location.href = '/dashboard.html';
-                    }
-                }, 1000);
-
-                // Allow immediate redirect on click
-                document.querySelector('.btn').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    clearInterval(timer);
-                    window.location.href = '/dashboard.html';
-                });
-            </script>
-        </body>
-        </html>
-    `, {
-        headers: {
-            'Content-Type': 'text/html;charset=UTF-8',
-            'Access-Control-Allow-Origin': '*'
-        }
-    });
-}
-
-/**
- * Creates an error page for failed authentication
- */
-function createErrorPage(title, message) {
-    return new Response(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Authentication Error - Environmental Dashboard</title>
-            <style>
-                body {
-                    font-family: system-ui, -apple-system, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin: 0;
-                    padding: 1rem;
-                }
-                .container {
-                    background: rgba(255, 255, 255, 0.95);
-                    backdrop-filter: blur(10px);
-                    border-radius: 1rem;
-                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-                    padding: 2rem;
-                    text-align: center;
-                    max-width: 500px;
-                    width: 100%;
-                }
-                .error-icon {
-                    width: 64px;
-                    height: 64px;
-                    background: linear-gradient(135deg, #d63939, #f03e3e);
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin: 0 auto 1.5rem;
-                    color: white;
-                    font-size: 2rem;
-                }
-                h1 {
-                    color: #d63939;
-                    margin-bottom: 1rem;
-                }
-                .error-message {
-                    background: #f8d7da;
-                    border: 1px solid #f5c6cb;
-                    color: #721c24;
-                    padding: 1rem;
-                    border-radius: 0.5rem;
-                    margin: 1rem 0;
-                }
-                .btn {
-                    display: inline-block;
-                    background: linear-gradient(135deg, #206bc4, #4dabf7);
-                    color: white;
-                    padding: 0.75rem 2rem;
-                    text-decoration: none;
-                    border-radius: 0.5rem;
-                    margin: 0.5rem;
-                    transition: transform 0.2s ease;
-                }
-                .btn:hover {
-                    transform: translateY(-2px);
-                }
-                .btn-secondary {
-                    background: linear-gradient(135deg, #6c757d, #868e96);
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="error-icon">✗</div>
-                <h1>${title}</h1>
-                <div class="error-message">${message}</div>
-                <p>Please try logging in again or contact support if the problem persists.</p>
-                <a href="/login.html" class="btn">Try Login Again</a>
-                <a href="/" class="btn btn-secondary">Go to Dashboard</a>
-            </div>
-        </body>
-        </html>
-    `, {
-        status: 400,
-        headers: {
-            'Content-Type': 'text/html;charset=UTF-8',
-            'Access-Control-Allow-Origin': '*'
-        }
-    });
-}
-
-/**
- * Handle OPTIONS requests for CORS preflight
- */
-export async function onRequestOptions() {
-    return new Response(null, {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-        }
-    });
 }

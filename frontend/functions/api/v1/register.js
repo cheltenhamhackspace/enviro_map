@@ -2,7 +2,7 @@
  * User Registration API Endpoint
  * Handles user account creation with Turnstile verification and sends login email
  */
-import { SignJWT, importPKCS8 } from 'jose';
+import { signToken } from './lib/auth.js';
 
 export async function onRequest(context) {
     try {
@@ -63,8 +63,14 @@ export async function onRequest(context) {
             isNewUser = true;
         }
 
-        // Generate JWT token with user ID
-        const jwt = await generateJWT(email, userId, context.env.JWT_PRIVATE_KEY);
+        // Generate a single-use login token (purpose + jti enforced by /verify)
+        const jwt = await signToken({
+            email: email,
+            userId: userId,
+            purpose: 'login',
+            expiry: '15m',
+            jti: crypto.randomUUID()
+        }, context.env.JWT_PRIVATE_KEY);
 
         // Send registration/login email
         const emailSent = await sendRegistrationEmail(email, jwt, isNewUser, context.env.MAILCHANNELS_API_KEY);
@@ -125,34 +131,6 @@ async function verifyTurnstile(turnstileResponse, remoteip, turnstileKey) {
 function validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-}
-
-/**
- * Generates JWT token for authentication
- */
-async function generateJWT(email, userId, privateKeyPem) {
-    try {
-        const alg = 'EdDSA';
-        const privateKey = await importPKCS8(privateKeyPem, alg);
-
-        const jwt = await new SignJWT({
-            sub: userId.toString(),
-            email: email,
-            user_id: userId,
-            email_verified: false,
-            iss: 'map.cheltenham.space',
-            aud: 'enviro-dashboard'
-        })
-        .setProtectedHeader({ alg, typ: 'JWT' })
-        .setIssuedAt()
-        .setExpirationTime('15m') // 15 minutes expiry
-        .sign(privateKey);
-
-        return jwt;
-    } catch (error) {
-        console.error('JWT generation error:', error);
-        throw new Error('Failed to generate authentication token');
-    }
 }
 
 /**

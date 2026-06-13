@@ -2,24 +2,17 @@
  * Sensor Management API Endpoint
  * DELETE: Delete a sensor and all its data (authenticated users only)
  */
-import { jwtVerify, importSPKI } from 'jose';
+import { requireSession } from '../lib/auth.js';
 
 export async function onRequestDelete(context) {
     try {
-        // Verify authentication
-        const authHeader = context.request.headers.get('Authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return createErrorResponse('Missing or invalid authorization header', 401);
+        // Session comes from the httpOnly cookie
+        const session = await requireSession(context);
+        if (!session) {
+            return createErrorResponse('Not logged in', 401);
         }
 
-        const token = authHeader.substring(7);
-        const verificationResult = await verifyJWT(token, context.env.JWT_PUBLIC_KEY);
-
-        if (!verificationResult.success) {
-            return createErrorResponse('Invalid or expired token', 401);
-        }
-
-        const userId = verificationResult.data.payload.user_id;
+        const userId = session.userId;
         const deviceId = context.params.device_id;
 
         // Verify sensor exists and user owns it
@@ -68,32 +61,6 @@ export async function onRequestDelete(context) {
     } catch (error) {
         console.error('Sensor deletion error:', error);
         return createErrorResponse('Internal server error: ' + error.message, 500);
-    }
-}
-
-/**
- * Verifies JWT token using the public key
- */
-async function verifyJWT(jwt, publicKeyPem) {
-    try {
-        const alg = 'EdDSA';
-        const publicKey = await importSPKI(publicKeyPem, alg);
-
-        const verificationResult = await jwtVerify(jwt, publicKey, {
-            issuer: 'map.cheltenham.space',
-            audience: 'enviro-dashboard',
-        });
-
-        return {
-            success: true,
-            data: verificationResult
-        };
-    } catch (error) {
-        console.error('JWT verification failed:', error);
-        return {
-            success: false,
-            error: error.message
-        };
     }
 }
 

@@ -2,7 +2,7 @@
  * Login API Endpoint
  * Handles user authentication with Turnstile verification and JWT generation
  */
-import { SignJWT, importPKCS8 } from 'jose';
+import { signToken } from './lib/auth.js';
 
 export async function onRequest(context) {
     try {
@@ -39,11 +39,29 @@ export async function onRequest(context) {
         ).bind(email).first();
 
         if (!user) {
-            return createErrorResponse('No account found for this email. Please register first.', 404);
+            // Anti-enumeration: identical response whether or not the account
+            // exists. No email is sent for unknown addresses.
+            return new Response(JSON.stringify({
+                success: true,
+                email: email,
+                message: 'Login email sent'
+            }), {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Cache-Control': 'no-store'
+                }
+            });
         }
 
-        // Generate JWT token
-        const jwt = await generateJWT(email, user.id, context.env.JWT_PRIVATE_KEY);
+        // Generate a single-use login token (purpose + jti enforced by /verify)
+        const jwt = await signToken({
+            email: email,
+            userId: user.id,
+            purpose: 'login',
+            expiry: '15m',
+            jti: crypto.randomUUID()
+        }, context.env.JWT_PRIVATE_KEY);
 
         // Send login email
         const emailSent = await sendLoginEmail(email, jwt, context.env.MAILCHANNELS_API_KEY);
@@ -103,34 +121,6 @@ async function verifyTurnstile(turnstileResponse, remoteip, turnstileKey) {
 function validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-}
-
-/**
- * Generates JWT token for authentication
- */
-async function generateJWT(email, userId, privateKeyPem) {
-    try {
-        const alg = 'EdDSA';
-        const privateKey = await importPKCS8(privateKeyPem, alg);
-
-        const jwt = await new SignJWT({
-            sub: userId.toString(),
-            email: email,
-            user_id: userId,
-            email_verified: false,
-            iss: 'map.cheltenham.space',
-            aud: 'enviro-dashboard'
-        })
-        .setProtectedHeader({ alg, typ: 'JWT' })
-        .setIssuedAt()
-        .setExpirationTime('15m') // 15 minutes expiry
-        .sign(privateKey);
-
-        return jwt;
-    } catch (error) {
-        console.error('JWT generation error:', error);
-        throw new Error('Failed to generate authentication token');
-    }
 }
 
 /**
